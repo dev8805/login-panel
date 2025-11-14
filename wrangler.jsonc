@@ -1,0 +1,8 @@
+{
+  "name": "login-panel",
+  "compatibility_date": "2025-11-14",
+  "pages_build_caching": true,
+  "assets": {
+    "directory": "./"
+  }
+}
