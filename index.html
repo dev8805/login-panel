@@ -83,6 +83,21 @@
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
+        select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s;
+    background: white;
+}
+
+select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
         
         button {
             width: 100%;
@@ -205,6 +220,82 @@
             padding: 40px;
             color: #666;
         }
+        /* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 16px 16px 0 0;
+}
+
+.modal-header h3 {
+    font-size: 20px;
+    margin: 0;
+}
+
+.modal-close {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.modal-close:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.modal-body {
+    padding: 30px;
+}
+
+.success-message {
+    background: #d4edda;
+    border: 2px solid #c3e6cb;
+    color: #155724;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    white-space: pre-line;
+    font-family: monospace;
+}
     </style>
 </head>
 <body>
@@ -252,6 +343,7 @@
                 <button class="logout-btn" onclick="logout()">🚪 Cerrar Sesión</button>
             </div>
         </div>
+        
     </div>
     
     <script>
@@ -267,12 +359,13 @@
         // Menú de opciones con sus URLs
         const menuOptions = [
             {
-                id: 'crear_producto',
-                icon: '📦',
-                title: 'Crear Producto',
-                url: 'https://crear-producto.poswhatsapp.online',
-                permission: 'productos.crear'
-            },
+         id: 'crear_producto',
+       icon: '📦',
+        title: 'Crear Producto',
+       url: '#',
+       permission: 'productos.crear',
+       modal: true
+       },
             {
                 id: 'registrar_compra',
                 icon: '🛒',
@@ -422,9 +515,17 @@
                 const hasPermission = checkPermission(permisos, option.permission);
                 
                 const menuItem = document.createElement('a');
-                menuItem.className = `menu-item ${!hasPermission ? 'disabled' : ''}`;
-                menuItem.href = hasPermission ? `${option.url}?auth=true` : '#';
-                menuItem.target = hasPermission ? '_blank' : '';
+               menuItem.className = `menu-item ${!hasPermission ? 'disabled' : ''}`;
+if (option.modal) {
+    menuItem.href = '#';
+    menuItem.onclick = (e) => {
+        e.preventDefault();
+        if (hasPermission) openModal(option.id);
+    };
+} else {
+    menuItem.href = hasPermission ? `${option.url}?auth=true` : '#';
+    menuItem.target = hasPermission ? '_blank' : '';
+}
                 
                 menuItem.innerHTML = `
                     <div class="menu-item-icon">${option.icon}</div>
@@ -474,7 +575,328 @@
             
             checkSession();
         });
+        // Abrir modal
+function openModal(modalId) {
+    console.log('🔓 Abriendo modal:', modalId);
+    
+    if (modalId === 'crear_producto') {
+        const modal = document.getElementById('modalCrearProducto');
+        const modalBody = document.getElementById('modalBody');
+        
+        // Cargar formulario
+        modalBody.innerHTML = `
+            <form id="formCrearProducto" onsubmit="submitProducto(event)">
+                <div id="successMsg" class="success-message" style="display:none;"></div>
+                <div id="errorMsgModal" class="error"></div>
+                
+                <div class="form-group">
+                    <label for="productoNombre">Nombre del producto *</label>
+                    <input type="text" id="productoNombre" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="tipoVenta">Tipo de venta *</label>
+                    <select id="tipoVenta" required onchange="updateFormByType()">
+                        <option value="">Seleccionar...</option>
+                        <option value="unidad">Unidad</option>
+                        <option value="peso">Peso</option>
+                        <option value="medida">Medida</option>
+                    </select>
+                </div>
+                
+                <div id="camposDinamicos"></div>
+                
+                <div class="form-group">
+                    <label for="apodos">Apodos (separados por comas)</label>
+                    <input type="text" id="apodos" placeholder="producto1, prod1, p1">
+                </div>
+                
+                <button type="submit" id="btnSubmit">Crear Producto</button>
+            </form>
+        `;
+        
+        modal.classList.add('show');
+    }
+}
+
+// Cerrar modal
+function closeModal() {
+    document.getElementById('modalCrearProducto').classList.remove('show');
+}
+
+// Actualizar campos según tipo de venta
+function updateFormByType() {
+    const tipo = document.getElementById('tipoVenta').value;
+    const container = document.getElementById('camposDinamicos');
+    
+    let html = '';
+    
+    if (tipo === 'unidad') {
+        html = `
+            <div class="form-group">
+                <label>Unidad de compra *</label>
+                <select id="unidadCompra" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="CAJA">CAJA</option>
+                    <option value="PACA">PACA</option>
+                    <option value="UNIDAD">UNIDAD</option>
+                    <option value="PAQUETE">PAQUETE</option>
+                    <option value="BOLSA">BOLSA</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Factor (unidades por compra) *</label>
+                <input type="number" id="factor" required min="1" step="1" value="1">
+            </div>
+            <div class="form-group">
+                <label>Stock inicial (unidades) *</label>
+                <input type="number" id="stock" required min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Precio unitario *</label>
+                <input type="number" id="precio" required min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Costo unitario *</label>
+                <input type="number" id="costo" required min="0" step="0.01">
+            </div>
+        `;
+    } else if (tipo === 'peso') {
+        html = `
+            <div class="form-group">
+                <label>Unidad de venta *</label>
+                <select id="unidadPeso" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="libras">Libras</option>
+                    <option value="kilogramos">Kilogramos</option>
+                    <option value="gramos">Gramos</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Unidad de compra *</label>
+                <select id="unidadCompra" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="BULTO">BULTO</option>
+                    <option value="LIBRA">LIBRA</option>
+                    <option value="KILO">KILO</option>
+                    <option value="ARROBA">ARROBA</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Factor (peso por compra) *</label>
+                <input type="number" id="factor" required min="0.01" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Stock inicial *</label>
+                <input type="number" id="stock" required min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Precio por unidad de venta *</label>
+                <input type="number" id="precio" required min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Costo por unidad de venta *</label>
+                <input type="number" id="costo" required min="0" step="0.01">
+            </div>
+        `;
+    } else if (tipo === 'medida') {
+        html = `
+            <div class="form-group">
+                <label>Unidad de venta *</label>
+                <select id="unidadPeso" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="metros">Metros</option>
+                    <option value="centimetros">Centímetros</option>
+                    <option value="milimetros">Milímetros</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Unidad de compra *</label>
+                <select id="unidadCompra" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="ROLLO">ROLLO</option>
+                    <option value="LAMINA">LAMINA</option>
+                    <option value="BOBINA">BOBINA</option>
+                    <option value="METRO">METRO</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Factor (medida por compra) *</label>
+                <input type="number" id="factor" required min="0.01" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Stock inicial *</label>
+                <input type="number" id="stock" required min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Precio por unidad de venta *</label>
+                <input type="number" id="precio" required min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Costo por unidad de venta *</label>
+                <input type="number" id="costo" required min="0" step="0.01">
+            </div>
+        `;
+    }
+    
+    container.innerHTML = html;
+}
+
+// Enviar formulario
+async function submitProducto(event) {
+    event.preventDefault();
+    console.log('📤 Enviando formulario...');
+    
+    const btnSubmit = document.getElementById('btnSubmit');
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Creando...';
+    
+    try {
+        // Recolectar datos
+        const formData = {
+            producto: document.getElementById('productoNombre').value,
+            tipo_venta: document.getElementById('tipoVenta').value,
+            unidad_compra: document.getElementById('unidadCompra').value,
+            factor: parseFloat(document.getElementById('factor').value),
+            stock: parseFloat(document.getElementById('stock').value),
+            precio: parseFloat(document.getElementById('precio').value),
+            costo: parseFloat(document.getElementById('costo').value),
+            apodos: document.getElementById('apodos').value,
+            unidad_peso: document.getElementById('unidadPeso')?.value || 'unidades',
+            tenant_id: userData.tenant_id,
+            user_id: userData.user_id
+        };
+        
+        console.log('📦 Datos a enviar:', formData);
+        
+        // Insertar producto en Supabase
+        const { data: producto, error: errorProducto } = await supabase
+            .from('productos')
+            .insert({
+                tenant_id: formData.tenant_id,
+                producto: formData.producto,
+                precio_venta: formData.precio,
+                costo: formData.costo,
+                factor_unidades: formData.factor,
+                apodos_input: formData.apodos,
+                tipo_venta: formData.tipo_venta,
+                unidad_peso: formData.unidad_peso,
+                unidad_compra: formData.unidad_compra,
+                stock_actual: formData.stock,
+                stock_inicial: formData.stock,
+                activo: true,
+                updated_by: formData.user_id
+            })
+            .select()
+            .single();
+        
+        if (errorProducto) throw errorProducto;
+        
+        console.log('✅ Producto insertado:', producto);
+        
+        // Procesar e insertar apodos
+        let apodosInsertados = [];
+        if (formData.apodos && formData.apodos.trim() !== '') {
+            const apodosArray = formData.apodos
+                .split(',')
+                .map(a => a.trim())
+                .filter(a => a !== '')
+                .map(apodo => ({
+                    tenant_id: formData.tenant_id,
+                    producto_id: producto.producto_id,
+                    apodo: apodo.toLowerCase(),
+                    producto: producto.producto
+                }));
+            
+            if (apodosArray.length > 0) {
+                const { data: apodos, error: errorApodos } = await supabase
+                    .from('productos_apodos')
+                    .insert(apodosArray)
+                    .select();
+                
+                if (errorApodos) throw errorApodos;
+                apodosInsertados = apodos;
+                console.log('✅ Apodos insertados:', apodosInsertados);
+            }
+        }
+        
+        // Generar mensaje de confirmación
+        const mensaje = generarMensajeConfirmacion(producto, apodosInsertados, formData);
+        
+        // Mostrar mensaje de éxito
+        document.getElementById('successMsg').innerHTML = mensaje;
+        document.getElementById('successMsg').style.display = 'block';
+        document.getElementById('formCrearProducto').style.display = 'none';
+        
+        console.log('✅ Producto creado exitosamente');
+        
+    } catch (error) {
+        console.error('❌ Error:', error);
+        showError(error.message || 'Error al crear producto');
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Crear Producto';
+    }
+}
+
+// Generar mensaje de confirmación
+function generarMensajeConfirmacion(producto, apodos, formData) {
+    const abreviaturaUnidad = formData.unidad_peso === 'libras' ? 'lbs' : 
+                              formData.unidad_peso === 'kilogramos' ? 'kg' : 
+                              formData.unidad_peso === 'gramos' ? 'g' : 
+                              formData.unidad_peso;
+    
+    let listaApodos = '';
+    if (apodos.length > 0) {
+        listaApodos = apodos.map(a => `  • ${a.apodo} (${a.apodo_id})`).join('\n');
+    } else {
+        listaApodos = '  _Sin apodos_';
+    }
+    
+    let lineaUnidad, lineaStock, lineaPrecio;
+    
+    if (formData.tipo_venta === 'peso') {
+        lineaUnidad = `🔍 Unidad de compra: ${formData.unidad_compra} (x${formData.factor} ${abreviaturaUnidad})\n🔍 Unidad de venta: ${formData.unidad_peso}`;
+        lineaStock = `📊 Stock inicial: ${producto.stock_actual} ${formData.unidad_peso}`;
+        lineaPrecio = `💰 Precio por ${formData.unidad_peso}: $${parseFloat(producto.precio_venta).toLocaleString('es-CO')}`;
+    } else if (formData.tipo_venta === 'medida') {
+        lineaUnidad = `🔍 Unidad de compra: ${formData.unidad_compra} (x${formData.factor} ${abreviaturaUnidad})\n🔍 Unidad de venta: ${formData.unidad_peso}`;
+        lineaStock = `📊 Stock inicial: ${producto.stock_actual} ${formData.unidad_peso}`;
+        lineaPrecio = `💰 Precio por ${formData.unidad_peso}: $${parseFloat(producto.precio_venta).toLocaleString('es-CO')}`;
+    } else {
+        lineaUnidad = `🔍 Unidad de compra: ${formData.unidad_compra} (x${formData.factor} unidades)`;
+        lineaStock = `📊 Stock inicial: ${producto.stock_actual} unidades`;
+        lineaPrecio = `💰 Precio unitario: $${parseFloat(producto.precio_venta).toLocaleString('es-CO')}`;
+    }
+    
+    return `✅ ¡Producto creado exitosamente!
+📦 Producto: ${producto.producto}
+🔢 Código: ${producto.codigo}
+${lineaUnidad}
+${lineaPrecio}
+💵 Costo: $${parseFloat(producto.costo || 0).toLocaleString('es-CO')}
+${lineaStock}
+🏷️ Apodos registrados:
+${listaApodos}
+👤 Creado por: ${userData.nombre}
+🏪 Negocio: ${userData.tenants.nombre_negocio}
+
+_El producto ya está disponible para ventas._`;
+}
     </script>
 </body>
 
+    <!-- Modal Crear Producto -->
+<div id="modalCrearProducto" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>📦 Crear Producto</h3>
+            <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <!-- Aquí se cargará el formulario -->
+        </div>
+    </div>
+</div>
+
 </html>
+
