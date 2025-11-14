@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel POS WhatsApp</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 450px;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            text-align: center;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        /* Login Form */
+        .login-form {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Dashboard */
+        .dashboard {
+            display: none;
+        }
+        
+        .user-info {
+            background: #f5f7ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .user-info h2 {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .user-info p {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .menu-item {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: #333;
+        }
+        
+        .menu-item:hover {
+            border-color: #667eea;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+        }
+        
+        .menu-item.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        
+        .menu-item-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+        
+        .menu-item-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .logout-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            margin-top: 20px;
+        }
+        
+        .logout-btn:hover {
+            box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4);
+        }
+        
+        .error {
+            background-color: #fee;
+            border: 2px solid #f99;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .error.show {
+            display: block;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 POS WhatsApp</h1>
+            <p>Panel de Administración</p>
+        </div>
+        
+        <div class="content">
+            <!-- Loading -->
+            <div id="loading" class="loading">
+                Verificando sesión...
+            </div>
+            
+            <!-- Login Form -->
+            <div id="loginForm" class="login-form" style="display: none;">
+                <div id="errorMsg" class="error"></div>
+                
+                <div class="form-group">
+                    <label for="email">Correo Electrónico</label>
+                    <input type="email" id="email" placeholder="tu@email.com" autocomplete="email">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+                </div>
+                
+                <button id="loginBtn" onclick="login()">Iniciar Sesión</button>
+            </div>
+            
+            <!-- Dashboard -->
+            <div id="dashboard" class="dashboard">
+                <div class="user-info">
+                    <h2 id="userName">Cargando...</h2>
+                    <p id="userRole"></p>
+                    <p id="businessName"></p>
+                </div>
+                
+                <div class="menu-grid" id="menuGrid">
+                    <!-- Se llenan dinámicamente -->
+                </div>
+                
+                <button class="logout-btn" onclick="logout()">🚪 Cerrar Sesión</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Configuración de Supabase
+        const SUPABASE_URL = 'https://fqujxgwresrdvvfkmdgv.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdWp4Z3dyZXNyZHZ2ZmttZGd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1MDc2NzQsImV4cCI6MjA3MDA4MzY3NH0._XwIEgRXVzSYZI7Y6nNZ9jfmrjjIw6Dy1RTP7z0qKCI';
+        
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        let userData = null;
+        
+        // Menú de opciones con sus URLs
+        const menuOptions = [
+            {
+                id: 'crear_producto',
+                icon: '📦',
+                title: 'Crear Producto',
+                url: 'https://crear-producto.poswhatsapp.online',
+                permission: 'productos.crear'
+            },
+            {
+                id: 'registrar_compra',
+                icon: '🛒',
+                title: 'Registrar Compra',
+                url: 'https://compra.poswhatsapp.online',
+                permission: 'inventario.modificar'
+            },
+            {
+                id: 'crear_usuario',
+                icon: '👤',
+                title: 'Crear Usuario',
+                url: 'https://crear-usuario.poswhatsapp.online',
+                permission: 'usuarios.crear'
+            },
+            {
+                id: 'informes',
+                icon: '📊',
+                title: 'Informes',
+                url: 'https://informe.poswhatsapp.online',
+                permission: 'informes.ver'
+            }
+        ];
+        
+        // Verificar sesión al cargar
+        async function checkSession() {
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                
+                if (error) throw error;
+                
+                if (session) {
+                    await loadUserData(session.user.id);
+                    showDashboard();
+                } else {
+                    showLogin();
+                }
+            } catch (error) {
+                console.error('Error checking session:', error);
+                showLogin();
+            }
+        }
+        
+        // Cargar datos del usuario
+        async function loadUserData(authUserId) {
+            try {
+                const { data, error } = await supabase
+                    .from('usuarios')
+                    .select(`
+                        *,
+                        tenants!inner(nombre_negocio)
+                    `)
+                    .eq('auth_user_id', authUserId)
+                    .eq('activo', true)
+                    .single();
+                
+                if (error) throw error;
+                
+                userData = data;
+                console.log('Usuario cargado:', userData);
+            } catch (error) {
+                console.error('Error loading user:', error);
+                showError('Error cargando datos del usuario');
+                await logout();
+            }
+        }
+        
+        // Login
+        async function login() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            
+            if (!email || !password) {
+                showError('Por favor completa todos los campos');
+                return;
+            }
+            
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Iniciando sesión...';
+            hideError();
+            
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password
+                });
+                
+                if (error) throw error;
+                
+                await loadUserData(data.user.id);
+                showDashboard();
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                showError(error.message || 'Error al iniciar sesión');
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Iniciar Sesión';
+            }
+        }
+        
+        // Logout
+        async function logout() {
+            try {
+                await supabase.auth.signOut();
+                userData = null;
+                showLogin();
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+        
+        // Mostrar login
+        function showLogin() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+        }
+        
+        // Mostrar dashboard
+        function showDashboard() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            
+            // Actualizar info del usuario
+            document.getElementById('userName').textContent = `👋 Hola, ${userData.nombre}`;
+            document.getElementById('userRole').textContent = `Rol: ${userData.rol}`;
+            document.getElementById('businessName').textContent = `🏪 ${userData.tenants.nombre_negocio}`;
+            
+            // Generar menú
+            renderMenu();
+        }
+        
+        // Renderizar menú según permisos
+        function renderMenu() {
+            const menuGrid = document.getElementById('menuGrid');
+            menuGrid.innerHTML = '';
+            
+            const permisos = userData.permisos || {};
+            
+            menuOptions.forEach(option => {
+                const hasPermission = checkPermission(permisos, option.permission);
+                
+                const menuItem = document.createElement('a');
+                menuItem.className = `menu-item ${!hasPermission ? 'disabled' : ''}`;
+                menuItem.href = hasPermission ? `${option.url}?auth=true` : '#';
+                menuItem.target = hasPermission ? '_blank' : '';
+                
+                menuItem.innerHTML = `
+                    <div class="menu-item-icon">${option.icon}</div>
+                    <div class="menu-item-title">${option.title}</div>
+                `;
+                
+                menuGrid.appendChild(menuItem);
+            });
+        }
+        
+        // Verificar permiso
+        function checkPermission(permisos, permissionPath) {
+            // Dueño tiene todos los permisos
+            if (userData.rol === 'dueno') return true;
+            
+            const parts = permissionPath.split('.');
+            let current = permisos;
+            
+            for (const part of parts) {
+                if (!current || !current[part]) return false;
+                current = current[part];
+            }
+            
+            return current === true;
+        }
+        
+        // Mostrar/ocultar error
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMsg');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+        }
+        
+        function hideError() {
+            document.getElementById('errorMsg').classList.remove('show');
+        }
+        
+        // Enter para login
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('email')?.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') document.getElementById('password').focus();
+            });
+            
+            document.getElementById('password')?.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') login();
+            });
+            
+            checkSession();
+        });
+    </script>
+</body>
+</html>
