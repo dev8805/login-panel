@@ -770,30 +770,34 @@ async function submitProducto(event) {
         console.log('📦 Datos a enviar:', formData);
         console.log('🔑 User ID:', formData.user_id);
         console.log('🏢 Tenant ID:', formData.tenant_id);
-        // Insertar producto usando RPC (función segura)
-const { data: producto, error: errorProducto } = await supabase
-    .rpc('crear_producto_panel', {
-        p_tenant_id: formData.tenant_id,
-        p_producto: formData.producto,
-        p_precio_venta: formData.precio,
-        p_costo: formData.costo,
-        p_factor_unidades: formData.factor,
-        p_apodos_input: formData.apodos,
-        p_tipo_venta: formData.tipo_venta,
-        p_unidad_peso: formData.unidad_peso,
-        p_unidad_compra: formData.unidad_compra,
-        p_stock_actual: formData.stock,
-        p_stock_inicial: formData.stock,
-        p_updated_by: formData.user_id
-    })
-    .single();
+       // Insertar producto usando RPC (función segura)
+        const { data: producto, error: errorProducto } = await supabase
+            .rpc('crear_producto_panel', {
+                p_tenant_id: formData.tenant_id,
+                p_producto: formData.producto,
+                p_precio_venta: formData.precio,
+                p_costo: formData.costo,
+                p_factor_unidades: formData.factor,
+                p_apodos_input: formData.apodos || '',
+                p_tipo_venta: formData.tipo_venta,
+                p_unidad_peso: formData.unidad_peso,
+                p_unidad_compra: formData.unidad_compra,
+                p_stock_actual: formData.stock,
+                p_stock_inicial: formData.stock,
+                p_updated_by: formData.user_id
+            });
         
         if (errorProducto) {
-    console.error('❌ Error insertando producto:', errorProducto);
-    throw errorProducto;
-}
+            console.error('❌ Error insertando producto:', errorProducto);
+            throw new Error(errorProducto.message || 'Error al crear producto');
+        }
         
-        console.log('✅ Producto insertado:', producto);
+        if (!producto || producto.length === 0) {
+            throw new Error('No se recibió respuesta del servidor');
+        }
+        
+        const productoCreado = Array.isArray(producto) ? producto[0] : producto;
+        console.log('✅ Producto insertado:', productoCreado);
         
         // Procesar e insertar apodos
         let apodosInsertados = [];
@@ -804,9 +808,9 @@ const { data: producto, error: errorProducto } = await supabase
                 .filter(a => a !== '')
                 .map(apodo => ({
                     tenant_id: formData.tenant_id,
-                    producto_id: producto.producto_id,
+                    producto_id: productoCreado.producto_id,
                     apodo: apodo.toLowerCase(),
-                    producto: producto.producto
+                    producto: productoCreado.producto
                 }));
             
             if (apodosArray.length > 0) {
@@ -822,7 +826,7 @@ const { data: producto, error: errorProducto } = await supabase
         }
         
         // Generar mensaje de confirmación
-        const mensaje = generarMensajeConfirmacion(producto, apodosInsertados, formData);
+        const mensaje = generarMensajeConfirmacion(productoCreado, apodosInsertados, formData);
         
         // Mostrar mensaje de éxito
         document.getElementById('successMsg').innerHTML = mensaje;
@@ -900,5 +904,6 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
 
 
