@@ -768,29 +768,30 @@ async function submitProducto(event) {
         };
         
         console.log('📦 Datos a enviar:', formData);
+        console.log('🔑 User ID:', formData.user_id);
+        console.log('🏢 Tenant ID:', formData.tenant_id);
+        // Insertar producto usando RPC (función segura)
+const { data: producto, error: errorProducto } = await supabase
+    .rpc('crear_producto_panel', {
+        p_tenant_id: formData.tenant_id,
+        p_producto: formData.producto,
+        p_precio_venta: formData.precio,
+        p_costo: formData.costo,
+        p_factor_unidades: formData.factor,
+        p_apodos_input: formData.apodos,
+        p_tipo_venta: formData.tipo_venta,
+        p_unidad_peso: formData.unidad_peso,
+        p_unidad_compra: formData.unidad_compra,
+        p_stock_actual: formData.stock,
+        p_stock_inicial: formData.stock,
+        p_updated_by: formData.user_id
+    })
+    .single();
         
-        // Insertar producto en Supabase
-        const { data: producto, error: errorProducto } = await supabase
-            .from('productos')
-            .insert({
-                tenant_id: formData.tenant_id,
-                producto: formData.producto,
-                precio_venta: formData.precio,
-                costo: formData.costo,
-                factor_unidades: formData.factor,
-                apodos_input: formData.apodos,
-                tipo_venta: formData.tipo_venta,
-                unidad_peso: formData.unidad_peso,
-                unidad_compra: formData.unidad_compra,
-                stock_actual: formData.stock,
-                stock_inicial: formData.stock,
-                activo: true,
-                updated_by: formData.user_id
-            })
-            .select()
-            .single();
-        
-        if (errorProducto) throw errorProducto;
+        if (errorProducto) {
+    console.error('❌ Error insertando producto:', errorProducto);
+    throw errorProducto;
+}
         
         console.log('✅ Producto insertado:', producto);
         
@@ -899,4 +900,5 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
 
