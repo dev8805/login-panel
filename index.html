@@ -412,46 +412,45 @@ select:focus {
         
         // Cargar datos del usuario
         async function loadUserData(authUserId) {
-            try {
-                console.log('👤 Cargando datos del usuario:', authUserId);
-                const { data, error } = await supabase
-                    .from('usuarios')
-                    .select(`
-                        *,
-                        tenants!inner(nombre_negocio)
-                    `)
-                    .eq('auth_user_id', authUserId)
-                    .eq('activo', true)
-                    .single();
-                
-                if (error) throw error;
-                
-                userData = data;
-                console.log('Usuario cargado:', userData);
-                
-                // Obtener el user_id de tenant_users para usar en updated_by
-                const { data: tenantUser, error: errorTenantUser } = await supabase
-                    .from('tenant_users')
-                    .select('user_id')
-                    .eq('tenant_id', userData.tenant_id)
-                    .eq('telefono_whatsapp', userData.numero_telefono)
-                    .eq('activo', true)
-                    .single();
-                
-                if (errorTenantUser) {
-                    console.warn('⚠️ No se encontró user_id en tenant_users:', errorTenantUser);
-                    userData.tenant_user_id = null;
-                } else {
-                    userData.tenant_user_id = tenantUser.user_id;
-                    console.log('✅ tenant_user_id obtenido:', userData.tenant_user_id);
-                }
-                
-            } catch (error) {
-                console.error('Error loading user:', error);
-                showError('Error cargando datos del usuario');
-                await logout();
-            }
-        }
+  try {
+    console.log('Cargando datos del usuario:', authUserId);
+    
+    // 1. Obtener datos de tenant_users (donde está el usuario ahora)
+    const { data: tenantUser, error: errorTenantUser } = await supabase
+      .from('tenant_users')
+      .select('*, tenants(tenant_id, nombre_negocio, pais, zona_horaria)')
+      .eq('user_id', authUserId)
+      .eq('activo', true)
+      .single();
+
+    if (errorTenantUser) throw errorTenantUser;
+    
+    console.log('Usuario de tenant encontrado:', tenantUser);
+
+    // 2. Construir el objeto userData con toda la información necesaria
+    userData = {
+      user_id: tenantUser.user_id,
+      nombre: tenantUser.nombre,
+      rol: tenantUser.rol,
+      permisos: tenantUser.permisos,
+      tenant_id: tenantUser.tenant_id,
+      telefono_whatsapp: tenantUser.telefono_whatsapp,
+      tenants: {
+        nombre_negocio: tenantUser.tenants.nombre_negocio,
+        pais: tenantUser.tenants.pais,
+        zona_horaria: tenantUser.tenants.zona_horaria
+      }
+    };
+
+    console.log('Datos del usuario cargados:', userData);
+
+  } catch (error) {
+    console.error('Error loading user:', error);
+    showError('Error cargando datos del usuario');
+    await logout();
+  }
+}
+
         
         // Login
         async function login() {
@@ -922,6 +921,7 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
 
 
 
