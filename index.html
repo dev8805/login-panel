@@ -428,6 +428,24 @@ select:focus {
                 
                 userData = data;
                 console.log('Usuario cargado:', userData);
+                
+                // Obtener el user_id de tenant_users para usar en updated_by
+                const { data: tenantUser, error: errorTenantUser } = await supabase
+                    .from('tenant_users')
+                    .select('user_id')
+                    .eq('tenant_id', userData.tenant_id)
+                    .eq('telefono_whatsapp', userData.numero_telefono)
+                    .eq('activo', true)
+                    .single();
+                
+                if (errorTenantUser) {
+                    console.warn('⚠️ No se encontró user_id en tenant_users:', errorTenantUser);
+                    userData.tenant_user_id = null;
+                } else {
+                    userData.tenant_user_id = tenantUser.user_id;
+                    console.log('✅ tenant_user_id obtenido:', userData.tenant_user_id);
+                }
+                
             } catch (error) {
                 console.error('Error loading user:', error);
                 showError('Error cargando datos del usuario');
@@ -764,11 +782,11 @@ async function submitProducto(event) {
             apodos: document.getElementById('apodos').value,
             unidad_peso: document.getElementById('unidadPeso')?.value || 'unidades',
             tenant_id: userData.tenant_id,
-            user_id: userData.user_id
+            tenant_user_id: userData.tenant_user_id || null
         };
         
         console.log('📦 Datos a enviar:', formData);
-        console.log('🔑 User ID:', formData.user_id);
+        console.log('🔑 Tenant User ID:', formData.tenant_user_id);
         console.log('🏢 Tenant ID:', formData.tenant_id);
        // Insertar producto usando RPC (función segura)
         const { data: producto, error: errorProducto } = await supabase
@@ -784,7 +802,7 @@ async function submitProducto(event) {
                 p_unidad_compra: formData.unidad_compra,
                 p_stock_actual: formData.stock,
                 p_stock_inicial: formData.stock,
-                p_updated_by: formData.user_id
+                p_updated_by: formData.tenant_user_id
             });
         
         if (errorProducto) {
@@ -904,6 +922,7 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
 
 
 
