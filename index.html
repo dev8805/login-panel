@@ -969,35 +969,6 @@ El usuario ya puede acceder al sistema.`;
         btnSubmit.textContent = 'Crear Usuario';
     }
 }
-        
-        if (errorUsuario) throw errorUsuario;
-        
-        console.log('✅ Usuario creado:', nuevoUsuario);
-        
-        // Mostrar mensaje de éxito
-        const mensajeExito = `✅ ¡Usuario creado exitosamente!
-
-👤 Nombre: ${nuevoUsuario.nombre}
-📱 Teléfono: ${nuevoUsuario.telefono_whatsapp}
-👔 Rol: ${nuevoUsuario.rol}
-🏪 Negocio: ${userData.tenants.nombre_negocio}
-
-El usuario ya puede acceder al sistema.`;
-        
-        mostrarExitoUsuario(mensajeExito);
-        
-        // Ocultar formulario
-        document.getElementById('formCrearUsuario').style.display = 'none';
-        
-        console.log('✅ Usuario registrado exitosamente');
-        
-    } catch (error) {
-        console.error('❌ Error:', error);
-        mostrarErrorUsuario(error.message || 'Error al crear usuario');
-        btnSubmit.disabled = false;
-        btnSubmit.textContent = 'Crear Usuario';
-    }
-}
 
 // Mostrar error en usuario
 function mostrarErrorUsuario(mensaje) {
@@ -1895,6 +1866,7 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
 
 
 
