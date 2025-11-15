@@ -938,20 +938,26 @@ if (!rolInfo.permisos) {
 console.log('📋 Info del rol completa:', rolInfo);
 console.log('🔐 Permisos del rol:', rolInfo.permisos);
         
-        // Insertar usuario en tenant_users
-        const { data: nuevoUsuario, error: errorUsuario } = await supabase
-            .from('tenant_users')
-            .insert({
-                tenant_id: userData.tenant_id,
-                telefono_whatsapp: telefonoCompleto,
-                phone_number_id: userData.tenants.phone_number_id || userData.phone_number_id,
-                nombre: nombre,
-                rol: rolSeleccionado,
-                activo: true,
-                permisos: rolInfo.permisos || {}
-            })
-            .select()
-            .single();
+        // Preparar datos para insertar
+const datosUsuario = {
+    tenant_id: userData.tenant_id,
+    telefono_whatsapp: telefonoCompleto,
+    phone_number_id: userData.tenants.phone_number_id || userData.phone_number_id,
+    nombre: nombre,
+    rol: rolSeleccionado,
+    activo: true,
+    permisos: rolInfo.permisos
+};
+
+console.log('📝 Datos a insertar:', datosUsuario);
+console.log('🔐 Permisos a insertar:', JSON.stringify(datosUsuario.permisos));
+
+// Insertar usuario en tenant_users
+const { data: nuevoUsuario, error: errorUsuario } = await supabase
+    .from('tenant_users')
+    .insert(datosUsuario)
+    .select()
+    .single();
         
         if (errorUsuario) throw errorUsuario;
         
@@ -1878,6 +1884,7 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
 
 
 
