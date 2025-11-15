@@ -794,37 +794,15 @@ async function cargarFormularioCompra(modalBody) {
                 >
             </div>
             
-            <button type="button" id="submitBtnCompra" onclick="enviarCompraPanel()">Registrar Compra</button>
+            <button type="button" id="submitBtnCompra">Registrar Compra</button>
         </div>
     `;
     
     // Inicializar funcionalidad del formulario
     await inicializarFormularioCompra();
 }
-     // Inicializar formulario de compra
-async function inicializarFormularioCompra() {
-    let productosData = [];
-    let productoSeleccionado = null;
-    
-    // Cargar productos
-    try {
-        const { data, error } = await supabase
-            .from('productos')
-            .select('*')
-            .eq('tenant_id', userData.tenant_id)
-            .eq('activo', true);
-        
-        if (error) throw error;
-        productosData = data;
-        
-        console.log('📦 Productos cargados para compra:', productosData.length);
-    } catch (error) {
-        console.error('Error cargando productos:', error);
-        mostrarErrorCompra('Error cargando productos: ' + error.message);
-        return;
-    }
 
-    // Generar opciones de medida para compra
+// Generar opciones de medida para compra
 function generarOpcionesMedidaCompra(producto, medidaElement) {
     medidaElement.innerHTML = '';
     
@@ -861,7 +839,7 @@ function generarOpcionesMedidaCompra(producto, medidaElement) {
     });
 }
 
-    // Calcular unidades ingresadas según tipo de venta
+// Calcular unidades ingresadas según tipo de venta
 function calcularUnidadesIngresadasCompra(producto, cantidad, unidadMedida) {
     const stockActual = parseFloat(producto.stock_actual) || 0;
     const tipoVenta = producto.tipo_venta;
@@ -905,7 +883,7 @@ function calcularUnidadesIngresadasCompra(producto, cantidad, unidadMedida) {
     };
 }
 
-    // Enviar compra desde el panel
+// Enviar compra desde el panel
 async function enviarCompraPanel() {
     const productoSeleccionado = window.productoSeleccionadoCompra();
     const cantidadInput = document.getElementById('cantidadCompra');
@@ -1132,34 +1110,39 @@ ${fechaActual}
     }
 }
 
-    // Mostrar error en compra
-function mostrarErrorCompra(mensaje) {
-    const errorDiv = document.getElementById('errorCompra');
-    const successDiv = document.getElementById('successCompra');
+     // Inicializar formulario de compra
+async function inicializarFormularioCompra() {
+    let productosData = [];
+    let productoSeleccionado = null;
     
-    errorDiv.textContent = mensaje;
-    errorDiv.classList.add('show');
-    successDiv.classList.remove('show');
-    
-    setTimeout(() => errorDiv.classList.remove('show'), 5000);
-}
-
-// Mostrar éxito en compra
-function mostrarExitoCompra(mensaje) {
-    const successDiv = document.getElementById('successCompra');
-    const errorDiv = document.getElementById('errorCompra');
-    
-    successDiv.textContent = mensaje;
-    successDiv.classList.add('show');
-    errorDiv.classList.remove('show');
-}
+    // Cargar productos
+    try {
+        const { data, error } = await supabase
+            .from('productos')
+            .select('*')
+            .eq('tenant_id', userData.tenant_id)
+            .eq('activo', true);
         
-    
+        if (error) throw error;
+        productosData = data;
+        
+        console.log('📦 Productos cargados para compra:', productosData.length);
+    } catch (error) {
+        console.error('Error cargando productos:', error);
+        mostrarErrorCompra('Error cargando productos: ' + error.message);
+        return;
+    }
+        
     // Elementos del DOM
     const productoInput = document.getElementById('productoCompra');
     const autocompleteList = document.getElementById('autocompleteListCompra');
     const stockInfo = document.getElementById('stockInfoCompra');
     const medidaOptionsDiv = document.getElementById('medidaOptionsCompra');
+
+    const submitBtn = document.getElementById('submitBtnCompra');
+    
+    // Agregar event listener al botón
+    submitBtn.addEventListener('click', enviarCompraPanel);
     
     // Autocompletado
     productoInput.addEventListener('input', (e) => {
