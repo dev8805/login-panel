@@ -917,15 +917,26 @@ async function submitUsuario(event) {
 const { data: rolInfoArray, error: errorRol } = await supabase
     .rpc('get_rol_info', { p_rol: rolSeleccionado });
 
-if (errorRol) throw errorRol;
+if (errorRol) {
+    console.error('❌ Error obteniendo rol:', errorRol);
+    throw errorRol;
+}
+
+console.log('📋 Respuesta RPC rol:', rolInfoArray);
 
 const rolInfo = rolInfoArray && rolInfoArray.length > 0 ? rolInfoArray[0] : null;
 
 if (!rolInfo) {
     throw new Error('No se encontró información del rol');
 }
-        
-        console.log('📋 Info del rol:', rolInfo);
+
+// Validar que los permisos existan
+if (!rolInfo.permisos) {
+    throw new Error('El rol no tiene permisos definidos');
+}
+
+console.log('📋 Info del rol completa:', rolInfo);
+console.log('🔐 Permisos del rol:', rolInfo.permisos);
         
         // Insertar usuario en tenant_users
         const { data: nuevoUsuario, error: errorUsuario } = await supabase
@@ -1867,6 +1878,7 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
 
 
 
