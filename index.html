@@ -465,11 +465,14 @@ select:focus {
         modal: true
             },
             {
-                id: 'crear_usuario',
-                icon: '👤',
-                title: 'Crear Usuario',
-                url: 'https://crear-usuario.poswhatsapp.online',
-                permission: 'usuarios.crear'
+                {
+    id: 'crear_usuario',
+    icon: '👤',
+    title: 'Crear Usuario',
+    url: '#',
+    permission: 'usuarios.crear',
+    modal: true
+},
             },
             {
                 id: 'informes',
@@ -726,6 +729,13 @@ function openModal(modalId) {
         cargarFormularioCompra(modalBody);
         modal.classList.add('show');
     }
+    } else if (modalId === 'crear_usuario') {
+    const modal = document.getElementById('modalCrearUsuario');
+    const modalBody = document.getElementById('modalBodyUsuario');
+    
+    cargarFormularioUsuario(modalBody);
+    modal.classList.add('show');
+}
 }
 
 // Cerrar modal
@@ -736,6 +746,156 @@ function closeModal() {
         // Cerrar modal de compra
 function closeModalCompra() {
     document.getElementById('modalRegistrarCompra').classList.remove('show');
+}
+
+        // Cerrar modal de usuario
+function closeModalUsuario() {
+    document.getElementById('modalCrearUsuario').classList.remove('show');
+}
+
+        // Cargar formulario de usuario
+function cargarFormularioUsuario(modalBody) {
+    modalBody.innerHTML = `
+        <div id="successUsuario" class="success-message"></div>
+        <div id="errorUsuario" class="error"></div>
+        
+        <form id="formCrearUsuario" onsubmit="submitUsuario(event)">
+            <div class="form-group">
+                <label for="nombreUsuario" class="required">Nombre completo</label>
+                <input 
+                    type="text" 
+                    id="nombreUsuario" 
+                    placeholder="Nombre del usuario" 
+                    required
+                >
+            </div>
+            
+            <div class="form-group">
+                <label for="telefonoUsuario" class="required">Número de teléfono</label>
+                <input 
+                    type="tel" 
+                    id="telefonoUsuario" 
+                    placeholder="+573001234567" 
+                    required
+                    pattern="\\+?[0-9]{10,15}"
+                >
+                <small style="color: #666; font-size: 12px;">Incluye el código de país (ej: +57)</small>
+            </div>
+            
+            <button type="submit" id="btnSubmitUsuario">Crear Usuario</button>
+        </form>
+    `;
+}
+
+// Enviar formulario de usuario
+async function submitUsuario(event) {
+    event.preventDefault();
+    
+    const btnSubmit = document.getElementById('btnSubmitUsuario');
+    const nombreInput = document.getElementById('nombreUsuario');
+    const telefonoInput = document.getElementById('telefonoUsuario');
+    
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Creando...';
+    
+    try {
+        const nombre = nombreInput.value.trim();
+        let telefono = telefonoInput.value.trim();
+        
+        // Validar que el teléfono empiece con +
+        if (!telefono.startsWith('+')) {
+            throw new Error('El teléfono debe incluir el código de país (ej: +57)');
+        }
+        
+        console.log('📝 Creando usuario:', { nombre, telefono });
+        
+        // Insertar usuario en tenant_users
+        const { data: nuevoUsuario, error: errorUsuario } = await supabase
+            .from('tenant_users')
+            .insert({
+                tenant_id: userData.tenant_id,
+                telefono_whatsapp: telefono,
+                phone_number_id: userData.tenants.phone_number_id || userData.phone_number_id,
+                nombre: nombre,
+                rol: 'empleado',
+                activo: true,
+                permisos: {
+                    ventas: { crear: true, ver: true },
+                    productos: { ver: true },
+                    inventario: { ver: true }
+                }
+            })
+            .select()
+            .single();
+        
+        if (errorUsuario) throw errorUsuario;
+        
+        console.log('✅ Usuario creado:', nuevoUsuario);
+        
+        // Mostrar mensaje de éxito
+        const mensajeExito = `✅ ¡Usuario creado exitosamente!
+
+👤 Nombre: ${nuevoUsuario.nombre}
+📱 Teléfono: ${nuevoUsuario.telefono_whatsapp}
+👔 Rol: ${nuevoUsuario.rol}
+🏪 Negocio: ${userData.tenants.nombre_negocio}
+
+El usuario ya puede acceder al sistema.`;
+        
+        mostrarExitoUsuario(mensajeExito);
+        
+        // Ocultar formulario
+        document.getElementById('formCrearUsuario').style.display = 'none';
+        
+        console.log('✅ Usuario registrado exitosamente');
+        
+    } catch (error) {
+        console.error('❌ Error:', error);
+        mostrarErrorUsuario(error.message || 'Error al crear usuario');
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Crear Usuario';
+    }
+}
+
+// Mostrar error en usuario
+function mostrarErrorUsuario(mensaje) {
+    const errorDiv = document.getElementById('errorUsuario');
+    const successDiv = document.getElementById('successUsuario');
+    
+    if (errorDiv) {
+        errorDiv.textContent = mensaje;
+        errorDiv.classList.add('show');
+    }
+    if (successDiv) {
+        successDiv.classList.remove('show');
+    }
+    
+    setTimeout(() => {
+        if (errorDiv) errorDiv.classList.remove('show');
+    }, 5000);
+}
+
+// Mostrar éxito en usuario
+function mostrarExitoUsuario(mensaje) {
+    const successDiv = document.getElementById('successUsuario');
+    const errorDiv = document.getElementById('errorUsuario');
+    
+    if (successDiv) {
+        successDiv.textContent = mensaje;
+        successDiv.classList.add('show');
+    }
+    if (errorDiv) {
+        errorDiv.classList.remove('show');
+    }
+    
+    // Agregar botón para cerrar
+    setTimeout(() => {
+        const btnCerrar = document.createElement('button');
+        btnCerrar.textContent = 'Cerrar';
+        btnCerrar.style.marginTop = '20px';
+        btnCerrar.onclick = () => closeModalUsuario();
+        successDiv.appendChild(btnCerrar);
+    }, 100);
 }
 
         // Mostrar error en compra
@@ -1579,5 +1739,19 @@ _El producto ya está disponible para ventas._`;
     </div>
 </div>
 
+    <!-- Modal Crear Usuario -->
+<div id="modalCrearUsuario" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>👤 Crear Usuario</h3>
+            <button class="modal-close" onclick="closeModalUsuario()">×</button>
+        </div>
+        <div class="modal-body" id="modalBodyUsuario">
+            <!-- Aquí se cargará el formulario -->
+        </div>
+    </div>
+</div>
+
 </html>
+
 
