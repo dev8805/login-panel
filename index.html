@@ -738,6 +738,38 @@ function closeModalCompra() {
     document.getElementById('modalRegistrarCompra').classList.remove('show');
 }
 
+        // Mostrar error en compra
+function mostrarErrorCompra(mensaje) {
+    const errorDiv = document.getElementById('errorCompra');
+    const successDiv = document.getElementById('successCompra');
+    
+    if (errorDiv) {
+        errorDiv.textContent = mensaje;
+        errorDiv.classList.add('show');
+    }
+    if (successDiv) {
+        successDiv.classList.remove('show');
+    }
+    
+    setTimeout(() => {
+        if (errorDiv) errorDiv.classList.remove('show');
+    }, 5000);
+}
+
+// Mostrar éxito en compra
+function mostrarExitoCompra(mensaje) {
+    const successDiv = document.getElementById('successCompra');
+    const errorDiv = document.getElementById('errorCompra');
+    
+    if (successDiv) {
+        successDiv.textContent = mensaje;
+        successDiv.classList.add('show');
+    }
+    if (errorDiv) {
+        errorDiv.classList.remove('show');
+    }
+}
+
 // Cargar formulario de compra
 async function cargarFormularioCompra(modalBody) {
     modalBody.innerHTML = `
@@ -1548,3 +1580,4 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
