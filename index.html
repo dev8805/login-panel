@@ -414,14 +414,36 @@ select:focus {
         async function loadUserData(authUserId) {
   try {
     console.log('Cargando datos del usuario:', authUserId);
+      // Verificar que la tabla existe
+    const { data: testTable, error: testError } = await supabase
+      .from('tenant_users')
+      .select('count')
+      .limit(1);
+    
+    console.log('📋 Test de tabla tenant_users:', testTable, testError);
     
     // 1. Obtener datos de tenant_users (donde está el usuario ahora)
     const { data: tenantUser, error: errorTenantUser } = await supabase
-      .from('tenant_users')
-      .select('*, tenants(tenant_id, nombre_negocio, pais, zona_horaria)')
-      .eq('user_id', authUserId)
-      .eq('activo', true)
-      .single();
+  .from('tenant_users')
+  .select(`
+    user_id,
+    tenant_id,
+    telefono_whatsapp,
+    phone_number_id,
+    nombre,
+    activo,
+    rol,
+    permisos,
+    tenants (
+      tenant_id,
+      nombre_negocio,
+      pais,
+      zona_horaria
+    )
+  `)
+  .eq('user_id', authUserId)
+  .eq('activo', true)
+  .single();
 
     if (errorTenantUser) throw errorTenantUser;
     
@@ -922,6 +944,7 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
 
 
 
