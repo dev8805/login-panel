@@ -385,6 +385,177 @@ select:focus {
     font-weight: 400;
     cursor: pointer;
 }     
+
+/* Estilos para Modal de Informes */
+.modal-informes {
+    max-width: 95%;
+    max-height: 95vh;
+}
+
+.tabs-container {
+    display: flex;
+    border-bottom: 2px solid #e0e0e0;
+    margin-bottom: 20px;
+    overflow-x: auto;
+}
+
+.tab-button {
+    padding: 12px 24px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-weight: 600;
+    color: #666;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+
+.tab-button:hover {
+    color: #667eea;
+    background: #f5f7ff;
+}
+
+.tab-button.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid #667eea;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #666;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+}
+
+.alert-box {
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.alert-box.success {
+    background: #d4edda;
+    border-color: #28a745;
+}
+
+.alert-box.error {
+    background: #f8d7da;
+    border-color: #dc3545;
+}
+
+.productos-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.productos-table th,
+.productos-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.productos-table th {
+    background: #f5f7ff;
+    font-weight: 600;
+    color: #667eea;
+}
+
+.productos-table tr:hover {
+    background: #f9f9f9;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.badge-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.badge-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.badge-danger {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.date-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.date-selector button {
+    padding: 10px 20px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+    width: auto;
+}
+
+.date-selector button:hover {
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.date-selector button.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.loading-spinner {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
         
     </style>
 </head>
@@ -472,13 +643,14 @@ select:focus {
     permission: 'usuarios.crear',
     modal: true
 },
-            {
-                id: 'informes',
-                icon: '📊',
-                title: 'Informes',
-                url: 'https://informe.poswhatsapp.online',
-                permission: 'informes.ver'
-            }
+{
+    id: 'informes',
+    icon: '📊',
+    title: 'Informes',
+    url: '#',
+    permission: 'informes.ver',
+    modal: true
+}
         ];
         
         // Verificar sesión al cargar
@@ -733,7 +905,14 @@ function openModal(modalId) {
     
     cargarFormularioUsuario(modalBody);
     modal.classList.add('show');
-}
+   } else if (modalId === 'informes') {
+    const modal = document.getElementById('modalInformes');
+    const modalBody = document.getElementById('modalBodyInformes');
+    
+    cargarInformes(modalBody);
+    modal.classList.add('show');
+  }
+
 }
 
 // Cerrar modal
@@ -751,6 +930,10 @@ function closeModalUsuario() {
     document.getElementById('modalCrearUsuario').classList.remove('show');
 }
 
+// Cerrar modal de informes
+function closeModalInformes() {
+    document.getElementById('modalInformes').classList.remove('show');
+}
         // Cargar formulario de usuario
 async function cargarFormularioUsuario(modalBody) {
     // Mostrar loading
@@ -1885,6 +2068,309 @@ ${listaApodos}
 
 _El producto ya está disponible para ventas._`;
 }
+
+ // =====================================================
+// FUNCIONES PARA INFORMES
+// =====================================================
+
+let datosInformes = null;
+let rangoFechaInformes = 'today';
+
+async function cargarInformes(modalBody) {
+    modalBody.innerHTML = `
+        <div class="loading-spinner">
+            Cargando informes...
+        </div>
+    `;
+    
+    try {
+        await cargarDatosInformes();
+        renderizarInformes(modalBody);
+    } catch (error) {
+        console.error('Error cargando informes:', error);
+        modalBody.innerHTML = `
+            <div class="alert-box error">
+                <strong>Error:</strong> No se pudieron cargar los informes. ${error.message}
+            </div>
+        `;
+    }
+}
+
+async function cargarDatosInformes() {
+    const { startDate, endDate } = obtenerRangoFechas(rangoFechaInformes);
+    
+    console.log('📊 Cargando datos de informes...', { startDate, endDate });
+    
+    // Obtener ventas
+    const { data: ventas, error: errorVentas } = await supabase
+        .from('ventas')
+        .select('*')
+        .eq('tenant_id', userData.tenant_id)
+        .eq('activo', true)
+        .is('deleted_at', null)
+        .gte('created_at', startDate)
+        .lte('created_at', endDate);
+    
+    if (errorVentas) throw errorVentas;
+    
+    // Obtener compras
+    const { data: compras, error: errorCompras } = await supabase
+        .from('movimientos_inventario')
+        .select('*')
+        .eq('tenant_id', userData.tenant_id)
+        .eq('tipo', 'entrada')
+        .eq('activo', true)
+        .is('deleted_at', null)
+        .gte('created_at', startDate)
+        .lte('created_at', endDate);
+    
+    if (errorCompras) throw errorCompras;
+    
+    // Obtener gastos
+    const { data: gastos, error: errorGastos } = await supabase
+        .from('gastos')
+        .select('*')
+        .eq('tenant_id', userData.tenant_id)
+        .eq('activo', true)
+        .is('deleted_at', null)
+        .gte('created_at', startDate)
+        .lte('created_at', endDate);
+    
+    if (errorGastos) throw errorGastos;
+    
+    // Obtener productos
+    const { data: productos, error: errorProductos } = await supabase
+        .from('productos')
+        .select('*')
+        .eq('tenant_id', userData.tenant_id)
+        .eq('activo', true)
+        .is('deleted_at', null);
+    
+    if (errorProductos) throw errorProductos;
+    
+    datosInformes = procesarDatosInformes(ventas, compras, gastos, productos);
+    console.log('✅ Datos procesados:', datosInformes);
+}
+
+function obtenerRangoFechas(rango) {
+    const hoy = new Date();
+    let startDate, endDate;
+    
+    switch (rango) {
+        case 'today':
+            startDate = new Date(hoy.setHours(0, 0, 0, 0)).toISOString();
+            endDate = new Date(hoy.setHours(23, 59, 59, 999)).toISOString();
+            break;
+        case 'week':
+            const hace7Dias = new Date();
+            hace7Dias.setDate(hace7Dias.getDate() - 7);
+            startDate = new Date(hace7Dias.setHours(0, 0, 0, 0)).toISOString();
+            endDate = new Date().toISOString();
+            break;
+        case 'month':
+            const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+            startDate = new Date(primerDia.setHours(0, 0, 0, 0)).toISOString();
+            endDate = new Date().toISOString();
+            break;
+        default:
+            startDate = new Date(hoy.setHours(0, 0, 0, 0)).toISOString();
+            endDate = new Date(hoy.setHours(23, 59, 59, 999)).toISOString();
+    }
+    
+    return { startDate, endDate };
+}
+
+function procesarDatosInformes(ventas, compras, gastos, productos) {
+    const totalVentas = ventas.reduce((sum, v) => sum + parseFloat(v.total || 0), 0);
+    const totalCompras = compras.reduce((sum, c) => sum + parseFloat(c.costo_total || 0), 0);
+    const totalGastos = gastos.reduce((sum, g) => sum + parseFloat(g.monto || 0), 0);
+    const utilidad = totalVentas - totalCompras;
+    
+    // Productos más vendidos
+    const productosVendidos = {};
+    ventas.forEach(venta => {
+        if (venta.items && Array.isArray(venta.items)) {
+            venta.items.forEach(item => {
+                const nombre = item.PRODUCTO || item.producto;
+                if (!productosVendidos[nombre]) {
+                    productosVendidos[nombre] = {
+                        nombre,
+                        cantidad: 0,
+                        total: 0
+                    };
+                }
+                productosVendidos[nombre].cantidad += parseFloat(item.CANTIDAD || 0);
+                productosVendidos[nombre].total += parseFloat(item.VALOR_TOTAL || 0);
+            });
+        }
+    });
+    
+    const topProductos = Object.values(productosVendidos)
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 5);
+    
+    // Stock bajo
+    const stockBajo = productos.filter(p => parseFloat(p.stock_actual) < 10);
+    
+    return {
+        totalVentas,
+        totalCompras,
+        totalGastos,
+        utilidad,
+        topProductos,
+        stockBajo,
+        cantidadVentas: ventas.length,
+        cantidadProductos: productos.length
+    };
+}
+
+function renderizarInformes(modalBody) {
+    const nombrePeriodo = {
+        'today': 'Hoy',
+        'week': 'Última Semana',
+        'month': 'Este Mes'
+    }[rangoFechaInformes];
+    
+    modalBody.innerHTML = `
+        <div class="date-selector">
+            <button onclick="cambiarPeriodoInformes('today')" class="${rangoFechaInformes === 'today' ? 'active' : ''}">
+                Hoy
+            </button>
+            <button onclick="cambiarPeriodoInformes('week')" class="${rangoFechaInformes === 'week' ? 'active' : ''}">
+                Última Semana
+            </button>
+            <button onclick="cambiarPeriodoInformes('month')" class="${rangoFechaInformes === 'month' ? 'active' : ''}">
+                Este Mes
+            </button>
+        </div>
+        
+        <div class="tabs-container">
+            <button class="tab-button active" onclick="cambiarTabInforme('resumen')">
+                📊 Resumen
+            </button>
+            <button class="tab-button" onclick="cambiarTabInforme('productos')">
+                📦 Productos
+            </button>
+            <button class="tab-button" onclick="cambiarTabInforme('alertas')">
+                ⚠️ Alertas
+            </button>
+        </div>
+        
+        <div id="tab-resumen" class="tab-content active">
+            <h3>📊 Resumen General - ${nombrePeriodo}</h3>
+            
+            <div class="stats-grid">
+                <div class="stat-card" style="border-left-color: #10b981;">
+                    <div class="stat-label">💰 Total Ventas</div>
+                    <div class="stat-value">${formatearMoneda(datosInformes.totalVentas)}</div>
+                    <small>${datosInformes.cantidadVentas} transacciones</small>
+                </div>
+                
+                <div class="stat-card" style="border-left-color: #3b82f6;">
+                    <div class="stat-label">🛒 Total Compras</div>
+                    <div class="stat-value">${formatearMoneda(datosInformes.totalCompras)}</div>
+                </div>
+                
+                <div class="stat-card" style="border-left-color: #f59e0b;">
+                    <div class="stat-label">📦 Total Gastos</div>
+                    <div class="stat-value">${formatearMoneda(datosInformes.totalGastos)}</div>
+                </div>
+                
+                <div class="stat-card" style="border-left-color: #8b5cf6;">
+                    <div class="stat-label">📈 Utilidad Bruta</div>
+                    <div class="stat-value">${formatearMoneda(datosInformes.utilidad)}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="tab-productos" class="tab-content">
+            <h3>📦 Top 5 Productos Más Vendidos</h3>
+            
+            ${datosInformes.topProductos.length > 0 ? `
+                <table class="productos-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Producto</th>
+                            <th>Cantidad Vendida</th>
+                            <th>Total Ventas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${datosInformes.topProductos.map((p, i) => `
+                            <tr>
+                                <td>${i + 1}</td>
+                                <td><strong>${p.nombre}</strong></td>
+                                <td>${Math.round(p.cantidad)} und</td>
+                                <td><strong>${formatearMoneda(p.total)}</strong></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            ` : '<p style="text-align: center; color: #999; padding: 40px;">No hay ventas en este período</p>'}
+        </div>
+        
+        <div id="tab-alertas" class="tab-content">
+            <h3>⚠️ Alertas del Sistema</h3>
+            
+            ${datosInformes.stockBajo.length > 0 ? `
+                <div class="alert-box error">
+                    <strong>🚨 Stock Bajo (${datosInformes.stockBajo.length} productos)</strong>
+                    <ul style="margin-top: 10px; padding-left: 20px;">
+                        ${datosInformes.stockBajo.slice(0, 5).map(p => `
+                            <li>${p.producto} - <strong>${Math.round(p.stock_actual)} ${p.unidad_peso || 'und'}</strong></li>
+                        `).join('')}
+                    </ul>
+                    ${datosInformes.stockBajo.length > 5 ? `<p style="margin-top: 10px;"><em>Y ${datosInformes.stockBajo.length - 5} productos más...</em></p>` : ''}
+                </div>
+            ` : `
+                <div class="alert-box success">
+                    <strong>✅ Todo en Orden</strong>
+                    <p>No hay alertas críticas en este momento.</p>
+                </div>
+            `}
+            
+            <div style="margin-top: 20px; padding: 20px; background: #f5f7ff; border-radius: 8px;">
+                <p><strong>📊 Total de Productos:</strong> ${datosInformes.cantidadProductos}</p>
+            </div>
+        </div>
+    `;
+}
+
+function cambiarTabInforme(tabId) {
+    // Ocultar todos los tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Desactivar todos los botones
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Activar el tab seleccionado
+    document.getElementById(`tab-${tabId}`).classList.add('active');
+    event.target.classList.add('active');
+}
+
+async function cambiarPeriodoInformes(periodo) {
+    rangoFechaInformes = periodo;
+    const modalBody = document.getElementById('modalBodyInformes');
+    
+    modalBody.innerHTML = '<div class="loading-spinner">Actualizando datos...</div>';
+    
+    await cargarDatosInformes();
+    renderizarInformes(modalBody);
+}
+
+function formatearMoneda(valor) {
+    return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0
+    }).format(valor);
+}
+
     </script>
 </body>
 
@@ -1927,19 +2413,17 @@ _El producto ya está disponible para ventas._`;
     </div>
 </div>
 
+<!-- Modal Informes -->
+<div id="modalInformes" class="modal">
+    <div class="modal-content modal-informes">
+        <div class="modal-header">
+            <h3>📊 Informes y Estadísticas</h3>
+            <button class="modal-close" onclick="closeModalInformes()">×</button>
+        </div>
+        <div class="modal-body" id="modalBodyInformes">
+            <!-- Aquí se cargarán los informes -->
+        </div>
+    </div>
+</div>
+
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
