@@ -295,7 +295,13 @@ select:focus {
     margin: 20px 0;
     white-space: pre-line;
     font-family: monospace;
+    display: none;
 }
+
+        .success-message.show {
+    display: block !important;
+}
+        
     </style>
 </head>
 <body>
@@ -872,7 +878,7 @@ console.log('🔄 Intentando actualizar el DOM...');
 successDiv.innerHTML = mensaje;
 console.log('✅ innerHTML actualizado');
 
-successDiv.style.display = 'block';
+successDiv.classList.add('show');
 console.log('✅ successDiv display = block');
 
 formDiv.style.display = 'none';
@@ -962,6 +968,7 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
 
 
 
