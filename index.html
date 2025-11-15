@@ -422,8 +422,17 @@ select:focus {
     
     console.log('📋 Test de tabla tenant_users:', testTable, testError);
     
-    // 1. Obtener datos de tenant_users (donde está el usuario ahora)
-    const { data: tenantUser, error: errorTenantUser } = await supabase
+      // 1. Primero obtener TODOS los datos sin filtros
+console.log('🔍 Buscando usuario:', authUserId);
+
+const { data: allUsers, error: errorAll } = await supabase
+  .from('tenant_users')
+  .select('*');
+
+console.log('👥 Todos los usuarios:', allUsers, errorAll);
+
+// 2. Luego buscar el usuario específico con filter en lugar de eq
+const { data: tenantUser, error: errorTenantUser } = await supabase
   .from('tenant_users')
   .select(`
     user_id,
@@ -433,17 +442,31 @@ select:focus {
     nombre,
     activo,
     rol,
-    permisos,
-    tenants (
-      tenant_id,
-      nombre_negocio,
-      pais,
-      zona_horaria
-    )
+    permisos
   `)
-  .eq('user_id', authUserId)
-  .eq('activo', true)
+  .filter('user_id', 'eq', authUserId)
+  .filter('activo', 'eq', true)
+  .limit(1)
+  .maybeSingle();
+
+console.log('👤 Usuario encontrado:', tenantUser, errorTenantUser);
+
+if (errorTenantUser) throw errorTenantUser;
+if (!tenantUser) throw new Error('Usuario no encontrado');
+
+// 3. Ahora buscar el tenant por separado
+const { data: tenant, error: errorTenant } = await supabase
+  .from('tenants')
+  .select('tenant_id, nombre_negocio, pais, zona_horaria')
+  .eq('tenant_id', tenantUser.tenant_id)
   .single();
+
+console.log('🏢 Tenant encontrado:', tenant, errorTenant);
+
+if (errorTenant) throw errorTenant;
+
+// 4. Combinar los datos manualmente
+tenantUser.tenants = tenant;
 
     if (errorTenantUser) throw errorTenantUser;
     
@@ -944,6 +967,7 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
 
 
 
