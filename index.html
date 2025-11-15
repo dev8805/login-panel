@@ -847,15 +847,34 @@ if (!productoCreado.codigo) {
         }
         
         // Generar mensaje de confirmación
-        const mensaje = generarMensajeConfirmacion(productoCreado, apodosInsertados, formData);
-        
-        // Mostrar mensaje de éxito
+const mensaje = generarMensajeConfirmacion(productoCreado, apodosInsertados, formData);
+
+console.log('📝 Mensaje generado:', mensaje);
+console.log('📝 Longitud del mensaje:', mensaje.length);
+
+// Mostrar mensaje de éxito
 const successDiv = document.getElementById('successMsg');
 const formDiv = document.getElementById('formCrearProducto');
 
+console.log('🎯 successDiv encontrado:', successDiv);
+console.log('🎯 formDiv encontrado:', formDiv);
+console.log('🎯 successDiv display actual:', successDiv ? successDiv.style.display : 'NO ENCONTRADO');
+console.log('🎯 formDiv display actual:', formDiv ? formDiv.style.display : 'NO ENCONTRADO');
+
+console.log('🔄 Intentando actualizar el DOM...');
+
 successDiv.innerHTML = mensaje;
+console.log('✅ innerHTML actualizado');
+
 successDiv.style.display = 'block';
+console.log('✅ successDiv display = block');
+
 formDiv.style.display = 'none';
+console.log('✅ formDiv display = none');
+
+console.log('🎯 successDiv display después:', successDiv.style.display);
+console.log('🎯 formDiv display después:', formDiv.style.display);
+console.log('🎯 successDiv innerHTML:', successDiv.innerHTML.substring(0, 100));
 
 console.log('✅ Producto creado exitosamente');
 
@@ -937,6 +956,7 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
 
 
 
