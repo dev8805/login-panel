@@ -762,10 +762,15 @@ async function cargarFormularioUsuario(modalBody) {
     
     try {
         // Cargar roles disponibles directamente de la tabla
+        console.log('🔍 Iniciando carga de roles...');
+        
         const { data: roles, error: errorRoles } = await supabase
             .from('roles_templates')
             .select('*')
             .order('rol');
+        
+        console.log('📊 Respuesta cruda de roles_templates:', roles);
+        console.log('❌ Error en consulta:', errorRoles);
 
         if (errorRoles) {
             console.error('❌ Error cargando roles:', errorRoles);
@@ -1923,6 +1928,7 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
 
 
 
