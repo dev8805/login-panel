@@ -220,6 +220,11 @@ select:focus {
             padding: 40px;
             color: #666;
         }
+
+        .hidden {
+    display: none !important;
+}
+        
         /* Modal */
 .modal {
     display: none;
@@ -301,6 +306,85 @@ select:focus {
         .success-message.show {
     display: block !important;
 }
+
+   .required::after {
+    content: " *";
+    color: #e74c3c;
+}
+
+.input-wrapper {
+    position: relative;
+}
+
+.autocomplete-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 2px solid #667eea;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+}
+
+.autocomplete-list.active {
+    display: block;
+}
+
+.autocomplete-item {
+    padding: 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s;
+}
+
+.autocomplete-item:hover {
+    background-color: #f5f7ff;
+}
+
+.autocomplete-item-nombre {
+    font-weight: 600;
+    color: #333;
+}
+
+.autocomplete-item-codigo {
+    font-size: 12px;
+    color: #999;
+}
+
+.info-stock {
+    font-size: 12px;
+    color: #888;
+    margin-top: 4px;
+}
+
+.medida-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.radio-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.radio-group input[type="radio"] {
+    width: auto;
+    margin: 0;
+    cursor: pointer;
+}
+
+.radio-group label {
+    margin-bottom: 0;
+    font-weight: 400;
+    cursor: pointer;
+}     
         
     </style>
 </head>
@@ -374,10 +458,11 @@ select:focus {
        },
             {
                 id: 'registrar_compra',
-                icon: '🛒',
-                title: 'Registrar Compra',
-                url: 'https://compra.poswhatsapp.online',
-                permission: 'inventario.modificar'
+        icon: '🛒',
+        title: 'Registrar Compra',
+        url: '#',
+        permission: 'inventario.modificar',
+        modal: true
             },
             {
                 id: 'crear_usuario',
@@ -637,10 +722,511 @@ function openModal(modalId) {
     }
 }
 
+   } else if (modalId === 'registrar_compra') {
+        const modal = document.getElementById('modalRegistrarCompra');
+        const modalBody = document.getElementById('modalBodyCompra');
+        
+        cargarFormularioCompra(modalBody);
+        modal.classList.add('show');
+    }     
+
 // Cerrar modal
 function closeModal() {
     document.getElementById('modalCrearProducto').classList.remove('show');
 }
+
+        // Cerrar modal de compra
+function closeModalCompra() {
+    document.getElementById('modalRegistrarCompra').classList.remove('show');
+}
+
+// Cargar formulario de compra
+async function cargarFormularioCompra(modalBody) {
+    modalBody.innerHTML = `
+        <div id="successCompra" class="success-message"></div>
+        <div id="errorCompra" class="error"></div>
+        
+        <div id="compraForm">
+            <!-- Producto con autocompletado -->
+            <div class="form-group">
+                <label for="productoCompra" class="required">Producto</label>
+                <div class="input-wrapper">
+                    <input 
+                        type="text" 
+                        id="productoCompra" 
+                        placeholder="Escribe para buscar..." 
+                        autocomplete="off"
+                        required
+                    >
+                    <div class="autocomplete-list" id="autocompleteListCompra"></div>
+                </div>
+                <div class="info-stock" id="stockInfoCompra"></div>
+            </div>
+            
+            <!-- Medida de Compra -->
+            <div class="form-group">
+                <label class="required">Medida de Compra</label>
+                <div class="medida-options" id="medidaOptionsCompra">
+                    <p style="color: #888;">Selecciona un producto primero</p>
+                </div>
+            </div>
+            
+            <!-- Cantidad -->
+            <div class="form-group">
+                <label for="cantidadCompra" class="required">Cantidad</label>
+                <input 
+                    type="number" 
+                    id="cantidadCompra" 
+                    placeholder="Ej: 5" 
+                    step="0.01" 
+                    required
+                >
+            </div>
+            
+            <!-- Valor Total -->
+            <div class="form-group">
+                <label for="valorTotalCompra" class="required">Valor Total Compra</label>
+                <input 
+                    type="number" 
+                    id="valorTotalCompra" 
+                    placeholder="Ingresa el valor total" 
+                    step="0.01"
+                    required
+                    style="font-size: 20px; font-weight: 700; color: #667eea;"
+                >
+            </div>
+            
+            <button type="button" id="submitBtnCompra" onclick="enviarCompraPanel()">Registrar Compra</button>
+        </div>
+    `;
+    
+    // Inicializar funcionalidad del formulario
+    await inicializarFormularioCompra();
+}
+     // Inicializar formulario de compra
+async function inicializarFormularioCompra() {
+    let productosData = [];
+    let productoSeleccionado = null;
+    
+    // Cargar productos
+    try {
+        const { data, error } = await supabase
+            .from('productos')
+            .select('*')
+            .eq('tenant_id', userData.tenant_id)
+            .eq('activo', true);
+        
+        if (error) throw error;
+        productosData = data;
+        
+        console.log('📦 Productos cargados para compra:', productosData.length);
+    } catch (error) {
+        console.error('Error cargando productos:', error);
+        mostrarErrorCompra('Error cargando productos: ' + error.message);
+        return;
+    }
+
+    // Generar opciones de medida para compra
+function generarOpcionesMedidaCompra(producto, medidaElement) {
+    medidaElement.innerHTML = '';
+    
+    const medidas = [
+        {
+            value: producto.unidad_peso,
+            label: producto.unidad_peso
+        },
+        {
+            value: producto.unidad_compra,
+            label: producto.unidad_compra
+        }
+    ];
+    
+    medidas.forEach((medida, index) => {
+        const div = document.createElement('div');
+        div.className = 'radio-group';
+        
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'medidaCompra';
+        radio.value = medida.value;
+        radio.id = `medidaCompra_${index}`;
+        radio.required = true;
+        if (index === 0) radio.checked = true;
+        
+        const label = document.createElement('label');
+        label.htmlFor = `medidaCompra_${index}`;
+        label.textContent = medida.label;
+        
+        div.appendChild(radio);
+        div.appendChild(label);
+        medidaElement.appendChild(div);
+    });
+}
+
+    // Calcular unidades ingresadas según tipo de venta
+function calcularUnidadesIngresadasCompra(producto, cantidad, unidadMedida) {
+    const stockActual = parseFloat(producto.stock_actual) || 0;
+    const tipoVenta = producto.tipo_venta;
+    const unidadPeso = producto.unidad_peso;
+    const factor = parseFloat(producto.factor_unidades) || 1;
+    
+    let unidadesIngresadas;
+    
+    if (tipoVenta === 'peso') {
+        const unidadMedidaNorm = unidadMedida.toLowerCase().replace(/s$/, '');
+        const unidadPesoNorm = unidadPeso.toLowerCase().replace(/s$/, '');
+        
+        if (unidadMedidaNorm === unidadPesoNorm) {
+            unidadesIngresadas = cantidad;
+        } else {
+            unidadesIngresadas = cantidad * factor;
+        }
+    } else if (tipoVenta === 'medida') {
+        const unidadMedidaNorm = unidadMedida.toLowerCase().replace(/s$/, '');
+        const unidadPesoNorm = unidadPeso.toLowerCase().replace(/s$/, '');
+        
+        if (unidadMedidaNorm === unidadPesoNorm) {
+            unidadesIngresadas = cantidad;
+        } else {
+            unidadesIngresadas = cantidad * factor;
+        }
+    } else {
+        if (unidadMedida === 'unidades' || unidadMedida === 'unidad') {
+            unidadesIngresadas = cantidad;
+        } else {
+            unidadesIngresadas = cantidad * factor;
+        }
+    }
+    
+    const nuevoStock = stockActual + unidadesIngresadas;
+    
+    return {
+        unidadesIngresadas,
+        nuevoStock,
+        stockAnterior: stockActual
+    };
+}
+
+    // Enviar compra desde el panel
+async function enviarCompraPanel() {
+    const productoSeleccionado = window.productoSeleccionadoCompra();
+    const cantidadInput = document.getElementById('cantidadCompra');
+    const valorTotalInput = document.getElementById('valorTotalCompra');
+    const submitBtn = document.getElementById('submitBtnCompra');
+    
+    // Validar
+    if (!productoSeleccionado) {
+        mostrarErrorCompra('Debes seleccionar un producto');
+        return;
+    }
+    
+    if (!cantidadInput.value || parseFloat(cantidadInput.value) <= 0) {
+        mostrarErrorCompra('La cantidad debe ser mayor a 0');
+        return;
+    }
+    
+    if (!valorTotalInput.value || parseFloat(valorTotalInput.value) <= 0) {
+        mostrarErrorCompra('El valor total debe ser mayor a 0');
+        return;
+    }
+    
+    if (!document.querySelector('input[name="medidaCompra"]:checked')) {
+        mostrarErrorCompra('Debes seleccionar una medida de compra');
+        return;
+    }
+    
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Registrando...';
+    
+    try {
+        const medidaSeleccionada = document.querySelector('input[name="medidaCompra"]:checked').value;
+        const cantidad = parseFloat(cantidadInput.value);
+        const valorTotal = parseFloat(valorTotalInput.value);
+        
+        console.log('🛒 Iniciando registro de compra...');
+
+        // Obtener zona horaria
+        const { data: tenantData } = await supabase
+            .from('tenants')
+            .select('zona_horaria')
+            .eq('tenant_id', userData.tenant_id)
+            .single();
+        
+        const zonaHoraria = tenantData?.zona_horaria || 'America/Bogota';
+        
+        const fechaSQL = new Date().toLocaleDateString('en-CA', {
+            timeZone: zonaHoraria
+        });
+        
+        // Calcular unidades y nuevo stock
+        const calculoStock = calcularUnidadesIngresadasCompra(
+            productoSeleccionado,
+            cantidad,
+            medidaSeleccionada
+        );
+        
+        const { unidadesIngresadas, nuevoStock, stockAnterior } = calculoStock;
+        const nuevoCosto = unidadesIngresadas > 0 ? (valorTotal / unidadesIngresadas) : 0;
+        
+        console.log('📊 Cálculos:', {
+            unidadesIngresadas,
+            stockAnterior,
+            nuevoStock,
+            nuevoCosto
+        });
+        
+        // Insertar movimiento de inventario
+        const { data: movimiento, error: errorMovimiento } = await supabase
+            .from('movimientos_inventario')
+            .insert({
+                tenant_id: userData.tenant_id,
+                producto_id: productoSeleccionado.producto_id,
+                codigo: productoSeleccionado.codigo,
+                cantidad: unidadesIngresadas,
+                tipo: 'entrada',
+                costo_unitario: nuevoCosto,
+                costo_total: valorTotal,
+                razon: `Entrada de ${cantidad} ${medidaSeleccionada}`,
+                user_id: userData.user_id,
+                activo: true,
+                created_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+        
+        if (errorMovimiento) throw errorMovimiento;
+        console.log('✅ Movimiento registrado');
+        
+        // Actualizar stock y costo en productos
+        const { error: errorProducto } = await supabase
+            .from('productos')
+            .update({
+                stock_actual: nuevoStock,
+                costo: nuevoCosto,
+                updated_at: new Date().toISOString(),
+                updated_by: userData.user_id
+            })
+            .eq('producto_id', productoSeleccionado.producto_id);
+        
+        if (errorProducto) throw errorProducto;
+        console.log('✅ Stock actualizado');
+
+        // Actualizar o crear caja diaria
+        const { data: cajaHoyData } = await supabase
+            .from('caja_diaria')
+            .select('*')
+            .eq('tenant_id', userData.tenant_id)
+            .eq('fecha', fechaSQL);
+        
+        let cajaEsperada = 0;
+        
+        if (cajaHoyData && cajaHoyData.length > 0) {
+            // Actualizar caja existente
+            const cajaActual = cajaHoyData[0];
+            const comprasActuales = parseFloat(cajaActual.compras_totales) || 0;
+            const nuevasCompras = comprasActuales + valorTotal;
+            
+            const baseInicial = parseFloat(cajaActual.base_inicial) || 0;
+            const ventasTotales = parseFloat(cajaActual.ventas_totales) || 0;
+            const gastosTotales = parseFloat(cajaActual.gastos_totales) || 0;
+            
+            cajaEsperada = baseInicial + ventasTotales - gastosTotales - nuevasCompras;
+            
+            await supabase
+                .from('caja_diaria')
+                .update({
+                    compras_totales: nuevasCompras,
+                    caja_esperada: cajaEsperada,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', cajaActual.id);
+            
+            console.log('✅ Caja diaria actualizada');
+        } else {
+            // Crear nuevo registro de caja
+            const { data: cajaAnteriorData } = await supabase
+                .from('caja_diaria')
+                .select('caja_esperada')
+                .eq('tenant_id', userData.tenant_id)
+                .lt('fecha', fechaSQL)
+                .order('fecha', { ascending: false })
+                .limit(1);
+            
+            const cajaAnterior = cajaAnteriorData && cajaAnteriorData.length > 0 
+                ? parseFloat(cajaAnteriorData[0].caja_esperada) 
+                : 0;
+            
+            cajaEsperada = cajaAnterior - valorTotal;
+            
+            await supabase
+                .from('caja_diaria')
+                .insert({
+                    tenant_id: userData.tenant_id,
+                    fecha: fechaSQL,
+                    caja_dia_anterior: cajaAnterior,
+                    base_agregada: 0,
+                    base_inicial: cajaAnterior,
+                    ventas_totales: 0,
+                    gastos_totales: 0,
+                    compras_totales: valorTotal,
+                    consumos_totales: 0,
+                    mermas_totales: 0,
+                    caja_esperada: cajaEsperada,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                });
+            
+            console.log('✅ Caja diaria creada');
+        }
+
+        // Determinar unidad de stock según tipo de venta
+        let unidadStock, stockFormateado;
+        
+        if (productoSeleccionado.tipo_venta === 'unidad') {
+            unidadStock = 'und';
+            stockFormateado = Math.round(nuevoStock);
+        } else if (productoSeleccionado.tipo_venta === 'peso') {
+            unidadStock = productoSeleccionado.unidad_peso || 'libras';
+            stockFormateado = nuevoStock.toFixed(2);
+        } else if (productoSeleccionado.tipo_venta === 'medida') {
+            unidadStock = productoSeleccionado.unidad_peso || 'metros';
+            stockFormateado = nuevoStock.toFixed(2);
+        } else {
+            unidadStock = 'und';
+            stockFormateado = Math.round(nuevoStock);
+        }
+        
+        const fechaActual = new Date().toLocaleString('es-CO', {
+            timeZone: zonaHoraria,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        });
+        
+        const valorFormateado = `$${valorTotal.toLocaleString('es-CO', {maximumFractionDigits: 0})}`;
+        const cajaFormateada = `$${cajaEsperada.toLocaleString('es-CO', {maximumFractionDigits: 0})}`;
+        
+        const mensajeExito = `✅ Registro de entrada a Inventario
+${fechaActual}
+
+[${productoSeleccionado.codigo}] ${cantidad} ${medidaSeleccionada} ${productoSeleccionado.producto} - ${valorFormateado} / Stock: ${stockFormateado} ${unidadStock}
+
+💰 Total de la COMPRA: ${valorFormateado}
+💼 Caja esperada: ${cajaFormateada}`;
+        
+        mostrarExitoCompra(mensajeExito);
+        
+        // Ocultar formulario
+        document.getElementById('compraForm').classList.add('hidden');
+        submitBtn.classList.add('hidden');
+        
+        console.log('✅ Compra registrada exitosamente');
+        
+    } catch (error) {
+        console.error('❌ Error:', error);
+        mostrarErrorCompra('Error al registrar la compra: ' + error.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Registrar Compra';
+    }
+}
+
+    // Mostrar error en compra
+function mostrarErrorCompra(mensaje) {
+    const errorDiv = document.getElementById('errorCompra');
+    const successDiv = document.getElementById('successCompra');
+    
+    errorDiv.textContent = mensaje;
+    errorDiv.classList.add('show');
+    successDiv.classList.remove('show');
+    
+    setTimeout(() => errorDiv.classList.remove('show'), 5000);
+}
+
+// Mostrar éxito en compra
+function mostrarExitoCompra(mensaje) {
+    const successDiv = document.getElementById('successCompra');
+    const errorDiv = document.getElementById('errorCompra');
+    
+    successDiv.textContent = mensaje;
+    successDiv.classList.add('show');
+    errorDiv.classList.remove('show');
+}
+        
+    
+    // Elementos del DOM
+    const productoInput = document.getElementById('productoCompra');
+    const autocompleteList = document.getElementById('autocompleteListCompra');
+    const stockInfo = document.getElementById('stockInfoCompra');
+    const medidaOptionsDiv = document.getElementById('medidaOptionsCompra');
+    
+    // Autocompletado
+    productoInput.addEventListener('input', (e) => {
+        const valor = e.target.value.toLowerCase().trim();
+        
+        if (valor.length === 0) {
+            autocompleteList.classList.remove('active');
+            productoSeleccionado = null;
+            stockInfo.textContent = '';
+            medidaOptionsDiv.innerHTML = '<p style="color: #888;">Selecciona un producto primero</p>';
+            return;
+        }
+        
+        const filtrados = productosData.filter(p => 
+            p.producto.toLowerCase().includes(valor) ||
+            p.codigo.toLowerCase().includes(valor) ||
+            (p.apodos_input && p.apodos_input.toLowerCase().includes(valor))
+        );
+        
+        mostrarAutocompleteCompra(filtrados, autocompleteList, stockInfo, medidaOptionsDiv);
+    });
+    
+    // Función para mostrar autocomplete
+    function mostrarAutocompleteCompra(productos, listElement, stockElement, medidaElement) {
+        listElement.innerHTML = '';
+        
+        if (productos.length === 0) {
+            const div = document.createElement('div');
+            div.className = 'autocomplete-item';
+            div.innerHTML = '<div class="autocomplete-item-nombre" style="color: #999;">No se encontraron productos</div>';
+            listElement.appendChild(div);
+            listElement.classList.add('active');
+            return;
+        }
+        
+        productos.forEach(prod => {
+            const div = document.createElement('div');
+            div.className = 'autocomplete-item';
+            div.innerHTML = `
+                <div class="autocomplete-item-nombre">${prod.producto}</div>
+                <div class="autocomplete-item-codigo">Código: ${prod.codigo} | Stock: ${prod.stock_actual} ${prod.unidad_peso}</div>
+            `;
+            div.addEventListener('click', () => {
+                productoSeleccionado = prod;
+                productoInput.value = `${prod.producto} (${prod.codigo})`;
+                listElement.classList.remove('active');
+                stockElement.textContent = `Stock actual: ${prod.stock_actual} ${prod.unidad_peso}`;
+                generarOpcionesMedidaCompra(prod, medidaElement);
+            });
+            listElement.appendChild(div);
+        });
+        
+        listElement.classList.add('active');
+    }
+    
+    // Cerrar autocomplete al hacer click afuera
+    document.addEventListener('click', (e) => {
+        if (e.target !== productoInput && !autocompleteList.contains(e.target)) {
+            autocompleteList.classList.remove('active');
+        }
+    });
+    
+    // Guardar referencia al producto seleccionado para usarlo en enviarCompraPanel
+    window.productoSeleccionadoCompra = () => productoSeleccionado;
+}   
 
 // Actualizar campos según tipo de venta
 function updateFormByType() {
@@ -967,7 +1553,21 @@ _El producto ya está disponible para ventas._`;
     </div>
 </div>
 
+    <!-- Modal Registrar Compra -->
+<div id="modalRegistrarCompra" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>🛒 Registrar Compra</h3>
+            <button class="modal-close" onclick="closeModalCompra()">×</button>
+        </div>
+        <div class="modal-body" id="modalBodyCompra">
+            <!-- Aquí se cargará el formulario -->
+        </div>
+    </div>
+</div>
+
 </html>
+
 
 
 
