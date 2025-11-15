@@ -764,8 +764,7 @@ async function cargarFormularioUsuario(modalBody) {
         // Cargar roles disponibles directamente de la tabla
         const { data: roles, error: errorRoles } = await supabase
             .from('roles_templates')
-            .select('rol, nombre_display, descripcion, permisos')
-            .eq('activo', true)
+            .select('*')
             .order('rol');
 
         if (errorRoles) {
@@ -777,11 +776,17 @@ async function cargarFormularioUsuario(modalBody) {
         
         // Verificar que todos los roles tengan permisos
         const rolesValidos = roles.filter(r => r.permisos && typeof r.permisos === 'object');
+        console.log('📋 Roles cargados completos:', roles);
         console.log('📋 Roles válidos con permisos:', rolesValidos);
         
-        if (rolesValidos.length === 0) {
-            throw new Error('No se encontraron roles con permisos válidos');
+        // Si no hay roles válidos, intentar usar todos los roles disponibles
+        const rolesAUsar = rolesValidos.length > 0 ? rolesValidos : roles;
+        
+        if (rolesAUsar.length === 0) {
+            throw new Error('No se encontraron roles en la base de datos');
         }
+        
+        console.log('📋 Roles a usar en el formulario:', rolesAUsar);
         
         // Determinar código de país según zona horaria
         const zonaHoraria = userData.tenants.zona_horaria || 'America/Bogota';
@@ -824,7 +829,7 @@ async function cargarFormularioUsuario(modalBody) {
         }
         
        // Generar opciones de roles
-        const opcionesRoles = rolesValidos.map(rol => 
+        const opcionesRoles = rolesAUsar.map(rol => 
             `<option value="${rol.rol}">${rol.nombre_display}${rol.descripcion ? ' - ' + rol.descripcion : ''}</option>`
         ).join('');
         
@@ -956,6 +961,12 @@ console.log('🔑 Permisos del rol (tipo):', typeof rolInfo.permisos);
 console.log('🔑 Permisos del rol (contenido):', JSON.stringify(rolInfo.permisos, null, 2));
         
         // Preparar datos para insertar - IMPORTANTE: permisos debe ser el objeto JSON directo
+const permisosParaInsertar = typeof rolInfo.permisos === 'string' 
+    ? JSON.parse(rolInfo.permisos) 
+    : rolInfo.permisos;
+
+console.log('🔐 Permisos procesados:', JSON.stringify(permisosParaInsertar, null, 2));
+
 const datosUsuario = {
     tenant_id: userData.tenant_id,
     telefono_whatsapp: telefonoCompleto,
@@ -963,7 +974,7 @@ const datosUsuario = {
     nombre: nombre,
     rol: rolSeleccionado,
     activo: true,
-    permisos: rolInfo.permisos  // Insertar el objeto JSON directamente, NO como string
+    permisos: permisosParaInsertar
 };
 
 console.log('📝 Datos a insertar:', datosUsuario);
@@ -1912,6 +1923,7 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
 
 
 
