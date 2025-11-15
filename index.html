@@ -819,7 +819,8 @@ console.log('✅ Producto insertado:', productoCreado);
 if (!productoCreado.codigo) {
     throw new Error('El producto se creó pero no se recibió el código');
 }
-        
+        console.log('🎯 CHECKPOINT 1: Antes de procesar apodos');
+console.log('🎯 productoCreado completo:', productoCreado);
         // Procesar e insertar apodos
         let apodosInsertados = [];
         if (formData.apodos && formData.apodos.trim() !== '') {
@@ -845,6 +846,9 @@ if (!productoCreado.codigo) {
                 console.log('✅ Apodos insertados:', apodosInsertados);
             }
         }
+
+        console.log('🎯 CHECKPOINT 2: Antes de generar mensaje');
+console.log('🎯 apodosInsertados:', apodosInsertados);
         
         // Generar mensaje de confirmación
 const mensaje = generarMensajeConfirmacion(productoCreado, apodosInsertados, formData);
@@ -852,6 +856,8 @@ const mensaje = generarMensajeConfirmacion(productoCreado, apodosInsertados, for
 console.log('📝 Mensaje generado:', mensaje);
 console.log('📝 Longitud del mensaje:', mensaje.length);
 
+console.log('🎯 CHECKPOINT 3: Mensaje generado, ahora mostrar');
+        
 // Mostrar mensaje de éxito
 const successDiv = document.getElementById('successMsg');
 const formDiv = document.getElementById('formCrearProducto');
@@ -956,6 +962,7 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
 
 
 
