@@ -810,9 +810,9 @@ if (errorRoles) throw errorRoles;
         }
         
         // Generar opciones de roles
-        const opcionesRoles = roles.map(rol => 
-            `<option value="${rol.id}">${rol.nombre}${rol.descripcion ? ' - ' + rol.descripcion : ''}</option>`
-        ).join('');
+const opcionesRoles = roles.map(rol => 
+    `<option value="${rol.rol}">${rol.nombre_display}${rol.descripcion ? ' - ' + rol.descripcion : ''}</option>`
+).join('');
         
         // Cargar formulario con roles
         modalBody.innerHTML = `
@@ -893,7 +893,7 @@ async function submitUsuario(event) {
         const nombre = nombreInput.value.trim();
         const telefono = telefonoInput.value.trim();
         const codigoPais = codigoPaisInput.value.trim();
-        const rolId = rolSelect.value;
+        const rolSeleccionado = rolSelect.value;
         
         // Validar campos
         if (!nombre) {
@@ -904,18 +904,18 @@ async function submitUsuario(event) {
             throw new Error('El teléfono es requerido');
         }
         
-        if (!rolId) {
+        if (!rolSeleccionado) {
             throw new Error('Debes seleccionar un rol');
         }
         
         // Combinar código de país con teléfono
         const telefonoCompleto = codigoPais + telefono;
         
-        console.log('📝 Creando usuario:', { nombre, telefono: telefonoCompleto, rolId });
-        
-        // Obtener información del rol seleccionado usando RPC
+        console.log('📝 Creando usuario:', { nombre, telefono: telefonoCompleto, rol: rolSeleccionado });
+
+// Obtener información del rol seleccionado usando RPC
 const { data: rolInfoArray, error: errorRol } = await supabase
-    .rpc('get_rol_info', { p_rol_id: rolId });
+    .rpc('get_rol_info', { p_rol: rolSeleccionado });
 
 if (errorRol) throw errorRol;
 
@@ -935,7 +935,7 @@ if (!rolInfo) {
                 telefono_whatsapp: telefonoCompleto,
                 phone_number_id: userData.tenants.phone_number_id || userData.phone_number_id,
                 nombre: nombre,
-                rol: rolId,
+                rol: rolSeleccionado,
                 activo: true,
                 permisos: rolInfo.permisos || {}
             })
@@ -951,7 +951,7 @@ if (!rolInfo) {
 
 👤 Nombre: ${nuevoUsuario.nombre}
 📱 Teléfono: ${nuevoUsuario.telefono_whatsapp}
-👔 Rol: ${rolInfo.nombre}
+👔 Rol: ${rolInfo.nombre_display}
 🏪 Negocio: ${userData.tenants.nombre_negocio}
 
 El usuario ya puede acceder al sistema.`;
@@ -1867,6 +1867,7 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
 
 
 
