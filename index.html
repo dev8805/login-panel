@@ -850,11 +850,23 @@ if (!productoCreado.codigo) {
         const mensaje = generarMensajeConfirmacion(productoCreado, apodosInsertados, formData);
         
         // Mostrar mensaje de éxito
-        document.getElementById('successMsg').innerHTML = mensaje;
-        document.getElementById('successMsg').style.display = 'block';
-        document.getElementById('formCrearProducto').style.display = 'none';
-        
-        console.log('✅ Producto creado exitosamente');
+const successDiv = document.getElementById('successMsg');
+const formDiv = document.getElementById('formCrearProducto');
+
+successDiv.innerHTML = mensaje;
+successDiv.style.display = 'block';
+formDiv.style.display = 'none';
+
+console.log('✅ Producto creado exitosamente');
+
+// Agregar botón para cerrar y crear otro
+setTimeout(() => {
+    const btnCerrar = document.createElement('button');
+    btnCerrar.textContent = 'Cerrar';
+    btnCerrar.style.marginTop = '20px';
+    btnCerrar.onclick = () => closeModal();
+    successDiv.appendChild(btnCerrar);
+}, 100);
         
     } catch (error) {
         console.error('❌ Error:', error);
@@ -925,6 +937,7 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
 
 
 
