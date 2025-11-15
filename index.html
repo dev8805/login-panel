@@ -719,16 +719,14 @@ function openModal(modalId) {
         `;
         
         modal.classList.add('show');
-    }
-}
-
-   } else if (modalId === 'registrar_compra') {
+    } else if (modalId === 'registrar_compra') {
         const modal = document.getElementById('modalRegistrarCompra');
         const modalBody = document.getElementById('modalBodyCompra');
         
         cargarFormularioCompra(modalBody);
         modal.classList.add('show');
-    }     
+    }
+}
 
 // Cerrar modal
 function closeModal() {
@@ -1567,20 +1565,3 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
