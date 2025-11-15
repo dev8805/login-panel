@@ -761,13 +761,11 @@ async function cargarFormularioUsuario(modalBody) {
     `;
     
     try {
-        // Cargar roles disponibles
-        const { data: roles, error: errorRoles } = await supabase
-            .from('roles_template')
-            .select('id, nombre, descripcion')
-            .order('nombre');
-        
-        if (errorRoles) throw errorRoles;
+        // Cargar roles disponibles usando RPC
+const { data: roles, error: errorRoles } = await supabase
+    .rpc('get_roles_disponibles');
+
+if (errorRoles) throw errorRoles;
         
         console.log('📋 Roles cargados:', roles);
         
@@ -915,14 +913,17 @@ async function submitUsuario(event) {
         
         console.log('📝 Creando usuario:', { nombre, telefono: telefonoCompleto, rolId });
         
-        // Obtener información del rol seleccionado
-        const { data: rolInfo, error: errorRol } = await supabase
-            .from('roles_template')
-            .select('nombre, permisos')
-            .eq('id', rolId)
-            .single();
-        
-        if (errorRol) throw errorRol;
+        // Obtener información del rol seleccionado usando RPC
+const { data: rolInfoArray, error: errorRol } = await supabase
+    .rpc('get_rol_info', { p_rol_id: rolId });
+
+if (errorRol) throw errorRol;
+
+const rolInfo = rolInfoArray && rolInfoArray.length > 0 ? rolInfoArray[0] : null;
+
+if (!rolInfo) {
+    throw new Error('No se encontró información del rol');
+}
         
         console.log('📋 Info del rol:', rolInfo);
         
@@ -1866,6 +1867,7 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
 
 
 
