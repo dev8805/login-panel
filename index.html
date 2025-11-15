@@ -410,89 +410,38 @@ select:focus {
             }
         }
         
-        // Cargar datos del usuario
+        // Cargar datos dl usuario
+
         async function loadUserData(authUserId) {
   try {
-    console.log('Cargando datos del usuario:', authUserId);
-      // Verificar que la tabla existe
-    const { data: testTable, error: testError } = await supabase
-      .from('tenant_users')
-      .select('count')
-      .limit(1);
+    console.log('👤 Cargando datos del usuario:', authUserId);
     
-    console.log('📋 Test de tabla tenant_users:', testTable, testError);
+    // Usar RPC para evitar problemas con triggers/foreign keys
+    const { data, error } = await supabase
+      .rpc('get_user_with_tenant', { p_user_id: authUserId });
     
-      // 1. Primero obtener TODOS los datos sin filtros
-console.log('🔍 Buscando usuario:', authUserId);
-
-const { data: allUsers, error: errorAll } = await supabase
-  .from('tenant_users')
-  .select('*');
-
-console.log('👥 Todos los usuarios:', allUsers, errorAll);
-
-// 2. Luego buscar el usuario específico con filter en lugar de eq
-const { data: tenantUser, error: errorTenantUser } = await supabase
-  .from('tenant_users')
-  .select(`
-    user_id,
-    tenant_id,
-    telefono_whatsapp,
-    phone_number_id,
-    nombre,
-    activo,
-    rol,
-    permisos
-  `)
-  .filter('user_id', 'eq', authUserId)
-  .filter('activo', 'eq', true)
-  .limit(1)
-  .maybeSingle();
-
-console.log('👤 Usuario encontrado:', tenantUser, errorTenantUser);
-
-if (errorTenantUser) throw errorTenantUser;
-if (!tenantUser) throw new Error('Usuario no encontrado');
-
-// 3. Ahora buscar el tenant por separado
-const { data: tenant, error: errorTenant } = await supabase
-  .from('tenants')
-  .select('tenant_id, nombre_negocio, pais, zona_horaria')
-  .eq('tenant_id', tenantUser.tenant_id)
-  .single();
-
-console.log('🏢 Tenant encontrado:', tenant, errorTenant);
-
-if (errorTenant) throw errorTenant;
-
-// 4. Combinar los datos manualmente
-tenantUser.tenants = tenant;
-
-    if (errorTenantUser) throw errorTenantUser;
+    console.log('📦 Respuesta RPC:', data, error);
     
-    console.log('Usuario de tenant encontrado:', tenantUser);
-
-    // 2. Construir el objeto userData con toda la información necesaria
+    if (error) throw error;
+    if (!data) throw new Error('Usuario no encontrado');
+    
+    // Asignar a userData
     userData = {
-      user_id: tenantUser.user_id,
-      tenant_user_id: tenantUser.user_id,
-      nombre: tenantUser.nombre,
-      rol: tenantUser.rol,
-      permisos: tenantUser.permisos,
-      tenant_id: tenantUser.tenant_id,
-      telefono_whatsapp: tenantUser.telefono_whatsapp,
-      tenants: {
-        nombre_negocio: tenantUser.tenants.nombre_negocio,
-        pais: tenantUser.tenants.pais,
-        zona_horaria: tenantUser.tenants.zona_horaria
-      }
+      user_id: data.user_id,
+      tenant_user_id: data.user_id,
+      nombre: data.nombre,
+      rol: data.rol,
+      permisos: data.permisos,
+      tenant_id: data.tenant_id,
+      telefono_whatsapp: data.telefono_whatsapp,
+      tenants: data.tenants
     };
 
-    console.log('Datos del usuario cargados:', userData);
+    console.log('✅ Usuario cargado correctamente:', userData);
 
   } catch (error) {
-    console.error('Error loading user:', error);
-    showError('Error cargando datos del usuario');
+    console.error('❌ Error loading user:', error);
+    showError('Error cargando datos del usuario: ' + error.message);
     await logout();
   }
 }
@@ -967,6 +916,7 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
 
 
 
