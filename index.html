@@ -752,79 +752,223 @@ function closeModalUsuario() {
 }
 
         // Cargar formulario de usuario
-function cargarFormularioUsuario(modalBody) {
+async function cargarFormularioUsuario(modalBody) {
+    // Mostrar loading
     modalBody.innerHTML = `
-        <div id="successUsuario" class="success-message"></div>
-        <div id="errorUsuario" class="error"></div>
-        
-        <form id="formCrearUsuario" onsubmit="submitUsuario(event)">
-            <div class="form-group">
-                <label for="nombreUsuario" class="required">Nombre completo</label>
-                <input 
-                    type="text" 
-                    id="nombreUsuario" 
-                    placeholder="Nombre del usuario" 
-                    required
-                >
-            </div>
-            
-            <div class="form-group">
-                <label for="telefonoUsuario" class="required">Número de teléfono</label>
-                <input 
-                    type="tel" 
-                    id="telefonoUsuario" 
-                    placeholder="+573001234567" 
-                    required
-                    pattern="\\+?[0-9]{10,15}"
-                >
-                <small style="color: #666; font-size: 12px;">Incluye el código de país (ej: +57)</small>
-            </div>
-            
-            <button type="submit" id="btnSubmitUsuario">Crear Usuario</button>
-        </form>
+        <div style="text-align: center; padding: 40px;">
+            <p>Cargando formulario...</p>
+        </div>
     `;
+    
+    try {
+        // Cargar roles disponibles
+        const { data: roles, error: errorRoles } = await supabase
+            .from('roles_template')
+            .select('id, nombre, descripcion')
+            .order('nombre');
+        
+        if (errorRoles) throw errorRoles;
+        
+        console.log('📋 Roles cargados:', roles);
+        
+        // Determinar código de país según zona horaria
+        const zonaHoraria = userData.tenants.zona_horaria || 'America/Bogota';
+        let codigoPais = '+57'; // Por defecto Colombia
+        
+        if (zonaHoraria.includes('America/Bogota') || zonaHoraria.includes('America/Colombia')) {
+            codigoPais = '+57';
+        } else if (zonaHoraria.includes('America/Mexico')) {
+            codigoPais = '+52';
+        } else if (zonaHoraria.includes('America/Argentina')) {
+            codigoPais = '+54';
+        } else if (zonaHoraria.includes('America/Lima')) {
+            codigoPais = '+51';
+        } else if (zonaHoraria.includes('America/Santiago')) {
+            codigoPais = '+56';
+        } else if (zonaHoraria.includes('America/Caracas')) {
+            codigoPais = '+58';
+        } else if (zonaHoraria.includes('America/Guayaquil')) {
+            codigoPais = '+593';
+        } else if (zonaHoraria.includes('America/La_Paz')) {
+            codigoPais = '+591';
+        } else if (zonaHoraria.includes('America/Asuncion')) {
+            codigoPais = '+595';
+        } else if (zonaHoraria.includes('America/Montevideo')) {
+            codigoPais = '+598';
+        } else if (zonaHoraria.includes('America/Panama')) {
+            codigoPais = '+507';
+        } else if (zonaHoraria.includes('America/Costa_Rica')) {
+            codigoPais = '+506';
+        } else if (zonaHoraria.includes('America/Guatemala')) {
+            codigoPais = '+502';
+        } else if (zonaHoraria.includes('America/Managua')) {
+            codigoPais = '+505';
+        } else if (zonaHoraria.includes('America/Tegucigalpa')) {
+            codigoPais = '+504';
+        } else if (zonaHoraria.includes('America/El_Salvador')) {
+            codigoPais = '+503';
+        } else if (zonaHoraria.includes('Europe/Madrid')) {
+            codigoPais = '+34';
+        }
+        
+        // Generar opciones de roles
+        const opcionesRoles = roles.map(rol => 
+            `<option value="${rol.id}">${rol.nombre}${rol.descripcion ? ' - ' + rol.descripcion : ''}</option>`
+        ).join('');
+        
+        // Cargar formulario con roles
+        modalBody.innerHTML = `
+            <div id="successUsuario" class="success-message"></div>
+            <div id="errorUsuario" class="error"></div>
+            
+            <form id="formCrearUsuario" onsubmit="submitUsuario(event)">
+                <div class="form-group">
+                    <label for="nombreUsuario" class="required">Nombre completo</label>
+                    <input 
+                        type="text" 
+                        id="nombreUsuario" 
+                        placeholder="Nombre del usuario" 
+                        required
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="codigoPais" class="required">Código de país</label>
+                    <input 
+                        type="text" 
+                        id="codigoPais" 
+                        value="${codigoPais}"
+                        readonly
+                        style="background-color: #f5f5f5;"
+                    >
+                    <small style="color: #666; font-size: 12px;">Detectado automáticamente según tu zona horaria</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="telefonoUsuario" class="required">Número de teléfono</label>
+                    <input 
+                        type="tel" 
+                        id="telefonoUsuario" 
+                        placeholder="3001234567" 
+                        required
+                        pattern="[0-9]{10,15}"
+                    >
+                    <small style="color: #666; font-size: 12px;">Solo números, sin el código de país</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="rolUsuario" class="required">Rol del usuario</label>
+                    <select id="rolUsuario" required>
+                        <option value="">Seleccionar rol...</option>
+                        ${opcionesRoles}
+                    </select>
+                </div>
+                
+                <button type="submit" id="btnSubmitUsuario">Crear Usuario</button>
+            </form>
+        `;
+        
+    } catch (error) {
+        console.error('❌ Error cargando formulario:', error);
+        modalBody.innerHTML = `
+            <div class="error show">
+                Error al cargar el formulario: ${error.message}
+            </div>
+        `;
+    }
 }
 
-// Enviar formulario de usuario
+    // Enviar formulario de usuario
 async function submitUsuario(event) {
     event.preventDefault();
     
     const btnSubmit = document.getElementById('btnSubmitUsuario');
     const nombreInput = document.getElementById('nombreUsuario');
     const telefonoInput = document.getElementById('telefonoUsuario');
+    const codigoPaisInput = document.getElementById('codigoPais');
+    const rolSelect = document.getElementById('rolUsuario');
     
     btnSubmit.disabled = true;
     btnSubmit.textContent = 'Creando...';
     
     try {
         const nombre = nombreInput.value.trim();
-        let telefono = telefonoInput.value.trim();
+        const telefono = telefonoInput.value.trim();
+        const codigoPais = codigoPaisInput.value.trim();
+        const rolId = rolSelect.value;
         
-        // Validar que el teléfono empiece con +
-        if (!telefono.startsWith('+')) {
-            throw new Error('El teléfono debe incluir el código de país (ej: +57)');
+        // Validar campos
+        if (!nombre) {
+            throw new Error('El nombre es requerido');
         }
         
-        console.log('📝 Creando usuario:', { nombre, telefono });
+        if (!telefono) {
+            throw new Error('El teléfono es requerido');
+        }
+        
+        if (!rolId) {
+            throw new Error('Debes seleccionar un rol');
+        }
+        
+        // Combinar código de país con teléfono
+        const telefonoCompleto = codigoPais + telefono;
+        
+        console.log('📝 Creando usuario:', { nombre, telefono: telefonoCompleto, rolId });
+        
+        // Obtener información del rol seleccionado
+        const { data: rolInfo, error: errorRol } = await supabase
+            .from('roles_template')
+            .select('nombre, permisos')
+            .eq('id', rolId)
+            .single();
+        
+        if (errorRol) throw errorRol;
+        
+        console.log('📋 Info del rol:', rolInfo);
         
         // Insertar usuario en tenant_users
         const { data: nuevoUsuario, error: errorUsuario } = await supabase
             .from('tenant_users')
             .insert({
                 tenant_id: userData.tenant_id,
-                telefono_whatsapp: telefono,
+                telefono_whatsapp: telefonoCompleto,
                 phone_number_id: userData.tenants.phone_number_id || userData.phone_number_id,
                 nombre: nombre,
-                rol: 'empleado',
+                rol: rolId,
                 activo: true,
-                permisos: {
-                    ventas: { crear: true, ver: true },
-                    productos: { ver: true },
-                    inventario: { ver: true }
-                }
+                permisos: rolInfo.permisos || {}
             })
             .select()
             .single();
+        
+        if (errorUsuario) throw errorUsuario;
+        
+        console.log('✅ Usuario creado:', nuevoUsuario);
+        
+        // Mostrar mensaje de éxito
+        const mensajeExito = `✅ ¡Usuario creado exitosamente!
+
+👤 Nombre: ${nuevoUsuario.nombre}
+📱 Teléfono: ${nuevoUsuario.telefono_whatsapp}
+👔 Rol: ${rolInfo.nombre}
+🏪 Negocio: ${userData.tenants.nombre_negocio}
+
+El usuario ya puede acceder al sistema.`;
+        
+        mostrarExitoUsuario(mensajeExito);
+        
+        // Ocultar formulario
+        document.getElementById('formCrearUsuario').style.display = 'none';
+        
+        console.log('✅ Usuario registrado exitosamente');
+        
+    } catch (error) {
+        console.error('❌ Error:', error);
+        mostrarErrorUsuario(error.message || 'Error al crear usuario');
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Crear Usuario';
+    }
+}
         
         if (errorUsuario) throw errorUsuario;
         
@@ -1751,6 +1895,7 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
 
 
 
