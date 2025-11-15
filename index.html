@@ -795,42 +795,42 @@ async function cargarFormularioUsuario(modalBody) {
         
         // Determinar código de país según zona horaria
         const zonaHoraria = userData.tenants.zona_horaria || 'America/Bogota';
-        let codigoPais = '+57'; // Por defecto Colombia
+        let codigoPais = '57'; // Por defecto Colombia (sin +)
         
         if (zonaHoraria.includes('America/Bogota') || zonaHoraria.includes('America/Colombia')) {
-            codigoPais = '+57';
+            codigoPais = '57';
         } else if (zonaHoraria.includes('America/Mexico')) {
-            codigoPais = '+52';
+            codigoPais = '52';
         } else if (zonaHoraria.includes('America/Argentina')) {
-            codigoPais = '+54';
+            codigoPais = '54';
         } else if (zonaHoraria.includes('America/Lima')) {
-            codigoPais = '+51';
+            codigoPais = '51';
         } else if (zonaHoraria.includes('America/Santiago')) {
-            codigoPais = '+56';
+            codigoPais = '56';
         } else if (zonaHoraria.includes('America/Caracas')) {
-            codigoPais = '+58';
+            codigoPais = '58';
         } else if (zonaHoraria.includes('America/Guayaquil')) {
-            codigoPais = '+593';
+            codigoPais = '593';
         } else if (zonaHoraria.includes('America/La_Paz')) {
-            codigoPais = '+591';
+            codigoPais = '591';
         } else if (zonaHoraria.includes('America/Asuncion')) {
-            codigoPais = '+595';
+            codigoPais = '595';
         } else if (zonaHoraria.includes('America/Montevideo')) {
-            codigoPais = '+598';
+            codigoPais = '598';
         } else if (zonaHoraria.includes('America/Panama')) {
-            codigoPais = '+507';
+            codigoPais = '507';
         } else if (zonaHoraria.includes('America/Costa_Rica')) {
-            codigoPais = '+506';
+            codigoPais = '506';
         } else if (zonaHoraria.includes('America/Guatemala')) {
-            codigoPais = '+502';
+            codigoPais = '502';
         } else if (zonaHoraria.includes('America/Managua')) {
-            codigoPais = '+505';
+            codigoPais = '505';
         } else if (zonaHoraria.includes('America/Tegucigalpa')) {
-            codigoPais = '+504';
+            codigoPais = '504';
         } else if (zonaHoraria.includes('America/El_Salvador')) {
-            codigoPais = '+503';
+            codigoPais = '503';
         } else if (zonaHoraria.includes('Europe/Madrid')) {
-            codigoPais = '+34';
+            codigoPais = '34';
         }
         
        // Generar opciones de roles
@@ -1928,6 +1928,7 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
 
 
 
