@@ -603,9 +603,9 @@ function openModal(modalId) {
         
         // Cargar formulario
         modalBody.innerHTML = `
+    <div id="successMsg" class="success-message"></div>
     <form id="formCrearProducto" onsubmit="submitProducto(event)">
-        <div id="successMsg" class="success-message"></div>
-                <div id="errorMsgModal" class="error"></div>
+        <div id="errorMsgModal" class="error"></div>
                 
                 <div class="form-group">
                     <label for="productoNombre">Nombre del producto *</label>
@@ -968,6 +968,7 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
 
 
 
