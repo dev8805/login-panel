@@ -761,13 +761,27 @@ async function cargarFormularioUsuario(modalBody) {
     `;
     
     try {
-        // Cargar roles disponibles usando RPC
-const { data: roles, error: errorRoles } = await supabase
-    .rpc('get_roles_disponibles');
+        // Cargar roles disponibles directamente de la tabla
+        const { data: roles, error: errorRoles } = await supabase
+            .from('roles_templates')
+            .select('rol, nombre_display, descripcion, permisos')
+            .eq('activo', true)
+            .order('rol');
 
-if (errorRoles) throw errorRoles;
+        if (errorRoles) {
+            console.error('❌ Error cargando roles:', errorRoles);
+            throw new Error('Error al cargar roles: ' + errorRoles.message);
+        }
         
         console.log('📋 Roles cargados:', roles);
+        
+        // Verificar que todos los roles tengan permisos
+        const rolesValidos = roles.filter(r => r.permisos && typeof r.permisos === 'object');
+        console.log('📋 Roles válidos con permisos:', rolesValidos);
+        
+        if (rolesValidos.length === 0) {
+            throw new Error('No se encontraron roles con permisos válidos');
+        }
         
         // Determinar código de país según zona horaria
         const zonaHoraria = userData.tenants.zona_horaria || 'America/Bogota';
@@ -809,10 +823,10 @@ if (errorRoles) throw errorRoles;
             codigoPais = '+34';
         }
         
-        // Generar opciones de roles
-const opcionesRoles = roles.map(rol => 
-    `<option value="${rol.rol}">${rol.nombre_display}${rol.descripcion ? ' - ' + rol.descripcion : ''}</option>`
-).join('');
+       // Generar opciones de roles
+        const opcionesRoles = rolesValidos.map(rol => 
+            `<option value="${rol.rol}">${rol.nombre_display}${rol.descripcion ? ' - ' + rol.descripcion : ''}</option>`
+        ).join('');
         
         // Cargar formulario con roles
         modalBody.innerHTML = `
@@ -913,32 +927,35 @@ async function submitUsuario(event) {
         
         console.log('📝 Creando usuario:', { nombre, telefono: telefonoCompleto, rol: rolSeleccionado });
 
-// Obtener información del rol seleccionado usando RPC
-const { data: rolInfoArray, error: errorRol } = await supabase
-    .rpc('get_rol_info', { p_rol: rolSeleccionado });
+// Obtener información del rol directamente de roles_templates
+const { data: rolInfo, error: errorRol } = await supabase
+    .from('roles_templates')
+    .select('rol, nombre_display, descripcion, permisos')
+    .eq('rol', rolSeleccionado)
+    .eq('activo', true)
+    .single();
 
 if (errorRol) {
     console.error('❌ Error obteniendo rol:', errorRol);
-    throw errorRol;
+    throw new Error('Error al obtener información del rol: ' + errorRol.message);
 }
 
-console.log('📋 Respuesta RPC rol:', rolInfoArray);
-
-const rolInfo = rolInfoArray && rolInfoArray.length > 0 ? rolInfoArray[0] : null;
+console.log('📋 Respuesta roles_templates:', rolInfo);
 
 if (!rolInfo) {
     throw new Error('No se encontró información del rol');
 }
 
-// Validar que los permisos existan
-if (!rolInfo.permisos) {
-    throw new Error('El rol no tiene permisos definidos');
+// Validar que los permisos existan y sean un objeto válido
+if (!rolInfo.permisos || typeof rolInfo.permisos !== 'object') {
+    throw new Error('El rol no tiene permisos válidos definidos');
 }
 
 console.log('📋 Info del rol completa:', rolInfo);
-console.log('🔐 Permisos del rol:', rolInfo.permisos);
+console.log('🔑 Permisos del rol (tipo):', typeof rolInfo.permisos);
+console.log('🔑 Permisos del rol (contenido):', JSON.stringify(rolInfo.permisos, null, 2));
         
-        // Preparar datos para insertar
+        // Preparar datos para insertar - IMPORTANTE: permisos debe ser el objeto JSON directo
 const datosUsuario = {
     tenant_id: userData.tenant_id,
     telefono_whatsapp: telefonoCompleto,
@@ -946,22 +963,33 @@ const datosUsuario = {
     nombre: nombre,
     rol: rolSeleccionado,
     activo: true,
-    permisos: rolInfo.permisos
+    permisos: rolInfo.permisos  // Insertar el objeto JSON directamente, NO como string
 };
 
 console.log('📝 Datos a insertar:', datosUsuario);
-console.log('🔐 Permisos a insertar:', JSON.stringify(datosUsuario.permisos));
+console.log('🔑 Tipo de permisos:', typeof datosUsuario.permisos);
+console.log('🔑 Permisos JSON:', JSON.stringify(datosUsuario.permisos, null, 2));
 
 // Insertar usuario en tenant_users
 const { data: nuevoUsuario, error: errorUsuario } = await supabase
     .from('tenant_users')
     .insert(datosUsuario)
-    .select()
+    .select('*, permisos')  // Asegurarnos de que devuelva los permisos
     .single();
         
-        if (errorUsuario) throw errorUsuario;
+        if (errorUsuario) {
+            console.error('❌ Error insertando usuario:', errorUsuario);
+            console.error('❌ Detalle del error:', JSON.stringify(errorUsuario, null, 2));
+            throw new Error('Error al crear usuario: ' + errorUsuario.message);
+        }
         
         console.log('✅ Usuario creado:', nuevoUsuario);
+        console.log('✅ Permisos guardados:', nuevoUsuario.permisos);
+        
+        // Verificar que los permisos se guardaron correctamente
+        if (!nuevoUsuario.permisos) {
+            console.warn('⚠️ ADVERTENCIA: El usuario se creó pero los permisos están vacíos');
+        }
         
         // Mostrar mensaje de éxito
         const mensajeExito = `✅ ¡Usuario creado exitosamente!
@@ -1884,6 +1912,7 @@ _El producto ya está disponible para ventas._`;
 </div>
 
 </html>
+
 
 
 
