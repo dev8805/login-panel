@@ -909,16 +909,61 @@ function openModal(modalId) {
                 
                 <div id="camposDinamicos"></div>
                 
-                <div class="form-group">
-                    <label for="apodos">Apodos (separados por comas)</label>
-                    <input type="text" id="apodos" placeholder="producto1, prod1, p1">
-                </div>
+                <!-- Apodos con sistema de agregar/eliminar -->
+<div class="form-group">
+    <label style="font-weight: 600;">Apodos del producto</label>
+    
+    <!-- Lista de apodos agregados -->
+    <div id="listaApodosCrear" style="background: #fff; border: 2px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 15px; min-height: 60px;">
+        <div id="apodosItemsCrear">
+            <!-- Los apodos se agregarán aquí dinámicamente -->
+        </div>
+    </div>
+    
+    <!-- Agregar nuevo apodo -->
+    <div style="background: #f5f7ff; padding: 15px; border-radius: 8px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 13px;">Agregar apodo</label>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <input 
+                type="text" 
+                id="nuevoApodoCrear" 
+                placeholder="Escribe un apodo..."
+                style="flex: 1; padding: 10px 12px; max-width: 70%;"
+                onkeypress="if(event.key === 'Enter') { event.preventDefault(); agregarApodoCrear(); }"
+            >
+            <button 
+                type="button"
+                onclick="agregarApodoCrear()"
+                style="padding: 10px 12px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; min-width: auto; width: auto; flex-shrink: 0;"
+            >
+                ➕
+            </button>
+        </div>
+        <small style="color: #666; font-size: 11px; display: block; margin-top: 8px;">El nombre del producto se agregará automáticamente como apodo</small>
+    </div>
+</div>
+
+<!-- Input oculto para guardar los apodos -->
+<input type="hidden" id="apodos" value="">
                 
                 <button type="submit" id="btnSubmit">Crear Producto</button>
             </form>
         `;
         
         modal.classList.add('show');
+
+       // Inicializar array de apodos y listener para nombre
+       window.apodosCrearProducto = [];
+        
+        // Listener para cuando cambia el nombre del producto
+        document.getElementById('productoNombre').addEventListener('blur', function() {
+            const nombreProducto = this.value.trim().toLowerCase();
+            if (nombreProducto && !window.apodosCrearProducto.includes(nombreProducto)) {
+                window.apodosCrearProducto.push(nombreProducto);
+                renderizarApodosCrear();
+            }
+        });
+
     } else if (modalId === 'registrar_compra') {
         const modal = document.getElementById('modalRegistrarCompra');
         const modalBody = document.getElementById('modalBodyCompra');
@@ -1929,6 +1974,67 @@ function updateFormByType() {
     container.innerHTML = html;
 }
 
+// Función para agregar apodo en crear producto
+function agregarApodoCrear() {
+    const input = document.getElementById('nuevoApodoCrear');
+    const apodo = input.value.trim().toLowerCase();
+    
+    if (!apodo) {
+        alert('Debes escribir un apodo');
+        return;
+    }
+    
+    // Validar que no exista ya
+    if (window.apodosCrearProducto.includes(apodo)) {
+        alert('Este apodo ya está agregado');
+        input.value = '';
+        return;
+    }
+    
+    // Agregar al array
+    window.apodosCrearProducto.push(apodo);
+    
+    // Limpiar input
+    input.value = '';
+    
+    // Renderizar lista
+    renderizarApodosCrear();
+}
+
+// Función para eliminar apodo en crear producto
+function eliminarApodoCrear(apodo) {
+    const index = window.apodosCrearProducto.indexOf(apodo);
+    if (index > -1) {
+        window.apodosCrearProducto.splice(index, 1);
+        renderizarApodosCrear();
+    }
+}
+
+// Función para renderizar la lista de apodos
+function renderizarApodosCrear() {
+    const container = document.getElementById('apodosItemsCrear');
+    
+    if (window.apodosCrearProducto.length === 0) {
+        container.innerHTML = '<p style="color: #999; font-size: 13px; margin: 0;">No hay apodos agregados aún</p>';
+    } else {
+        container.innerHTML = window.apodosCrearProducto.map(apodo => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: #f5f7ff; border-radius: 6px; margin-bottom: 6px;">
+                <span style="font-weight: 500; color: #333; font-size: 13px;">🏷️ ${apodo}</span>
+                <button 
+                    type="button"
+                    onclick="eliminarApodoCrear('${apodo}')"
+                    style="padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 10px; min-width: auto; width: auto;"
+                >
+                    🗑️
+                </button>
+            </div>
+        `).join('');
+    }
+    
+    // Actualizar input oculto
+    document.getElementById('apodos').value = window.apodosCrearProducto.join(',');
+}
+
 // Enviar formulario
 async function submitProducto(event) {
     event.preventDefault();
@@ -1939,6 +2045,13 @@ async function submitProducto(event) {
     btnSubmit.textContent = 'Creando...';
     
     try {
+
+        // Asegurar que el nombre del producto esté en los apodos
+const nombreProducto = document.getElementById('productoNombre').value.trim().toLowerCase();
+if (nombreProducto && !window.apodosCrearProducto.includes(nombreProducto)) {
+    window.apodosCrearProducto.push(nombreProducto);
+}
+
         // Recolectar datos
         const formData = {
             producto: document.getElementById('productoNombre').value,
@@ -1948,7 +2061,7 @@ async function submitProducto(event) {
             stock: parseFloat(document.getElementById('stock').value),
             precio: parseFloat(document.getElementById('precio').value),
             costo: parseFloat(document.getElementById('costo').value),
-            apodos: document.getElementById('apodos').value,
+            apodos: window.apodosCrearProducto.join(','),
             unidad_peso: document.getElementById('unidadPeso')?.value || 'unidades',
             tenant_id: userData.tenant_id,
             tenant_user_id: userData.tenant_user_id || null
