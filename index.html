@@ -2077,11 +2077,152 @@ let datosInformes = null;
 let rangoFechaInformes = 'today';
 
 // =====================================================
-// NUEVA FUNCIÓN PARA INFORMES
+// NUEVA FUNCIÓN PARA INFORMES CON DATOS REALES
 // =====================================================
 
 async function cargarInformes(modalBody) {
-    // Cargar el HTML del panel de ventas directamente
+    // Mostrar loading inicial
+    modalBody.innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+            <p style="font-size: 18px; color: #667eea;">📊 Cargando datos del informe...</p>
+        </div>
+    `;
+    
+    try {
+        // Obtener fechas por defecto (hoy)
+        const hoy = new Date();
+        const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+        const fechaInicio = primerDiaMes.toISOString().split('T')[0];
+        const fechaFin = hoy.toISOString().split('T')[0];
+        
+        // Cargar datos reales
+        const datosReales = await cargarDatosRealesInforme(fechaInicio, fechaFin);
+        
+        // Renderizar el informe con datos reales
+        renderizarInformeConDatos(modalBody, datosReales, fechaInicio, fechaFin);
+        
+    } catch (error) {
+        console.error('❌ Error cargando informe:', error);
+        modalBody.innerHTML = `
+            <div style="background: #f8d7da; border: 2px solid #dc3545; border-radius: 8px; padding: 20px; margin: 20px;">
+                <strong>❌ Error:</strong> No se pudo cargar el informe. ${error.message}
+            </div>
+        `;
+    }
+}
+
+// Función para cargar datos reales de Supabase
+async function cargarDatosRealesInforme(fechaInicio, fechaFin) {
+    console.log('📊 Cargando datos reales...', { fechaInicio, fechaFin, tenant_id: userData.tenant_id });
+    
+    // Convertir fechas a formato ISO con hora
+    const fechaInicioISO = new Date(fechaInicio + 'T00:00:00').toISOString();
+    const fechaFinISO = new Date(fechaFin + 'T23:59:59').toISOString();
+    
+    // 1. CARGAR VENTAS
+    const { data: ventas, error: errorVentas } = await supabase
+        .from('ventas')
+        .select('total, created_at')
+        .eq('tenant_id', userData.tenant_id)
+        .eq('activo', true)
+        .gte('created_at', fechaInicioISO)
+        .lte('created_at', fechaFinISO);
+    
+    if (errorVentas) throw new Error('Error cargando ventas: ' + errorVentas.message);
+    
+    // 2. CARGAR MOVIMIENTOS DE INVENTARIO (Mermas, Consumos, Compras)
+const { data: movimientos, error: errorMovimientos } = await supabase
+    .from('movimientos_inventario')
+    .select('codigo, costo_total, created_at')
+    .eq('tenant_id', userData.tenant_id)
+    .eq('activo', true)
+    .gte('created_at', fechaInicioISO)
+    .lte('created_at', fechaFinISO);
+
+if (errorMovimientos) throw new Error('Error cargando movimientos: ' + errorMovimientos.message);
+
+// 3. CARGAR GASTOS DE LA TABLA GASTOS
+const { data: gastos, error: errorGastos } = await supabase
+    .from('gastos')
+    .select('monto, descripcion, created_at')
+    .eq('tenant_id', userData.tenant_id)
+    .eq('activo', true)
+    .gte('created_at', fechaInicioISO)
+    .lte('created_at', fechaFinISO);
+
+if (errorGastos) throw new Error('Error cargando gastos: ' + errorGastos.message);
+
+console.log('✅ Datos cargados:', { 
+    ventas: ventas.length, 
+    movimientos: movimientos.length,
+    gastos: gastos.length 
+});
+
+// CALCULAR TOTALES
+const totalVentas = ventas.reduce((sum, v) => sum + parseFloat(v.total || 0), 0);
+
+// Separar por tipo de código
+const mermas = movimientos.filter(m => m.codigo && m.codigo.startsWith('M'));
+const consumos = movimientos.filter(m => m.codigo && m.codigo.startsWith('C'));
+const compras = movimientos.filter(m => m.codigo && m.codigo.startsWith('E'));
+
+const totalMermas = mermas.reduce((sum, m) => sum + parseFloat(m.costo_total || 0), 0);
+const totalConsumos = consumos.reduce((sum, c) => sum + parseFloat(c.costo_total || 0), 0);
+const totalCompras = compras.reduce((sum, c) => sum + parseFloat(c.costo_total || 0), 0);
+
+// Calcular total de gastos externos
+const totalGastosExternos = gastos.reduce((sum, g) => sum + parseFloat(g.monto || 0), 0);
+
+// Gastos totales = Compras + Mermas + Consumos + Gastos Externos
+const gastosOperacionales = totalCompras + totalMermas + totalConsumos;
+const gastosTotales = gastosOperacionales + totalGastosExternos;
+
+// Utilidad = Ventas - Gastos
+const utilidadNeta = totalVentas - gastosTotales;
+
+// Margen de ganancia (%)
+const margenGanancia = totalVentas > 0 ? ((utilidadNeta / totalVentas) * 100).toFixed(1) : 0;
+
+console.log('💰 Cálculos:', {
+    totalVentas,
+    totalCompras,
+    totalMermas,
+    totalConsumos,
+    totalGastosExternos,
+    gastosOperacionales,
+    gastosTotales,
+    utilidadNeta,
+    margenGanancia
+});
+
+return {
+    totalVentas,
+    totalCompras,
+    totalMermas,
+    totalConsumos,
+    totalGastosExternos,
+    gastosOperacionales,
+    gastosTotales,
+    utilidadNeta,
+    margenGanancia,
+    cantidadVentas: ventas.length,
+    cantidadMermas: mermas.length,
+    cantidadConsumos: consumos.length,
+    cantidadCompras: compras.length,
+    cantidadGastosExternos: gastos.length
+};
+}
+
+// Función para renderizar el informe con los datos
+function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
+    const formatearMoneda = (valor) => {
+        return new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+            minimumFractionDigits: 0
+        }).format(valor);
+    };
+    
     modalBody.innerHTML = `
         <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; max-height: 70vh; overflow-y: auto;">
             <div style="max-width: 480px; margin: 0 auto; background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);">
@@ -2092,130 +2233,118 @@ async function cargarInformes(modalBody) {
                     <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap;">
                         <div>
                             <label style="font-size: 11px; opacity: 0.9;">Fecha Inicio:</label>
-                            <input type="date" id="fechaInicio" style="padding: 5px 10px; border-radius: 5px; border: none; font-size: 13px;">
+                            <input type="date" id="fechaInicioInforme" value="${fechaInicio}" style="padding: 5px 10px; border-radius: 5px; border: none; font-size: 13px;">
                         </div>
                         <div>
                             <label style="font-size: 11px; opacity: 0.9;">Fecha Fin:</label>
-                            <input type="date" id="fechaFin" style="padding: 5px 10px; border-radius: 5px; border: none; font-size: 13px;">
+                            <input type="date" id="fechaFinInforme" value="${fechaFin}" style="padding: 5px 10px; border-radius: 5px; border: none; font-size: 13px;">
                         </div>
                     </div>
-                    <p id="textoPeriodo" style="margin-top: 10px;">Periodo: 1 - 15 de Noviembre 2025</p>
+                    <button onclick="actualizarInforme()" style="margin-top: 10px; padding: 8px 20px; background: white; color: #667eea; border: none; border-radius: 5px; font-weight: 600; cursor: pointer;">
+                        🔄 Actualizar
+                    </button>
+                    <p id="textoPeriodoInforme" style="margin-top: 10px;">Periodo seleccionado</p>
                 </div>
 
                 <div style="padding: 20px;">
                     <!-- Tarjetas de resumen -->
                     <div style="background: linear-gradient(135deg, #d4fc79 0%, #96f550 100%); border-radius: 12px; padding: 20px; margin-bottom: 15px; border-left: 5px solid #10b981;">
                         <div style="font-size: 13px; font-weight: 600; color: #333; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; margin-bottom: 8px;">💰 Ventas Totales</div>
-                        <div style="font-size: 28px; font-weight: bold; color: #1f2937;">$2,450,000</div>
-                        <div style="font-size: 12px; color: #666; margin-top: 8px;">↑ 12% respecto a la semana anterior</div>
+                        <div style="font-size: 28px; font-weight: bold; color: #1f2937;">${formatearMoneda(datos.totalVentas)}</div>
+                        <div style="font-size: 12px; color: #666; margin-top: 8px;">${datos.cantidadVentas} transacciones</div>
                     </div>
 
                     <div style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); border-radius: 12px; padding: 20px; margin-bottom: 15px; border-left: 5px solid #3b82f6;">
                         <div style="font-size: 13px; font-weight: 600; color: #333; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; margin-bottom: 8px;">📈 Utilidades Netas</div>
-                        <div style="font-size: 28px; font-weight: bold; color: #1f2937;">$1,170,000</div>
-                        <div style="font-size: 12px; color: #666; margin-top: 8px;">47.8% margen de ganancia</div>
+                        <div style="font-size: 28px; font-weight: bold; color: #1f2937;">${formatearMoneda(datos.utilidadNeta)}</div>
+                        <div style="font-size: 12px; color: #666; margin-top: 8px;">${datos.margenGanancia}% margen de ganancia</div>
                     </div>
 
                     <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 12px; padding: 20px; margin-bottom: 15px; border-left: 5px solid #ef4444;">
                         <div style="font-size: 13px; font-weight: 600; color: #333; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; margin-bottom: 8px;">💸 Gastos Totales</div>
-                        <div style="font-size: 28px; font-weight: bold; color: #1f2937;">$1,280,000</div>
-                        <div style="font-size: 12px; color: #666; margin-top: 8px;">Operacionales y personales</div>
+                        <div style="font-size: 28px; font-weight: bold; color: #1f2937;">${formatearMoneda(datos.gastosTotales)}</div>
+                        <div style="font-size: 12px; color: #666; margin-top: 8px;">Operacionales</div>
                     </div>
 
-                    <!-- Desglose de Ventas -->
-                    <div style="font-size: 16px; font-weight: 700; color: #1f2937; margin-top: 25px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e5e7eb;">📦 Desglose de Ventas</div>
-                    
-                    <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
-                        <span style="color: #666; font-weight: 500;">Venta Productos</span>
-                        <span style="font-weight: 600; color: #1f2937;">$1,837,500 <span style="font-size: 12px; color: #666; margin-left: 5px;">(75%)</span></span>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
-                        <span style="color: #666; font-weight: 500;">Venta Servicios</span>
-                        <span style="font-weight: 600; color: #1f2937;">$490,000 <span style="font-size: 12px; color: #666; margin-left: 5px;">(20%)</span></span>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 14px;">
-                        <span style="color: #666; font-weight: 500;">Otros Ingresos</span>
-                        <span style="font-weight: 600; color: #1f2937;">$122,500 <span style="font-size: 12px; color: #666; margin-left: 5px;">(5%)</span></span>
-                    </div>
+                    <!-- Desglose de Gastos Operacionales -->
+<div style="font-size: 16px; font-weight: 700; color: #1f2937; margin-top: 25px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e5e7eb;">💼 Desglose de Gastos</div>
 
-                    <!-- Gastos Operacionales -->
-                    <div style="font-size: 16px; font-weight: 700; color: #1f2937; margin-top: 25px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e5e7eb;">💼 Gastos Operacionales</div>
-                    
-                    <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
-                        <span style="color: #666; font-weight: 500;">Costo Inventario</span>
-                        <span style="font-weight: 600; color: #1f2937;">$768,000 <span style="font-size: 12px; color: #666;">(60%)</span></span>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
-                        <span style="color: #666; font-weight: 500;">Servicios (arriendo, utilidades)</span>
-                        <span style="font-weight: 600; color: #1f2937;">$320,000 <span style="font-size: 12px; color: #666;">(25%)</span></span>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
-                        <span style="color: #666; font-weight: 500;">Nómina Personal</span>
-                        <span style="font-weight: 600; color: #1f2937;">$153,600 <span style="font-size: 12px; color: #666;">(12%)</span></span>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
-                        <span style="color: #666; font-weight: 500;">Consumo de Inventario a Costo</span>
-                        <span style="font-weight: 600; color: #1f2937;">$80,000 <span style="font-size: 12px; color: #666;">(6.3%)</span></span>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 14px;">
-                        <span style="color: #666; font-weight: 500;">Otros Gastos</span>
-                        <span style="font-weight: 600; color: #1f2937;">$38,400 <span style="font-size: 12px; color: #666;">(3%)</span></span>
-                    </div>
+<div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
+    <span style="color: #666; font-weight: 500;">🛒 Compras de Inventario</span>
+    <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalCompras)}</span>
+</div>
+<div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 10px;">${datos.cantidadCompras} registros</div>
+
+<div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
+    <span style="color: #666; font-weight: 500;">📦 Consumo de Inventario a Costo</span>
+    <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalConsumos)}</span>
+</div>
+<div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 10px;">${datos.cantidadConsumos} registros</div>
+
+<div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
+    <span style="color: #666; font-weight: 500;">❌ Mermas y Pérdidas</span>
+    <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalMermas)}</span>
+</div>
+<div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 10px;">${datos.cantidadMermas} registros</div>
+
+<div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 14px;">
+    <span style="color: #666; font-weight: 500;">💳 Gastos Externos</span>
+    <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalGastosExternos)}</span>
+</div>
+<div style="font-size: 11px; color: #888; padding-left: 10px;">${datos.cantidadGastosExternos} registros</div>
+
+<div style="background: #eff6ff; border-left: 3px solid #3b82f6; padding: 10px 12px; border-radius: 6px; font-size: 12px; color: #1e40af; margin-top: 15px;">
+    <strong>📦 Consumo de Inventario:</strong> Productos del negocio consumidos registrados al precio de costo.<br>
+    <strong>💳 Gastos Externos:</strong> Gastos operacionales y personales del negocio.
+</div>
 
                     <!-- Resumen Final -->
                     <div style="background: #f9fafb; border-radius: 10px; padding: 15px; margin-top: 20px; border: 1px solid #e5e7eb;">
                         <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px;">
                             <strong style="color: #1f2937;">Ingresos Totales</strong>
-                            <span style="color: #10b981; font-weight: 600;">+ $2,450,000</span>
+                            <span style="color: #10b981; font-weight: 600;">+ ${formatearMoneda(datos.totalVentas)}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px;">
                             <strong style="color: #1f2937;">Gastos Totales</strong>
-                            <span style="color: #ef4444; font-weight: 600;">- $1,280,000</span>
+                            <span style="color: #ef4444; font-weight: 600;">- ${formatearMoneda(datos.gastosTotales)}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; border-top: 2px solid #d1d5db; padding-top: 10px; margin-top: 10px;">
                             <strong style="color: #1f2937;">Utilidad Neta</strong>
-                            <span style="color: #10b981; font-weight: 600; font-size: 16px;">$1,170,000</span>
+                            <span style="color: ${datos.utilidadNeta >= 0 ? '#10b981' : '#ef4444'}; font-weight: 600; font-size: 16px;">${formatearMoneda(datos.utilidadNeta)}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px;">
                             <strong style="color: #1f2937;">Margen de Ganancia</strong>
-                            <span style="color: #666;">47.8%</span>
+                            <span style="color: #666;">${datos.margenGanancia}%</span>
                         </div>
                     </div>
+                </div>
+                
+                <div style="background: #f9fafb; padding: 15px 20px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #e5e7eb;">
+                    <p>Informe generado: ${new Date().toLocaleString('es-CO')}</p>
+                    <p>🏪 ${userData.tenants.nombre_negocio}</p>
                 </div>
             </div>
         </div>
     `;
+}
+
+// Función para actualizar el informe cuando cambian las fechas
+async function actualizarInforme() {
+    const fechaInicio = document.getElementById('fechaInicioInforme').value;
+    const fechaFin = document.getElementById('fechaFinInforme').value;
     
-    // Inicializar funcionalidad de fechas
-    const fechaInicio = document.getElementById('fechaInicio');
-    const fechaFin = document.getElementById('fechaFin');
-    const textoPeriodo = document.getElementById('textoPeriodo');
-
-    // Establecer fechas por defecto
-    fechaInicio.value = '2025-11-01';
-    fechaFin.value = '2025-11-15';
-
-    function actualizarPeriodo() {
-        if (fechaInicio.value && fechaFin.value) {
-            const inicio = new Date(fechaInicio.value + 'T00:00:00');
-            const fin = new Date(fechaFin.value + 'T00:00:00');
-            
-            const opciones = { day: 'numeric', month: 'long', year: 'numeric' };
-            const inicioTexto = inicio.toLocaleDateString('es-ES', opciones);
-            const finTexto = fin.toLocaleDateString('es-ES', opciones);
-            
-            textoPeriodo.textContent = `Periodo: ${inicioTexto} - ${finTexto}`;
-        }
+    if (!fechaInicio || !fechaFin) {
+        alert('Por favor selecciona ambas fechas');
+        return;
     }
-
-    fechaInicio.addEventListener('change', actualizarPeriodo);
-    fechaFin.addEventListener('change', actualizarPeriodo);
+    
+    if (new Date(fechaInicio) > new Date(fechaFin)) {
+        alert('La fecha de inicio no puede ser mayor a la fecha fin');
+        return;
+    }
+    
+    const modalBody = document.getElementById('modalBodyInformes');
+    await cargarInformes(modalBody);
 }
 
     </script>
