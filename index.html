@@ -2331,73 +2331,96 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
                         <div style="font-size: 12px; color: #666; margin-top: 8px;">Operacionales</div>
                     </div>
 
-                    <!-- Desglose de Gastos -->
-<div style="font-size: 16px; font-weight: 700; color: #1f2937; margin-top: 25px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e5e7eb;">💼 Gastos Operacionales</div>
+                    <!-- Desglose de Gastos Operacionales -->
+${datos.gastosOperacionales > 0 ? `
+    <div style="font-size: 16px; font-weight: 700; color: #1f2937; margin-top: 25px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e5e7eb;">💼 Gastos Operacionales</div>
 
-<div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
-    <span style="color: #666; font-weight: 500;">🛒 Costo Inventario</span>
-    <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalCompras)}</span>
-</div>
-<div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 10px;">${datos.cantidadCompras} registros</div>
+    ${datos.totalCompras > 0 ? `
+        <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
+            <span style="color: #666; font-weight: 500;">🛒 Costo Inventario</span>
+            <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalCompras)}</span>
+        </div>
+        <div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 10px;">${datos.cantidadCompras} registros</div>
+    ` : ''}
 
-<div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
-    <span style="color: #666; font-weight: 500;">🏢 Servicios</span>
-    <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalServicios)}</span>
-</div>
-<div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 10px;">${datos.cantidadServicios} registros</div>
+    ${datos.totalServicios > 0 ? `
+        <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
+            <span style="color: #666; font-weight: 500;">🏢 Servicios</span>
+            <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalServicios)}</span>
+        </div>
+        <div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 10px;">${datos.cantidadServicios} registros</div>
+    ` : ''}
 
-<div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
-    <span style="color: #666; font-weight: 500;">👥 Nómina/Sueldo Personal</span>
-    <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalNomina)}</span>
-</div>
-<div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 10px;">${datos.cantidadNomina} registros</div>
+    ${datos.totalNomina > 0 ? `
+        <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
+            <span style="color: #666; font-weight: 500;">👥 Nómina/Sueldo Personal</span>
+            <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalNomina)}</span>
+        </div>
+        <div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 10px;">${datos.cantidadNomina} registros</div>
+    ` : ''}
 
-<div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 14px;">
-    <span style="color: #666; font-weight: 500;">📦 Consumo de Inventario a Costo</span>
-    <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalConsumos)}</span>
-</div>
-<div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 15px;">${datos.cantidadConsumos} registros</div>
+    ${datos.totalConsumos > 0 ? `
+        <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 14px;">
+            <span style="color: #666; font-weight: 500;">📦 Consumo de Inventario a Costo</span>
+            <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalConsumos)}</span>
+        </div>
+        <div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 15px;">${datos.cantidadConsumos} registros</div>
+    ` : ''}
 
-<div style="background: #f0f9ff; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+    <div style="background: #f0f9ff; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
     <div style="display: flex; justify-content: space-between;">
         <strong style="color: #0369a1;">Total Gastos Operacionales:</strong>
         <strong style="color: #0369a1;">${formatearMoneda(datos.gastosOperacionales)}</strong>
     </div>
 </div>
 
+` : ''}
+
 <!-- Gastos Personales Externos -->
-<div style="font-size: 16px; font-weight: 700; color: #1f2937; margin-top: 25px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e5e7eb;">🛍️ Gastos Personales Externos</div>
+${datos.gastosPersonalesExternos > 0 ? `
+    <div style="font-size: 16px; font-weight: 700; color: #1f2937; margin-top: 25px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e5e7eb;">�️ Gastos Personales Externos</div>
 
-<div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
-    <span style="color: #666; font-weight: 500;">🍽️ Alimentación</span>
-    <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalAlimentacion)}</span>
-</div>
-<div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 10px;">${datos.cantidadAlimentacion} registros</div>
+    ${datos.totalAlimentacion > 0 ? `
+        <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
+            <span style="color: #666; font-weight: 500;">🍽️ Alimentación</span>
+            <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalAlimentacion)}</span>
+        </div>
+        <div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 10px;">${datos.cantidadAlimentacion} registros</div>
+    ` : ''}
 
-<div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
-    <span style="color: #666; font-weight: 500;">🚗 Viaje</span>
-    <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalViaje)}</span>
-</div>
-<div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 10px;">${datos.cantidadViaje} registros</div>
+    ${datos.totalViaje > 0 ? `
+        <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
+            <span style="color: #666; font-weight: 500;">🚗 Viaje</span>
+            <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalViaje)}</span>
+        </div>
+        <div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 10px;">${datos.cantidadViaje} registros</div>
+    ` : ''}
 
-<div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
-    <span style="color: #666; font-weight: 500;">💳 Deuda Personal</span>
-    <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalDeuda)}</span>
-</div>
-<div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 10px;">${datos.cantidadDeuda} registros</div>
+    ${datos.totalDeuda > 0 ? `
+        <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
+            <span style="color: #666; font-weight: 500;">💳 Deuda Personal</span>
+            <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalDeuda)}</span>
+        </div>
+        <div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 10px;">${datos.cantidadDeuda} registros</div>
+    ` : ''}
 
-<div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
-    <span style="color: #666; font-weight: 500;">🎮 Entretenimiento</span>
-    <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalEntretenimiento)}</span>
-</div>
-<div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 10px;">${datos.cantidadEntretenimiento} registros</div>
+    ${datos.totalEntretenimiento > 0 ? `
+        <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px;">
+            <span style="color: #666; font-weight: 500;">🎮 Entretenimiento</span>
+            <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalEntretenimiento)}</span>
+        </div>
+        <div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 10px;">${datos.cantidadEntretenimiento} registros</div>
+    ` : ''}
 
-<div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 14px;">
-    <span style="color: #666; font-weight: 500;">📝 Variables</span>
-    <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalVariable)}</span>
-</div>
-<div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 15px;">${datos.cantidadVariable} registros</div>
+    ${datos.totalVariable > 0 ? `
+        <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 14px;">
+            <span style="color: #666; font-weight: 500;">📝 Variables</span>
+            <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalVariable)}</span>
+        </div>
+        <div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 15px;">${datos.cantidadVariable} registros</div>
+    ` : ''}
 
+    <div style="background: #fef3c7; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
 <div style="background: #fef3c7; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
     <div style="display: flex; justify-content: space-between;">
         <strong style="color: #92400e;">Total Gastos Personales:</strong>
@@ -2405,21 +2428,27 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
     </div>
 </div>
 
+` : ''}
+
 <!-- Mermas y Pérdidas -->
-<div style="font-size: 16px; font-weight: 700; color: #1f2937; margin-top: 25px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e5e7eb;">❌ Mermas y Pérdidas</div>
+${datos.totalMermas > 0 ? `
+    <div style="font-size: 16px; font-weight: 700; color: #1f2937; margin-top: 25px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e5e7eb;">❌ Mermas y Pérdidas</div>
 
-<div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 14px;">
-    <span style="color: #666; font-weight: 500;">📉 Pérdidas por Merma</span>
-    <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalMermas)}</span>
-</div>
-<div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 15px;">${datos.cantidadMermas} registros</div>
+    <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 14px;">
+        <span style="color: #666; font-weight: 500;">📉 Pérdidas por Merma</span>
+        <span style="font-weight: 600; color: #1f2937;">${formatearMoneda(datos.totalMermas)}</span>
+    </div>
+    <div style="font-size: 11px; color: #888; padding-left: 10px; margin-bottom: 15px;">${datos.cantidadMermas} registros</div>
+` : ''}
 
-<div style="background: #eff6ff; border-left: 3px solid #3b82f6; padding: 10px 12px; border-radius: 6px; font-size: 12px; color: #1e40af; margin-top: 15px;">
-    <strong>💡 Nota:</strong> Los gastos están organizados en tres categorías principales:<br>
-    • <strong>Operacionales:</strong> Compras, servicios, nómina y consumos<br>
-    • <strong>Personales:</strong> Alimentación, viaje, deuda, entretenimiento y variables<br>
-    • <strong>Mermas:</strong> Pérdidas de inventario
-</div>
+${(datos.gastosOperacionales > 0 || datos.gastosPersonalesExternos > 0 || datos.totalMermas > 0) ? `
+    <div style="background: #eff6ff; border-left: 3px solid #3b82f6; padding: 10px 12px; border-radius: 6px; font-size: 12px; color: #1e40af; margin-top: 15px;">
+        <strong>💡 Nota:</strong> Los gastos están organizados en tres categorías principales:<br>
+        • <strong>Operacionales:</strong> Compras, servicios, nómina y consumos<br>
+        • <strong>Personales:</strong> Alimentación, viaje, deuda, entretenimiento y variables<br>
+        • <strong>Mermas:</strong> Pérdidas de inventario
+    </div>
+` : ''}
 
                     <!-- Resumen Final -->
                     <div style="background: #f9fafb; border-radius: 10px; padding: 15px; margin-top: 20px; border: 1px solid #e5e7eb;">
