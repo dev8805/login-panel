@@ -2133,7 +2133,7 @@ async function cargarDatosRealesInforme(fechaInicio, fechaFin) {
     // 2. CARGAR MOVIMIENTOS DE INVENTARIO (Mermas, Consumos, Compras)
 const { data: movimientos, error: errorMovimientos } = await supabase
     .from('movimientos_inventario')
-    .select('codigo, costo_total, created_at')
+    .select('codigo, costo_total, costo_unitario, cantidad, created_at')
     .eq('tenant_id', userData.tenant_id)
     .eq('activo', true)
     .gte('created_at', fechaInicioISO)
@@ -2167,9 +2167,24 @@ const mermas = movimientos.filter(m => m.codigo && m.codigo.startsWith('M'));
 const consumos = movimientos.filter(m => m.codigo && m.codigo.startsWith('C'));
 const compras = movimientos.filter(m => m.codigo && m.codigo.startsWith('E'));
 
-const totalMermas = mermas.reduce((sum, m) => sum + parseFloat(m.costo_total || 0), 0);
-const totalConsumos = consumos.reduce((sum, c) => sum + parseFloat(c.costo_total || 0), 0);
-const totalCompras = compras.reduce((sum, c) => sum + parseFloat(c.costo_total || 0), 0);
+// Calcular totales considerando que algunos registros tienen costo_total en 0
+const totalMermas = mermas.reduce((sum, m) => {
+    const costoTotal = parseFloat(m.costo_total || 0);
+    const costoCalculado = costoTotal > 0 ? costoTotal : (parseFloat(m.cantidad || 0) * parseFloat(m.costo_unitario || 0));
+    return sum + costoCalculado;
+}, 0);
+
+const totalConsumos = consumos.reduce((sum, c) => {
+    const costoTotal = parseFloat(c.costo_total || 0);
+    const costoCalculado = costoTotal > 0 ? costoTotal : (parseFloat(c.cantidad || 0) * parseFloat(c.costo_unitario || 0));
+    return sum + costoCalculado;
+}, 0);
+
+const totalCompras = compras.reduce((sum, c) => {
+    const costoTotal = parseFloat(c.costo_total || 0);
+    const costoCalculado = costoTotal > 0 ? costoTotal : (parseFloat(c.cantidad || 0) * parseFloat(c.costo_unitario || 0));
+    return sum + costoCalculado;
+}, 0);
 
 // Calcular total de gastos externos
 const totalGastosExternos = gastos.reduce((sum, g) => sum + parseFloat(g.monto || 0), 0);
