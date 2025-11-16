@@ -2144,9 +2144,10 @@ if (errorMovimientos) throw new Error('Error cargando movimientos: ' + errorMovi
 // 3. CARGAR GASTOS DE LA TABLA GASTOS
 const { data: gastos, error: errorGastos } = await supabase
     .from('gastos')
-    .select('monto, descripcion, created_at')
+    .select('monto, concepto, created_at')
     .eq('tenant_id', userData.tenant_id)
     .eq('activo', true)
+    .is('deleted_at', null)
     .gte('created_at', fechaInicioISO)
     .lte('created_at', fechaFinISO);
 
