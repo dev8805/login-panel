@@ -2789,8 +2789,8 @@ async function cargarFormularioEditarApodos(modalBody) {
             <div id="editorApodos" style="display: none; margin-top: 30px; border-top: 2px solid #667eea; padding-top: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h3 id="tituloEditorApodos" style="margin: 0; color: #667eea;">Editando apodos</h3>
-                    <button onclick="cerrarEditorApodos()" style="padding: 8px 16px; background: #666; color: white; border: none; border-radius: 6px; cursor: pointer;">
-                        ✕ Cerrar
+                    <button class="modal-close" onclick="cerrarEditorApodos()" style="padding: 6px 10px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                     ✕
                     </button>
                 </div>
                 
@@ -2802,21 +2802,21 @@ async function cargarFormularioEditarApodos(modalBody) {
                 <!-- Agregar nuevo apodo -->
                 <div style="background: #f5f7ff; padding: 15px; border-radius: 8px;">
                     <label style="display: block; margin-bottom: 8px; font-weight: 600;">Agregar nuevo apodo</label>
-                    <div style="display: flex; gap: 10px;">
-                        <input 
-                            type="text" 
-                            id="nuevoApodo" 
-                            placeholder="Escribe el nuevo apodo..."
-                            style="flex: 1;"
-                            onkeypress="if(event.key === 'Enter') agregarNuevoApodo()"
-                        >
-                        <button 
-                            onclick="agregarNuevoApodo()"
-                            style="padding: 12px 20px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;"
-                        >
-                            ➕ Agregar
-                        </button>
-                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+    <input 
+        type="text" 
+        id="nuevoApodo" 
+        placeholder="Escribe el nuevo apodo..."
+        style="flex: 1; padding: 10px 12px;"
+        onkeypress="if(event.key === 'Enter') agregarNuevoApodo()"
+    >
+    <button 
+        onclick="agregarNuevoApodo()"
+        style="padding: 10px 14px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; white-space: nowrap;"
+    >
+        ➕
+    </button>
+</div>
                 </div>
             </div>
         `;
@@ -2853,7 +2853,6 @@ function filtrarProductosApodos() {
     }
 }
 
-// Abrir editor de apodos para un producto específico
 async function abrirEditorApodos(productoId, codigo, producto) {
     productoActualApodos = { producto_id: productoId, codigo: codigo, producto: producto };
     
@@ -2861,13 +2860,16 @@ async function abrirEditorApodos(productoId, codigo, producto) {
     document.getElementById('tituloEditorApodos').textContent = `Editando apodos de [${codigo}] ${producto}`;
     
     // Mostrar sección del editor
-    document.getElementById('editorApodos').style.display = 'block';
+    const editor = document.getElementById('editorApodos');
+    editor.style.display = 'block';
     
-    // Scroll hacia el editor
-    document.getElementById('editorApodos').scrollIntoView({ behavior: 'smooth' });
-    
-    // Cargar apodos existentes
+    // Cargar apodos primero (evita reflow durante carga)
     await cargarApodosProducto(productoId);
+    
+    // Scroll después de cargar (usar requestAnimationFrame)
+    requestAnimationFrame(() => {
+        editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
 }
 
 // Cargar apodos de un producto
@@ -2903,10 +2905,10 @@ async function cargarApodosProducto(productoId) {
                         <div id="apodo-item-${a.apodo_id}" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f5f7ff; border-radius: 6px; margin-bottom: 8px;">
                             <span style="font-weight: 500; color: #333;">🏷️ ${a.apodo}</span>
                             <button 
-                                onclick="eliminarApodoEditor('${a.apodo_id}', '${a.apodo}')"
-                                style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;"
-                            >
-                                🗑️ Eliminar
+    onclick="eliminarApodoEditor('${a.apodo_id}', '${a.apodo}')"
+    style="padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 10px;"
+>
+    🗑️
                             </button>
                         </div>
                     `).join('')}
