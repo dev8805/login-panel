@@ -2733,10 +2733,16 @@ async function cargarFormularioEditarApodos(modalBody) {
     
     try {
         const { data: apodos, error } = await supabase
-            .from('productos_apodos')
-            .select('apodo_id, codigo, producto, apodo')
-            .eq('tenant_id', userData.tenant_id)
-            .order('codigo');
+    .from('productos_apodos')
+    .select(`
+        apodo_id,
+        producto,
+        apodo,
+        productos!inner(codigo)
+    `)
+    .eq('tenant_id', userData.tenant_id)
+    .is('deleted_at', null)
+    .order('apodo_id');
         
         if (error) throw error;
         
@@ -2766,13 +2772,13 @@ async function cargarFormularioEditarApodos(modalBody) {
                     </thead>
                     <tbody id="bodyApodosEdit">
                         ${apodos.map(a => `
-                            <tr data-apodo-id="${a.apodo_id}">
-                                <td><strong>${a.codigo}</strong></td>
-                                <td>${a.producto}</td>
-                                <td id="apodo-${a.apodo_id}">${a.apodo}</td>
-                                <td>
-                                    <button 
-                                        onclick="eliminarApodo('${a.apodo_id}', '${a.codigo}', '${a.apodo}')"
+    <tr data-apodo-id="${a.apodo_id}">
+        <td><strong>${a.productos.codigo}</strong></td>
+        <td>${a.producto}</td>
+        <td id="apodo-${a.apodo_id}">${a.apodo}</td>
+        <td>
+            <button 
+                onclick="eliminarApodo('${a.apodo_id}', '${a.productos.codigo}', '${a.apodo}')"
                                         style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;"
                                     >
                                         🗑️ Eliminar
