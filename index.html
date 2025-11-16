@@ -2786,13 +2786,7 @@ async function cargarFormularioEditarApodos(modalBody) {
             </div>
             
             <!-- Sección del editor de apodos (oculta inicialmente) -->
-            <div id="editorApodos" style="display: none; margin-top: 30px; border-top: 2px solid #667eea; padding-top: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 id="tituloEditorApodos" style="margin: 0; color: #667eea;">Editando apodos</h3>
-                    <button class="modal-close" onclick="cerrarEditorApodos()" style="padding: 6px 10px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
-                     ✕
-                    </button>
-                </div>
+            
                 
                 <!-- Lista de apodos existentes -->
                 <div id="listaApodos" style="margin-bottom: 20px;">
@@ -2856,26 +2850,24 @@ function filtrarProductosApodos() {
 async function abrirEditorApodos(productoId, codigo, producto) {
     productoActualApodos = { producto_id: productoId, codigo: codigo, producto: producto };
     
-    // Actualizar título
-    document.getElementById('tituloEditorApodos').textContent = `Editando apodos de [${codigo}] ${producto}`;
+    // Actualizar título del modal
+    document.getElementById('tituloModalEditorApodos').textContent = `🏷️ [${codigo}] ${producto}`;
     
-    // Mostrar sección del editor
-    const editor = document.getElementById('editorApodos');
-    editor.style.display = 'block';
+    // Abrir el nuevo modal
+    const modal = document.getElementById('modalEditorApodos');
+    const modalBody = document.getElementById('modalBodyEditorApodos');
     
-    // Cargar apodos primero (evita reflow durante carga)
-    await cargarApodosProducto(productoId);
+    // Mostrar loading
+    modalBody.innerHTML = '<p style="text-align: center; padding: 40px;">Cargando apodos...</p>';
     
-    // Scroll después de cargar (usar requestAnimationFrame)
-    requestAnimationFrame(() => {
-        editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
+    modal.classList.add('show');
+    
+    // Cargar contenido del editor
+    await cargarContenidoEditorApodos(productoId);
 }
 
-// Cargar apodos de un producto
-async function cargarApodosProducto(productoId) {
-    const listaApodos = document.getElementById('listaApodos');
-    listaApodos.innerHTML = '<p style="text-align: center; color: #666;">Cargando apodos...</p>';
+async function cargarContenidoEditorApodos(productoId) {
+    const modalBody = document.getElementById('modalBodyEditorApodos');
     
     try {
         const { data: apodos, error } = await supabase
@@ -2888,37 +2880,65 @@ async function cargarApodosProducto(productoId) {
         
         if (error) throw error;
         
+        let listaApodosHTML = '';
+        
         if (apodos.length === 0) {
-            listaApodos.innerHTML = `
-                <div style="text-align: center; padding: 20px; background: #f9f9f9; border-radius: 8px; color: #999;">
+            listaApodosHTML = `
+                <div style="text-align: center; padding: 20px; background: #f9f9f9; border-radius: 8px; color: #999; margin-bottom: 20px;">
                     No hay apodos registrados para este producto
                 </div>
             `;
-            return;
+        } else {
+            listaApodosHTML = `
+                <div style="background: #fff; border: 2px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                    <h4 style="margin: 0 0 15px 0; color: #333;">Apodos actuales:</h4>
+                    <div id="apodosItems">
+                        ${apodos.map(a => `
+                            <div id="apodo-item-${a.apodo_id}" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f5f7ff; border-radius: 6px; margin-bottom: 8px;">
+                                <span style="font-weight: 500; color: #333;">🏷️ ${a.apodo}</span>
+                                <button 
+                                    onclick="eliminarApodoEditor('${a.apodo_id}', '${a.apodo}')"
+                                    style="padding: 6px 10px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 10px; min-width: auto; width: auto; flex-shrink: 0;"
+                                >
+                                    🗑️
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
         }
         
-        listaApodos.innerHTML = `
-            <div style="background: #fff; border: 2px solid #e0e0e0; border-radius: 8px; padding: 15px;">
-                <h4 style="margin: 0 0 15px 0; color: #333;">Apodos actuales:</h4>
-                <div id="apodosItems">
-                    ${apodos.map(a => `
-                        <div id="apodo-item-${a.apodo_id}" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f5f7ff; border-radius: 6px; margin-bottom: 8px;">
-    <span style="font-weight: 500; color: #333;">🏷️ ${a.apodo}</span>
-    <button 
-        onclick="eliminarApodoEditor('${a.apodo_id}', '${a.apodo}')"
-        style="padding: 6px 10px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 10px; min-width: auto; width: auto; flex-shrink: 0;"
-    >
-        🗑️
-    </button>
-</div> 
-                    `).join('')}
+        modalBody.innerHTML = `
+            <div id="successEditApodosModal" class="success-message"></div>
+            <div id="errorEditApodosModal" class="error"></div>
+            
+            ${listaApodosHTML}
+            
+            <!-- Agregar nuevo apodo -->
+            <div style="background: #f5f7ff; padding: 15px; border-radius: 8px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Agregar nuevo apodo</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input 
+                        type="text" 
+                        id="nuevoApodoModal" 
+                        placeholder="Escribe el nuevo apodo..."
+                        style="flex: 1; padding: 10px 12px; max-width: 70%;"
+                        onkeypress="if(event.key === 'Enter') agregarNuevoApodoModal()"
+                    >
+                    <button 
+                        onclick="agregarNuevoApodoModal()"
+                        style="padding: 10px 12px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; min-width: auto; width: auto; flex-shrink: 0;"
+                    >
+                        ➕
+                    </button>
                 </div>
             </div>
         `;
         
     } catch (error) {
         console.error('Error cargando apodos:', error);
-        listaApodos.innerHTML = `
+        modalBody.innerHTML = `
             <div class="error show">
                 Error al cargar apodos: ${error.message}
             </div>
@@ -2927,17 +2947,17 @@ async function cargarApodosProducto(productoId) {
 }
 
 // Agregar nuevo apodo
-async function agregarNuevoApodo() {
-    const input = document.getElementById('nuevoApodo');
+async function agregarNuevoApodoModal() {
+    const input = document.getElementById('nuevoApodoModal');
     const apodo = input.value.trim();
     
     if (!apodo) {
-        mostrarErrorEditApodos('Debes escribir un apodo');
+        mostrarErrorEditApodosModal('Debes escribir un apodo');
         return;
     }
     
     if (!productoActualApodos) {
-        mostrarErrorEditApodos('No hay producto seleccionado');
+        mostrarErrorEditApodosModal('No hay producto seleccionado');
         return;
     }
     
@@ -2960,13 +2980,13 @@ async function agregarNuevoApodo() {
         input.value = '';
         
         // Recargar lista de apodos
-        await cargarApodosProducto(productoActualApodos.producto_id);
+        await cargarContenidoEditorApodos(productoActualApodos.producto_id);
         
-        mostrarExitoEditApodos(`✅ Apodo "${apodo}" agregado correctamente`);
+        mostrarExitoEditApodosModal(`✅ Apodo "${apodo}" agregado correctamente`);
         
     } catch (error) {
         console.error('Error agregando apodo:', error);
-        mostrarErrorEditApodos('Error al agregar apodo: ' + error.message);
+        mostrarErrorEditApodosModal('Error al agregar apodo: ' + error.message);
     }
 }
 
@@ -2991,25 +3011,55 @@ async function eliminarApodoEditor(apodoId, apodo) {
         // Si ya no quedan apodos, recargar para mostrar mensaje
         const apodosItems = document.getElementById('apodosItems');
         if (apodosItems && apodosItems.children.length === 0) {
-            await cargarApodosProducto(productoActualApodos.producto_id);
+            await cargarContenidoEditorApodos(productoActualApodos.producto_id);
         }
         
-        mostrarExitoEditApodos(`✅ Apodo "${apodo}" eliminado correctamente`);
+        mostrarExitoEditApodosModal(`✅ Apodo "${apodo}" eliminado correctamente`);
         
     } catch (error) {
         console.error('Error eliminando apodo:', error);
-        mostrarErrorEditApodos('Error al eliminar apodo: ' + error.message);
+        mostrarErrorEditApodosModal('Error al eliminar apodo: ' + error.message);
     }
 }
 
 // Cerrar editor de apodos
-function cerrarEditorApodos() {
-    document.getElementById('editorApodos').style.display = 'none';
-    document.getElementById('nuevoApodo').value = '';
+function cerrarModalEditorApodos() {
+    document.getElementById('modalEditorApodos').classList.remove('show');
     productoActualApodos = null;
+}
+
+function mostrarErrorEditApodosModal(mensaje) {
+    const errorDiv = document.getElementById('errorEditApodosModal');
+    const successDiv = document.getElementById('successEditApodosModal');
     
-    // Scroll hacia arriba
-    document.querySelector('.modal-body').scrollTop = 0;
+    if (errorDiv) {
+        errorDiv.textContent = mensaje;
+        errorDiv.classList.add('show');
+    }
+    if (successDiv) {
+        successDiv.classList.remove('show');
+    }
+    
+    setTimeout(() => {
+        if (errorDiv) errorDiv.classList.remove('show');
+    }, 5000);
+}
+
+function mostrarExitoEditApodosModal(mensaje) {
+    const successDiv = document.getElementById('successEditApodosModal');
+    const errorDiv = document.getElementById('errorEditApodosModal');
+    
+    if (successDiv) {
+        successDiv.textContent = mensaje;
+        successDiv.classList.add('show');
+    }
+    if (errorDiv) {
+        errorDiv.classList.remove('show');
+    }
+    
+    setTimeout(() => {
+        if (successDiv) successDiv.classList.remove('show');
+    }, 3000);
 }
 
 function filtrarApodosEdit() {
@@ -3048,15 +3098,15 @@ async function eliminarApodo(apodoId, codigo, apodo) {
         const row = document.querySelector(`tr[data-apodo-id="${apodoId}"]`);
         if (row) row.remove();
         
-        mostrarExitoEditApodos(`✅ Apodo eliminado correctamente\n\n[${codigo}] "${apodo}"`);
+        mostrarExitoEditApodosModal(`✅ Apodo eliminado correctamente\n\n[${codigo}] "${apodo}"`);
         
     } catch (error) {
         console.error('Error eliminando apodo:', error);
-        mostrarErrorEditApodos('Error al eliminar apodo: ' + error.message);
+        mostrarErrorEditApodosModal('Error al eliminar apodo: ' + error.message);
     }
 }
 
-function mostrarErrorEditApodos(mensaje) {
+function mostrarErrorEditApodosModal(mensaje) {
     const errorDiv = document.getElementById('errorEditApodos');
     const successDiv = document.getElementById('successEditApodos');
     
@@ -3073,7 +3123,7 @@ function mostrarErrorEditApodos(mensaje) {
     }, 5000);
 }
 
-function mostrarExitoEditApodos(mensaje) {
+function mostrarExitoEditApodosModal(mensaje) {
     const successDiv = document.getElementById('successEditApodos');
     const errorDiv = document.getElementById('errorEditApodos');
     
@@ -3167,6 +3217,19 @@ function mostrarExitoEditApodos(mensaje) {
         </div>
         <div class="modal-body" id="modalBodyEditarApodos">
             <!-- Aquí se cargará el formulario -->
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editor de Apodos Individual -->
+<div id="modalEditorApodos" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="tituloModalEditorApodos">🏷️ Editar Apodos</h3>
+            <button class="modal-close" onclick="cerrarModalEditorApodos()">×</button>
+        </div>
+        <div class="modal-body" id="modalBodyEditorApodos">
+            <!-- Aquí se cargará el editor de apodos -->
         </div>
     </div>
 </div>
