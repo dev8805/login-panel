@@ -77,6 +77,17 @@
             font-size: 14px;
             transition: all 0.3s;
         }
+
+        /* Eliminar flechas de inputs numéricos */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
         
         input:focus {
             outline: none;
@@ -650,6 +661,22 @@ select:focus {
     url: '#',
     permission: 'informes.ver',
     modal: true
+},
+{
+    id: 'editar_producto',
+    icon: '✏️',
+    title: 'Editar Producto',
+    url: '#',
+    permission: 'productos.editar',
+    modal: true
+},
+{
+    id: 'editar_apodos',
+    icon: '🏷️',
+    title: 'Editar Apodos',
+    url: '#',
+    permission: 'productos.editar',
+    modal: true
 }
         ];
         
@@ -913,6 +940,20 @@ function openModal(modalId) {
     modal.classList.add('show');
   }
 
+  else if (modalId === 'editar_producto') {
+    const modal = document.getElementById('modalEditarProducto');
+    const modalBody = document.getElementById('modalBodyEditarProducto');
+    
+    cargarFormularioEditarProducto(modalBody);
+    modal.classList.add('show');
+} else if (modalId === 'editar_apodos') {
+    const modal = document.getElementById('modalEditarApodos');
+    const modalBody = document.getElementById('modalBodyEditarApodos');
+    
+    cargarFormularioEditarApodos(modalBody);
+    modal.classList.add('show');
+}
+
 }
 
 // Cerrar modal
@@ -933,6 +974,17 @@ function closeModalUsuario() {
 // Cerrar modal de informes
 function closeModalInformes() {
     document.getElementById('modalInformes').classList.remove('show');
+
+    // Cerrar modal de editar producto
+function closeModalEditarProducto() {
+    document.getElementById('modalEditarProducto').classList.remove('show');
+}
+
+// Cerrar modal de editar apodos
+function closeModalEditarApodos() {
+    document.getElementById('modalEditarApodos').classList.remove('show');
+}
+
 }
         // Cargar formulario de usuario
 async function cargarFormularioUsuario(modalBody) {
@@ -2499,6 +2551,328 @@ async function actualizarInforme() {
     await cargarInformes(modalBody);
 }
 
+// =====================================================
+// FUNCIONES PARA EDITAR PRODUCTO
+// =====================================================
+
+async function cargarFormularioEditarProducto(modalBody) {
+    // Mostrar loading
+    modalBody.innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+            <p>Cargando productos...</p>
+        </div>
+    `;
+    
+    try {
+        // Cargar productos
+        const { data: productos, error } = await supabase
+            .from('productos')
+            .select('producto_id, codigo, producto')
+            .eq('tenant_id', userData.tenant_id)
+            .eq('activo', true)
+            .order('codigo');
+        
+        if (error) throw error;
+        
+        modalBody.innerHTML = `
+            <div id="successEditProducto" class="success-message"></div>
+            <div id="errorEditProducto" class="error"></div>
+            
+            <!-- Buscador -->
+            <div class="form-group">
+                <label for="buscarProductoEdit">Buscar producto</label>
+                <input 
+                    type="text" 
+                    id="buscarProductoEdit" 
+                    placeholder="Buscar por código o nombre..."
+                    onkeyup="filtrarProductosEdit()"
+                >
+            </div>
+            
+            <!-- Tabla de productos -->
+            <div style="max-height: 400px; overflow-y: auto;">
+                <table class="productos-table" id="tablaProductosEdit">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyProductosEdit">
+                        ${productos.map(p => `
+                            <tr data-producto-id="${p.producto_id}">
+                                <td><strong>${p.codigo}</strong></td>
+                                <td id="nombre-${p.producto_id}">${p.producto}</td>
+                                <td>
+                                    <button 
+                                        onclick="editarNombreProducto('${p.producto_id}', '${p.codigo}')"
+                                        style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;"
+                                    >
+                                        ✏️ Editar
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('Error cargando productos:', error);
+        modalBody.innerHTML = `
+            <div class="error show">
+                Error al cargar productos: ${error.message}
+            </div>
+        `;
+    }
+}
+
+// Filtrar productos en la tabla
+function filtrarProductosEdit() {
+    const input = document.getElementById('buscarProductoEdit');
+    const filter = input.value.toLowerCase();
+    const tbody = document.getElementById('bodyProductosEdit');
+    const rows = tbody.getElementsByTagName('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+        const codigo = rows[i].cells[0].textContent.toLowerCase();
+        const nombre = rows[i].cells[1].textContent.toLowerCase();
+        
+        if (codigo.includes(filter) || nombre.includes(filter)) {
+            rows[i].style.display = '';
+        } else {
+            rows[i].style.display = 'none';
+        }
+    }
+}
+
+// Editar nombre de producto
+async function editarNombreProducto(productoId, codigo) {
+    const nombreActual = document.getElementById(`nombre-${productoId}`).textContent;
+    
+    const nuevoNombre = prompt(`Editar nombre del producto [${codigo}]:\n\nNombre actual: ${nombreActual}\n\nIngresa el nuevo nombre:`, nombreActual);
+    
+    if (!nuevoNombre || nuevoNombre.trim() === '') {
+        return;
+    }
+    
+    if (nuevoNombre.trim() === nombreActual) {
+        alert('El nombre no ha cambiado');
+        return;
+    }
+    
+    try {
+        const { error } = await supabase
+            .from('productos')
+            .update({
+                producto: nuevoNombre.trim(),
+                updated_at: new Date().toISOString(),
+                updated_by: userData.user_id
+            })
+            .eq('producto_id', productoId);
+        
+        if (error) throw error;
+        
+        // Actualizar en la tabla
+        document.getElementById(`nombre-${productoId}`).textContent = nuevoNombre.trim();
+        
+        mostrarExitoEditProducto(`✅ Producto actualizado correctamente\n\n[${codigo}] ${nuevoNombre.trim()}`);
+        
+    } catch (error) {
+        console.error('Error actualizando producto:', error);
+        mostrarErrorEditProducto('Error al actualizar el producto: ' + error.message);
+    }
+}
+
+function mostrarErrorEditProducto(mensaje) {
+    const errorDiv = document.getElementById('errorEditProducto');
+    const successDiv = document.getElementById('successEditProducto');
+    
+    if (errorDiv) {
+        errorDiv.textContent = mensaje;
+        errorDiv.classList.add('show');
+    }
+    if (successDiv) {
+        successDiv.classList.remove('show');
+    }
+    
+    setTimeout(() => {
+        if (errorDiv) errorDiv.classList.remove('show');
+    }, 5000);
+}
+
+function mostrarExitoEditProducto(mensaje) {
+    const successDiv = document.getElementById('successEditProducto');
+    const errorDiv = document.getElementById('errorEditProducto');
+    
+    if (successDiv) {
+        successDiv.textContent = mensaje;
+        successDiv.classList.add('show');
+    }
+    if (errorDiv) {
+        errorDiv.classList.remove('show');
+    }
+    
+    setTimeout(() => {
+        if (successDiv) successDiv.classList.remove('show');
+    }, 3000);
+}
+
+// =====================================================
+// FUNCIONES PARA EDITAR APODOS
+// =====================================================
+
+async function cargarFormularioEditarApodos(modalBody) {
+    modalBody.innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+            <p>Cargando apodos...</p>
+        </div>
+    `;
+    
+    try {
+        const { data: apodos, error } = await supabase
+            .from('productos_apodos')
+            .select('apodo_id, codigo, producto, apodo')
+            .eq('tenant_id', userData.tenant_id)
+            .order('codigo');
+        
+        if (error) throw error;
+        
+        modalBody.innerHTML = `
+            <div id="successEditApodos" class="success-message"></div>
+            <div id="errorEditApodos" class="error"></div>
+            
+            <div class="form-group">
+                <label for="buscarApodoEdit">Buscar apodo</label>
+                <input 
+                    type="text" 
+                    id="buscarApodoEdit" 
+                    placeholder="Buscar por código, producto o apodo..."
+                    onkeyup="filtrarApodosEdit()"
+                >
+            </div>
+            
+            <div style="max-height: 400px; overflow-y: auto;">
+                <table class="productos-table" id="tablaApodosEdit">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Producto</th>
+                            <th>Apodo</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyApodosEdit">
+                        ${apodos.map(a => `
+                            <tr data-apodo-id="${a.apodo_id}">
+                                <td><strong>${a.codigo}</strong></td>
+                                <td>${a.producto}</td>
+                                <td id="apodo-${a.apodo_id}">${a.apodo}</td>
+                                <td>
+                                    <button 
+                                        onclick="eliminarApodo('${a.apodo_id}', '${a.codigo}', '${a.apodo}')"
+                                        style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;"
+                                    >
+                                        🗑️ Eliminar
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('Error cargando apodos:', error);
+        modalBody.innerHTML = `
+            <div class="error show">
+                Error al cargar apodos: ${error.message}
+            </div>
+        `;
+    }
+}
+
+function filtrarApodosEdit() {
+    const input = document.getElementById('buscarApodoEdit');
+    const filter = input.value.toLowerCase();
+    const tbody = document.getElementById('bodyApodosEdit');
+    const rows = tbody.getElementsByTagName('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+        const codigo = rows[i].cells[0].textContent.toLowerCase();
+        const producto = rows[i].cells[1].textContent.toLowerCase();
+        const apodo = rows[i].cells[2].textContent.toLowerCase();
+        
+        if (codigo.includes(filter) || producto.includes(filter) || apodo.includes(filter)) {
+            rows[i].style.display = '';
+        } else {
+            rows[i].style.display = 'none';
+        }
+    }
+}
+
+async function eliminarApodo(apodoId, codigo, apodo) {
+    if (!confirm(`¿Seguro que deseas eliminar el apodo "${apodo}" del producto [${codigo}]?`)) {
+        return;
+    }
+    
+    try {
+        const { error } = await supabase
+            .from('productos_apodos')
+            .delete()
+            .eq('apodo_id', apodoId);
+        
+        if (error) throw error;
+        
+        // Eliminar fila de la tabla
+        const row = document.querySelector(`tr[data-apodo-id="${apodoId}"]`);
+        if (row) row.remove();
+        
+        mostrarExitoEditApodos(`✅ Apodo eliminado correctamente\n\n[${codigo}] "${apodo}"`);
+        
+    } catch (error) {
+        console.error('Error eliminando apodo:', error);
+        mostrarErrorEditApodos('Error al eliminar apodo: ' + error.message);
+    }
+}
+
+function mostrarErrorEditApodos(mensaje) {
+    const errorDiv = document.getElementById('errorEditApodos');
+    const successDiv = document.getElementById('successEditApodos');
+    
+    if (errorDiv) {
+        errorDiv.textContent = mensaje;
+        errorDiv.classList.add('show');
+    }
+    if (successDiv) {
+        successDiv.classList.remove('show');
+    }
+    
+    setTimeout(() => {
+        if (errorDiv) errorDiv.classList.remove('show');
+    }, 5000);
+}
+
+function mostrarExitoEditApodos(mensaje) {
+    const successDiv = document.getElementById('successEditApodos');
+    const errorDiv = document.getElementById('errorEditApodos');
+    
+    if (successDiv) {
+        successDiv.textContent = mensaje;
+        successDiv.classList.add('show');
+    }
+    if (errorDiv) {
+        errorDiv.classList.remove('show');
+    }
+    
+    setTimeout(() => {
+        if (successDiv) successDiv.classList.remove('show');
+    }, 3000);
+}
+
     </script>
 </body>
 
@@ -2550,6 +2924,32 @@ async function actualizarInforme() {
         </div>
         <div class="modal-body" id="modalBodyInformes">
             <!-- Aquí se cargarán los informes -->
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Producto -->
+<div id="modalEditarProducto" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>✏️ Editar Producto</h3>
+            <button class="modal-close" onclick="closeModalEditarProducto()">×</button>
+        </div>
+        <div class="modal-body" id="modalBodyEditarProducto">
+            <!-- Aquí se cargará el formulario -->
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Apodos -->
+<div id="modalEditarApodos" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>🏷️ Editar Apodos</h3>
+            <button class="modal-close" onclick="closeModalEditarApodos()">×</button>
+        </div>
+        <div class="modal-body" id="modalBodyEditarApodos">
+            <!-- Aquí se cargará el formulario -->
         </div>
     </div>
 </div>
