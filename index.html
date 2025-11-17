@@ -1877,7 +1877,7 @@ function updateFormByType() {
                 </select>
             </div>
             <div class="form-group">
-                <label>Factor (unidades por compra) *</label>
+                <label id="labelFactorUnidad">Factor *</label>
                 <input type="number" id="factor" required min="1" step="1" value="1">
             </div>
             <div class="form-group">
@@ -1893,6 +1893,22 @@ function updateFormByType() {
                 <input type="number" id="costo" required min="0" step="0.01">
             </div>
         `;
+        
+        container.innerHTML = html;
+        
+        // ⭐ LISTENERS PARA UNIDAD - SE AGREGAN AQUÍ
+        setTimeout(() => {
+            const unidadCompraSelect = document.getElementById('unidadCompra');
+            const labelFactor = document.getElementById('labelFactorUnidad');
+            
+            function actualizarLabelFactorUnidad() {
+                const unidadCompra = unidadCompraSelect.value || 'unidad de compra';
+                labelFactor.textContent = `¿Cuántas unidades tiene 1 ${unidadCompra}? *`;
+            }
+            
+            unidadCompraSelect.addEventListener('change', actualizarLabelFactorUnidad);
+        }, 0);
+        
     } else if (tipo === 'peso') {
         html = `
             <div class="form-group">
@@ -1915,7 +1931,7 @@ function updateFormByType() {
                 </select>
             </div>
             <div class="form-group">
-                <label>Factor (peso por compra) *</label>
+                <label id="labelFactorPeso">Factor *</label>
                 <input type="number" id="factor" required min="0.01" step="0.01">
             </div>
             <div class="form-group">
@@ -1923,14 +1939,44 @@ function updateFormByType() {
                 <input type="number" id="stock" required min="0" step="0.01">
             </div>
             <div class="form-group">
-                <label>Precio por unidad de venta *</label>
+                <label id="labelPrecioPeso">Precio por unidad de venta *</label>
                 <input type="number" id="precio" required min="0" step="0.01">
             </div>
             <div class="form-group">
-                <label>Costo por unidad de venta *</label>
+                <label id="labelCostoPeso">Costo por unidad de venta *</label>
                 <input type="number" id="costo" required min="0" step="0.01">
             </div>
         `;
+        
+        container.innerHTML = html;
+        
+        // ⭐ LISTENERS PARA PESO - SE AGREGAN AQUÍ
+        setTimeout(() => {
+            const unidadPesoSelect = document.getElementById('unidadPeso');
+            const unidadCompraSelect = document.getElementById('unidadCompra');
+            const labelFactor = document.getElementById('labelFactorPeso');
+            const labelPrecio = document.getElementById('labelPrecioPeso');
+            const labelCosto = document.getElementById('labelCostoPeso');
+            
+            function actualizarLabelFactorPeso() {
+                const unidadVenta = unidadPesoSelect.value || 'unidad de venta';
+                const unidadCompra = unidadCompraSelect.value || 'unidad de compra';
+                labelFactor.textContent = `¿Cuántas ${unidadVenta} tiene 1 ${unidadCompra}? *`;
+            }
+            
+            function actualizarLabelsPrecioCostoPeso() {
+                const unidadVenta = unidadPesoSelect.value || 'unidad de venta';
+                labelPrecio.textContent = `Precio por ${unidadVenta} *`;
+                labelCosto.textContent = `Costo por ${unidadVenta} *`;
+            }
+            
+            unidadPesoSelect.addEventListener('change', () => {
+                actualizarLabelFactorPeso();
+                actualizarLabelsPrecioCostoPeso();
+            });
+            unidadCompraSelect.addEventListener('change', actualizarLabelFactorPeso);
+        }, 0);
+        
     } else if (tipo === 'medida') {
         html = `
             <div class="form-group">
@@ -1953,7 +1999,7 @@ function updateFormByType() {
                 </select>
             </div>
             <div class="form-group">
-                <label>Factor (medida por compra) *</label>
+                <label id="labelFactorMedida">Factor *</label>
                 <input type="number" id="factor" required min="0.01" step="0.01">
             </div>
             <div class="form-group">
@@ -1961,17 +2007,44 @@ function updateFormByType() {
                 <input type="number" id="stock" required min="0" step="0.01">
             </div>
             <div class="form-group">
-                <label>Precio por unidad de venta *</label>
+                <label id="labelPrecioMedida">Precio por unidad de venta *</label>
                 <input type="number" id="precio" required min="0" step="0.01">
             </div>
             <div class="form-group">
-                <label>Costo por unidad de venta *</label>
+                <label id="labelCostoMedida">Costo por unidad de venta *</label>
                 <input type="number" id="costo" required min="0" step="0.01">
             </div>
         `;
+        
+        container.innerHTML = html;
+        
+        // ⭐ LISTENERS PARA MEDIDA - SE AGREGAN AQUÍ
+        setTimeout(() => {
+            const unidadPesoSelect = document.getElementById('unidadPeso');
+            const unidadCompraSelect = document.getElementById('unidadCompra');
+            const labelFactor = document.getElementById('labelFactorMedida');
+            const labelPrecio = document.getElementById('labelPrecioMedida');
+            const labelCosto = document.getElementById('labelCostoMedida');
+            
+            function actualizarLabelFactorMedida() {
+                const unidadVenta = unidadPesoSelect.value || 'unidad de venta';
+                const unidadCompra = unidadCompraSelect.value || 'unidad de compra';
+                labelFactor.textContent = `¿Cuántos ${unidadVenta} tiene 1 ${unidadCompra}? *`;
+            }
+            
+            function actualizarLabelsPrecioCostoMedida() {
+                const unidadVenta = unidadPesoSelect.value || 'unidad de venta';
+                labelPrecio.textContent = `Precio por ${unidadVenta} *`;
+                labelCosto.textContent = `Costo por ${unidadVenta} *`;
+            }
+            
+            unidadPesoSelect.addEventListener('change', () => {
+                actualizarLabelFactorMedida();
+                actualizarLabelsPrecioCostoMedida();
+            });
+            unidadCompraSelect.addEventListener('change', actualizarLabelFactorMedida);
+        }, 0);
     }
-    
-    container.innerHTML = html;
 }
 
 // Función para agregar apodo en crear producto
@@ -2003,6 +2076,15 @@ function agregarApodoCrear() {
 
 // Función para eliminar apodo en crear producto
 function eliminarApodoCrear(apodo) {
+    // Obtener el nombre del producto actual
+    const nombreProducto = document.getElementById('productoNombre').value.trim().toLowerCase();
+    
+    // Verificar si el apodo a eliminar es el nombre del producto
+    if (apodo === nombreProducto) {
+        alert('No puedes eliminar el nombre del producto de los apodos');
+        return;
+    }
+    
     const index = window.apodosCrearProducto.indexOf(apodo);
     if (index > -1) {
         window.apodosCrearProducto.splice(index, 1);
