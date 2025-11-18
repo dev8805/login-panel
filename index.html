@@ -533,6 +533,131 @@ select:focus {
     color: #721c24;
 }
 
+/* Estilos para productos procesados */
+.tipo-producto-group {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.tipo-producto-option {
+    flex: 1;
+    min-width: 200px;
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+}
+
+.tipo-producto-option:hover {
+    border-color: #667eea;
+    background: #f5f7ff;
+}
+
+.tipo-producto-option input[type="radio"] {
+    display: none;
+}
+
+.tipo-producto-option input[type="radio"]:checked + label {
+    color: #667eea;
+    font-weight: 700;
+}
+
+.tipo-producto-option input[type="radio"]:checked ~ * {
+    border-color: #667eea;
+}
+
+.tipo-producto-option.selected {
+    border-color: #667eea;
+    background: #f5f7ff;
+}
+
+.receta-section {
+    display: none;
+    background: #f9fafb;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.receta-section.active {
+    display: block;
+}
+
+.ingrediente-item {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ingrediente-info {
+    flex: 1;
+}
+
+.ingrediente-nombre {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.ingrediente-cantidad {
+    font-size: 14px;
+    color: #666;
+}
+
+.btn-remove-ingrediente {
+    padding: 6px 10px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    min-width: 70px;
+    width: auto;
+}
+
+.ingrediente-form {
+    background: white;
+    border: 2px dashed #667eea;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.form-row-ingrediente {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr auto;
+    gap: 10px;
+    align-items: end;
+}
+
+.empty-receta {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+    font-style: italic;
+}
+
+.badge-procesado {
+    display: inline-block;
+    padding: 4px 8px;
+    background: #fef3c7;
+    color: #92400e;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
 .date-selector {
     display: flex;
     gap: 10px;
@@ -891,64 +1016,121 @@ function openModal(modalId) {
     <div id="successMsg" class="success-message"></div>
     <form id="formCrearProducto" onsubmit="submitProducto(event)">
         <div id="errorMsgModal" class="error"></div>
-                
-                <div class="form-group">
-                    <label for="productoNombre">Nombre del producto *</label>
-                    <input type="text" id="productoNombre" required>
+        
+        <!-- Tipo de producto -->
+        <div class="form-group">
+            <label class="required">Tipo de producto</label>
+            <div class="tipo-producto-group">
+                <div class="tipo-producto-option selected" onclick="seleccionarTipoProducto('simple', this)">
+                    <input type="radio" name="tipoProducto" id="tipoSimple" value="simple" checked>
+                    <label for="tipoSimple">📦 Producto Simple</label>
+                    <p style="font-size: 12px; color: #666; margin-top: 8px;">Se vende directamente</p>
                 </div>
                 
-                <div class="form-group">
-                    <label for="tipoVenta">Tipo de venta *</label>
-                    <select id="tipoVenta" required onchange="updateFormByType()">
-                        <option value="">Seleccionar...</option>
-                        <option value="unidad">Unidad</option>
-                        <option value="peso">Peso</option>
-                        <option value="medida">Medida</option>
-                    </select>
+                <div class="tipo-producto-option" onclick="seleccionarTipoProducto('procesado', this)">
+                    <input type="radio" name="tipoProducto" id="tipoProcesado" value="procesado">
+                    <label for="tipoProcesado">🍴 Producto Procesado</label>
+                    <p style="font-size: 12px; color: #666; margin-top: 8px;">Tiene receta con ingredientes</p>
                 </div>
-                
-                <div id="camposDinamicos"></div>
-                
-                <!-- Apodos con sistema de agregar/eliminar -->
-<div class="form-group">
-    <label style="font-weight: 600;">Apodos del producto</label>
-    
-    <!-- Lista de apodos agregados -->
-    <div id="listaApodosCrear" style="background: #fff; border: 2px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 15px; min-height: 60px;">
-        <div id="apodosItemsCrear">
-            <!-- Los apodos se agregarán aquí dinámicamente -->
+            </div>
         </div>
-    </div>
-    
-    <!-- Agregar nuevo apodo -->
-    <div style="background: #f5f7ff; padding: 15px; border-radius: 8px;">
-        <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 13px;">Agregar apodo</label>
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <input 
-                type="text" 
-                id="nuevoApodoCrear" 
-                placeholder="Escribe un apodo..."
-                style="flex: 1; padding: 10px 12px; max-width: 70%;"
-                onkeypress="if(event.key === 'Enter') { event.preventDefault(); agregarApodoCrear(); }"
-            >
-            <button 
-                type="button"
-                onclick="agregarApodoCrear()"
-                style="padding: 10px 12px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; min-width: auto; width: auto; flex-shrink: 0;"
-            >
-                ➕
-            </button>
+                
+        <div class="form-group">
+            <label for="productoNombre">Nombre del producto *</label>
+            <input type="text" id="productoNombre" required>
         </div>
-        <small style="color: #666; font-size: 11px; display: block; margin-top: 8px;">El nombre del producto se agregará automáticamente como apodo</small>
-    </div>
+        
+        <div class="form-group">
+            <label for="tipoVenta">Tipo de venta *</label>
+            <select id="tipoVenta" required onchange="updateFormByType()">
+                <option value="">Seleccionar...</option>
+                <option value="unidad">Unidad</option>
+                <option value="peso">Peso</option>
+                <option value="medida">Medida</option>
+            </select>
+        </div>
+        
+        <div id="camposDinamicos"></div>
+        
+        <!-- Sección de Receta (solo para procesados) -->
+        <div id="seccionReceta" class="receta-section">
+            <h3 style="margin-bottom: 15px; color: #333;">📝 Receta del Producto</h3>
+            
+            <div class="alert alert-info" style="margin-bottom: 15px;">
+                <strong>ℹ️ Información:</strong> Define los ingredientes necesarios para producir 1 unidad de este producto.
+            </div>
+            
+            <div id="listaIngredientes">
+                <div class="empty-receta">
+                    No hay ingredientes agregados aún
+                </div>
+            </div>
+            
+            <div class="ingrediente-form">
+                <h4 style="margin-bottom: 10px; color: #667eea;">Agregar Ingrediente</h4>
+                <div class="form-row-ingrediente">
+                    <div>
+                        <label style="font-size: 12px;">Ingrediente</label>
+                        <select id="selectIngrediente">
+                            <option value="">Cargando...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 12px;">Cantidad</label>
+                        <input type="number" id="cantidadIngrediente" step="0.01" min="0.01" placeholder="50">
+                    </div>
+                    <div>
+    <label style="font-size: 12px;">Unidad</label>
+    <select id="unidadIngrediente">
+        <option value="">Selecciona ingrediente primero</option>
+    </select>
 </div>
-
-<!-- Input oculto para guardar los apodos -->
-<input type="hidden" id="apodos" value="">
-                
-                <button type="submit" id="btnSubmit">Crear Producto</button>
-            </form>
-        `;
+                    <div>
+                        <label style="font-size: 12px;">&nbsp;</label>
+                        <button type="button" onclick="agregarIngredienteReceta()" style="background: #10b981; width: 100%;">
+                            ➕
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Apodos -->
+        <div class="form-group">
+            <label style="font-weight: 600;">Apodos del producto</label>
+            
+            <div id="listaApodosCrear" style="background: #fff; border: 2px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 15px; min-height: 60px;">
+                <div id="apodosItemsCrear"></div>
+            </div>
+            
+            <div style="background: #f5f7ff; padding: 15px; border-radius: 8px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 13px;">Agregar apodo</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input 
+                        type="text" 
+                        id="nuevoApodoCrear" 
+                        placeholder="Escribe un apodo..."
+                        style="flex: 1; padding: 10px 12px; max-width: 70%;"
+                        onkeypress="if(event.key === 'Enter') { event.preventDefault(); agregarApodoCrear(); }"
+                    >
+                    <button 
+                        type="button"
+                        onclick="agregarApodoCrear()"
+                        style="padding: 10px 12px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; min-width: auto; width: auto; flex-shrink: 0;"
+                    >
+                        ➕
+                    </button>
+                </div>
+                <small style="color: #666; font-size: 11px; display: block; margin-top: 8px;">El nombre del producto se agregará automáticamente como apodo</small>
+            </div>
+        </div>
+        
+        <input type="hidden" id="apodos" value="">
+        <input type="hidden" id="ingredientesReceta" value="">
+        
+        <button type="submit" id="btnSubmit">Crear Producto</button>
+    </form>
+    `;
         
         modal.classList.add('show');
 
@@ -1024,6 +1206,24 @@ function closeModalInformes() {
     // Cerrar modal de editar producto
     function closeModalEditarProducto() {
     document.getElementById('modalEditarProducto').classList.remove('show');
+}
+
+// Función para mostrar/ocultar campo de unidad personalizada
+function toggleUnidadCompraPersonalizada() {
+    const select = document.getElementById('unidadCompra');
+    const campoPersonalizado = document.getElementById('campoUnidadPersonalizada');
+    const inputPersonalizado = document.getElementById('unidadCompraPersonalizada');
+    
+    if (select && campoPersonalizado) {
+        if (select.value === 'OTRA') {
+            campoPersonalizado.style.display = 'block';
+            inputPersonalizado.required = true;
+        } else {
+            campoPersonalizado.style.display = 'none';
+            inputPersonalizado.required = false;
+            inputPersonalizado.value = '';
+        }
+    }
 }
 
 // Cerrar modal de editar apodos
@@ -1866,16 +2066,21 @@ function updateFormByType() {
     if (tipo === 'unidad') {
         html = `
             <div class="form-group">
-                <label>Unidad de compra *</label>
-                <select id="unidadCompra" required>
-                    <option value="">Seleccionar...</option>
-                    <option value="CAJA">CAJA</option>
-                    <option value="PACA">PACA</option>
-                    <option value="UNIDAD">UNIDAD</option>
-                    <option value="PAQUETE">PAQUETE</option>
-                    <option value="BOLSA">BOLSA</option>
-                </select>
-            </div>
+    <label>Unidad de compra *</label>
+    <select id="unidadCompra" required onchange="toggleUnidadCompraPersonalizada()">
+        <option value="">Seleccionar...</option>
+        <option value="CAJA">CAJA</option>
+        <option value="PACA">PACA</option>
+        <option value="UNIDAD">UNIDAD</option>
+        <option value="PAQUETE">PAQUETE</option>
+        <option value="BOLSA">BOLSA</option>
+        <option value="OTRA">OTRA (Especificar)</option>
+    </select>
+</div>
+<div class="form-group" id="campoUnidadPersonalizada" style="display: none;">
+    <label>Especificar unidad de compra *</label>
+    <input type="text" id="unidadCompraPersonalizada" placeholder="Ej: BOTELLA, GARRAFA, etc.">
+</div>
             <div class="form-group">
                 <label id="labelFactorUnidad">Factor *</label>
                 <input type="number" id="factor" required min="1" step="1" value="1">
@@ -1902,11 +2107,19 @@ function updateFormByType() {
             const labelFactor = document.getElementById('labelFactorUnidad');
             
             function actualizarLabelFactorUnidad() {
-                const unidadCompra = unidadCompraSelect.value || 'unidad de compra';
-                labelFactor.textContent = `¿Cuántas unidades tiene 1 ${unidadCompra}? *`;
-            }
+    let unidadCompra;
+    if (unidadCompraSelect.value === 'OTRA') {
+        const unidadPersonalizada = document.getElementById('unidadCompraPersonalizada').value.trim().toUpperCase();
+        unidadCompra = unidadPersonalizada || 'unidad de compra';
+    } else {
+        unidadCompra = unidadCompraSelect.value || 'unidad de compra';
+    }
+    labelFactor.textContent = `¿Cuántas unidades tiene 1 ${unidadCompra}? *`;
+}
             
             unidadCompraSelect.addEventListener('change', actualizarLabelFactorUnidad);
+            const unidadPersonalizadaInput = document.getElementById('unidadCompraPersonalizada');
+            unidadPersonalizadaInput.addEventListener('input', actualizarLabelFactorUnidad);
         }, 0);
         
     } else if (tipo === 'peso') {
@@ -1921,23 +2134,28 @@ function updateFormByType() {
                 </select>
             </div>
             <div class="form-group">
-                <label>Unidad de compra *</label>
-                <select id="unidadCompra" required>
-                    <option value="">Seleccionar...</option>
-                    <option value="BULTO">BULTO</option>
-                    <option value="LIBRA">LIBRA</option>
-                    <option value="KILO">KILO</option>
-                    <option value="ARROBA">ARROBA</option>
-                </select>
-            </div>
+    <label>Unidad de compra *</label>
+    <select id="unidadCompra" required onchange="toggleUnidadCompraPersonalizada()">
+        <option value="">Seleccionar...</option>
+        <option value="BULTO">BULTO</option>
+        <option value="LIBRA">LIBRA</option>
+        <option value="KILO">KILO</option>
+        <option value="ARROBA">ARROBA</option>
+        <option value="OTRA">OTRA (Especificar)</option>
+    </select>
+</div>
+<div class="form-group" id="campoUnidadPersonalizada" style="display: none;">
+    <label>Especificar unidad de compra *</label>
+    <input type="text" id="unidadCompraPersonalizada" placeholder="Ej: BOTELLA, GARRAFA, etc." style="text-transform: uppercase;">
+</div>
             <div class="form-group">
                 <label id="labelFactorPeso">Factor *</label>
                 <input type="number" id="factor" required min="0.01" step="0.01">
             </div>
             <div class="form-group">
-                <label>Stock inicial *</label>
-                <input type="number" id="stock" required min="0" step="0.01">
-            </div>
+    <label id="labelStockPeso">Stock inicial *</label>
+    <input type="number" id="stock" required min="0" step="0.01">
+</div>
             <div class="form-group">
                 <label id="labelPrecioPeso">Precio por unidad de venta *</label>
                 <input type="number" id="precio" required min="0" step="0.01">
@@ -1949,20 +2167,33 @@ function updateFormByType() {
         `;
         
         container.innerHTML = html;
+
         
         // ⭐ LISTENERS PARA PESO - SE AGREGAN AQUÍ
         setTimeout(() => {
+            const labelStockPeso = document.getElementById('labelStockPeso');
             const unidadPesoSelect = document.getElementById('unidadPeso');
             const unidadCompraSelect = document.getElementById('unidadCompra');
             const labelFactor = document.getElementById('labelFactorPeso');
             const labelPrecio = document.getElementById('labelPrecioPeso');
             const labelCosto = document.getElementById('labelCostoPeso');
+
+            function actualizarLabelStockPeso() {
+    const unidadVenta = unidadPesoSelect.value || 'unidad de venta';
+    labelStockPeso.textContent = `Stock inicial (en ${unidadVenta}) *`;
+}
             
             function actualizarLabelFactorPeso() {
-                const unidadVenta = unidadPesoSelect.value || 'unidad de venta';
-                const unidadCompra = unidadCompraSelect.value || 'unidad de compra';
-                labelFactor.textContent = `¿Cuántas ${unidadVenta} tiene 1 ${unidadCompra}? *`;
-            }
+    const unidadVenta = unidadPesoSelect.value || 'unidad de venta';
+    let unidadCompra;
+    if (unidadCompraSelect.value === 'OTRA') {
+        const unidadPersonalizada = document.getElementById('unidadCompraPersonalizada').value.trim().toUpperCase();
+        unidadCompra = unidadPersonalizada || 'unidad de compra';
+    } else {
+        unidadCompra = unidadCompraSelect.value || 'unidad de compra';
+    }
+    labelFactor.textContent = `¿Cuántas ${unidadVenta} tiene 1 ${unidadCompra}? *`;
+}
             
             function actualizarLabelsPrecioCostoPeso() {
                 const unidadVenta = unidadPesoSelect.value || 'unidad de venta';
@@ -1971,10 +2202,13 @@ function updateFormByType() {
             }
             
             unidadPesoSelect.addEventListener('change', () => {
-                actualizarLabelFactorPeso();
-                actualizarLabelsPrecioCostoPeso();
-            });
+    actualizarLabelFactorPeso();
+    actualizarLabelsPrecioCostoPeso();
+    actualizarLabelStockPeso();
+});
             unidadCompraSelect.addEventListener('change', actualizarLabelFactorPeso);
+            const unidadPersonalizadaInput = document.getElementById('unidadCompraPersonalizada');
+            unidadPersonalizadaInput.addEventListener('input', actualizarLabelFactorPeso);
         }, 0);
         
     } else if (tipo === 'medida') {
@@ -1989,23 +2223,28 @@ function updateFormByType() {
                 </select>
             </div>
             <div class="form-group">
-                <label>Unidad de compra *</label>
-                <select id="unidadCompra" required>
-                    <option value="">Seleccionar...</option>
-                    <option value="ROLLO">ROLLO</option>
-                    <option value="LAMINA">LAMINA</option>
-                    <option value="BOBINA">BOBINA</option>
-                    <option value="METRO">METRO</option>
-                </select>
-            </div>
+    <label>Unidad de compra *</label>
+    <select id="unidadCompra" required onchange="toggleUnidadCompraPersonalizada()">
+        <option value="">Seleccionar...</option>
+        <option value="ROLLO">ROLLO</option>
+        <option value="LAMINA">LAMINA</option>
+        <option value="BOBINA">BOBINA</option>
+        <option value="METRO">METRO</option>
+        <option value="OTRA">OTRA (Especificar)</option>
+    </select>
+</div>
+<div class="form-group" id="campoUnidadPersonalizada" style="display: none;">
+    <label>Especificar unidad de compra *</label>
+    <input type="text" id="unidadCompraPersonalizada" placeholder="Ej: PLIEGO, HOJA, etc." style="text-transform: uppercase;">
+</div>
             <div class="form-group">
                 <label id="labelFactorMedida">Factor *</label>
                 <input type="number" id="factor" required min="0.01" step="0.01">
             </div>
             <div class="form-group">
-                <label>Stock inicial *</label>
-                <input type="number" id="stock" required min="0" step="0.01">
-            </div>
+    <label id="labelStockMedida">Stock inicial *</label>
+    <input type="number" id="stock" required min="0" step="0.01">
+</div>
             <div class="form-group">
                 <label id="labelPrecioMedida">Precio por unidad de venta *</label>
                 <input type="number" id="precio" required min="0" step="0.01">
@@ -2017,20 +2256,33 @@ function updateFormByType() {
         `;
         
         container.innerHTML = html;
+
         
         // ⭐ LISTENERS PARA MEDIDA - SE AGREGAN AQUÍ
         setTimeout(() => {
+            const labelStockMedida = document.getElementById('labelStockMedida');
             const unidadPesoSelect = document.getElementById('unidadPeso');
             const unidadCompraSelect = document.getElementById('unidadCompra');
             const labelFactor = document.getElementById('labelFactorMedida');
             const labelPrecio = document.getElementById('labelPrecioMedida');
             const labelCosto = document.getElementById('labelCostoMedida');
+
+            function actualizarLabelStockMedida() {
+    const unidadVenta = unidadPesoSelect.value || 'unidad de venta';
+    labelStockMedida.textContent = `Stock inicial (en ${unidadVenta}) *`;
+}
             
             function actualizarLabelFactorMedida() {
-                const unidadVenta = unidadPesoSelect.value || 'unidad de venta';
-                const unidadCompra = unidadCompraSelect.value || 'unidad de compra';
-                labelFactor.textContent = `¿Cuántos ${unidadVenta} tiene 1 ${unidadCompra}? *`;
-            }
+    const unidadVenta = unidadPesoSelect.value || 'unidad de venta';
+    let unidadCompra;
+    if (unidadCompraSelect.value === 'OTRA') {
+        const unidadPersonalizada = document.getElementById('unidadCompraPersonalizada').value.trim().toUpperCase();
+        unidadCompra = unidadPersonalizada || 'unidad de compra';
+    } else {
+        unidadCompra = unidadCompraSelect.value || 'unidad de compra';
+    }
+    labelFactor.textContent = `¿Cuántos ${unidadVenta} tiene 1 ${unidadCompra}? *`;
+}
             
             function actualizarLabelsPrecioCostoMedida() {
                 const unidadVenta = unidadPesoSelect.value || 'unidad de venta';
@@ -2039,10 +2291,13 @@ function updateFormByType() {
             }
             
             unidadPesoSelect.addEventListener('change', () => {
-                actualizarLabelFactorMedida();
-                actualizarLabelsPrecioCostoMedida();
-            });
+    actualizarLabelFactorMedida();
+    actualizarLabelsPrecioCostoMedida();
+    actualizarLabelStockMedida();
+});
             unidadCompraSelect.addEventListener('change', actualizarLabelFactorMedida);
+            const unidadPersonalizadaInput = document.getElementById('unidadCompraPersonalizada');
+unidadPersonalizadaInput.addEventListener('input', actualizarLabelFactorMedida);
         }, 0);
     }
 }
@@ -2127,18 +2382,36 @@ async function submitProducto(event) {
     btnSubmit.textContent = 'Creando...';
     
     try {
-
         // Asegurar que el nombre del producto esté en los apodos
-const nombreProducto = document.getElementById('productoNombre').value.trim().toLowerCase();
-if (nombreProducto && !window.apodosCrearProducto.includes(nombreProducto)) {
-    window.apodosCrearProducto.push(nombreProducto);
-}
+        const nombreProducto = document.getElementById('productoNombre').value.trim().toLowerCase();
+        if (nombreProducto && !window.apodosCrearProducto.includes(nombreProducto)) {
+            window.apodosCrearProducto.push(nombreProducto);
+        }
+
+        // ✅ NUEVO: Obtener tipo de producto
+        const tipoProducto = document.querySelector('input[name="tipoProducto"]:checked').value;
+        const esProcesado = tipoProducto === 'procesado';
+        
+        // ✅ NUEVO: Validar receta si es procesado
+        if (esProcesado && ingredientesReceta.length === 0) {
+            throw new Error('Los productos procesados deben tener al menos 1 ingrediente en la receta');
+        }
 
         // Recolectar datos
-        const formData = {
-            producto: document.getElementById('productoNombre').value,
-            tipo_venta: document.getElementById('tipoVenta').value,
-            unidad_compra: document.getElementById('unidadCompra').value,
+        // Capturar unidad de compra (normal o personalizada)
+let unidadCompra = document.getElementById('unidadCompra').value;
+if (unidadCompra === 'OTRA') {
+    const unidadPersonalizada = document.getElementById('unidadCompraPersonalizada').value.trim().toUpperCase();
+    if (!unidadPersonalizada) {
+        throw new Error('Debes especificar la unidad de compra personalizada');
+    }
+    unidadCompra = unidadPersonalizada;
+}
+
+const formData = {
+    producto: document.getElementById('productoNombre').value,
+    tipo_venta: document.getElementById('tipoVenta').value,
+    unidad_compra: unidadCompra,
             factor: parseFloat(document.getElementById('factor').value),
             stock: parseFloat(document.getElementById('stock').value),
             precio: parseFloat(document.getElementById('precio').value),
@@ -2146,13 +2419,17 @@ if (nombreProducto && !window.apodosCrearProducto.includes(nombreProducto)) {
             apodos: window.apodosCrearProducto.join(','),
             unidad_peso: document.getElementById('unidadPeso')?.value || 'unidades',
             tenant_id: userData.tenant_id,
-            tenant_user_id: userData.tenant_user_id || null
+            tenant_user_id: userData.tenant_user_id || null,
+            es_procesado: esProcesado,  // ✅ NUEVO
+            tiene_receta: esProcesado   // ✅ NUEVO
         };
         
         console.log('📦 Datos a enviar:', formData);
         console.log('🔑 Tenant User ID:', formData.tenant_user_id);
         console.log('🏢 Tenant ID:', formData.tenant_id);
-       // Insertar producto usando RPC (función segura)
+        console.log('🍴 Es procesado:', formData.es_procesado);
+        
+        // Insertar producto usando RPC (función segura)
         const { data: producto, error: errorProducto } = await supabase
             .rpc('crear_producto_panel', {
                 p_tenant_id: formData.tenant_id,
@@ -2178,19 +2455,35 @@ if (nombreProducto && !window.apodosCrearProducto.includes(nombreProducto)) {
             throw new Error('No se recibió respuesta del servidor');
         }
         
-        if (!producto || (Array.isArray(producto) && producto.length === 0)) {
-    throw new Error('No se recibió respuesta del servidor');
-}
+        const productoCreado = Array.isArray(producto) ? producto[0] : producto;
+        console.log('✅ Producto insertado:', productoCreado);
 
-const productoCreado = Array.isArray(producto) ? producto[0] : producto;
-console.log('✅ Producto insertado:', productoCreado);
-
-// Verificar que tengamos todos los campos necesarios
-if (!productoCreado.codigo) {
-    throw new Error('El producto se creó pero no se recibió el código');
-}
+        // Verificar que tengamos todos los campos necesarios
+        if (!productoCreado.codigo) {
+            throw new Error('El producto se creó pero no se recibió el código');
+        }
+        
+        // ✅ NUEVO: Actualizar campos es_procesado y tiene_receta
+        if (esProcesado) {
+            const { error: errorUpdate } = await supabase
+                .from('productos')
+                .update({
+                    es_procesado: true,
+                    tiene_receta: true,
+                    updated_at: new Date().toISOString(),
+                    updated_by: formData.tenant_user_id
+                })
+                .eq('producto_id', productoCreado.producto_id);
+            
+            if (errorUpdate) {
+                console.error('⚠️ Error actualizando flags:', errorUpdate);
+                // No lanzamos error, solo advertencia
+            }
+        }
+        
         console.log('🎯 CHECKPOINT 1: Antes de procesar apodos');
-console.log('🎯 productoCreado completo:', productoCreado);
+        console.log('🎯 productoCreado completo:', productoCreado);
+        
         // Procesar e insertar apodos
         let apodosInsertados = [];
         if (formData.apodos && formData.apodos.trim() !== '') {
@@ -2217,51 +2510,80 @@ console.log('🎯 productoCreado completo:', productoCreado);
             }
         }
 
+        // ✅ NUEVO: Insertar receta si es procesado
+        let recetaInsertada = [];
+        if (esProcesado && ingredientesReceta.length > 0) {
+            console.log('🍴 Insertando receta con', ingredientesReceta.length, 'ingredientes');
+            
+            const recetaArray = ingredientesReceta.map((ing, index) => ({
+                tenant_id: formData.tenant_id,
+                producto_procesado_id: productoCreado.producto_id,
+                ingrediente_id: ing.ingrediente_id,
+                cantidad_requerida: ing.cantidad,
+                unidad_medida: ing.unidad,
+                orden_ingrediente: index + 1,
+                created_by: formData.tenant_user_id
+            }));
+            
+            const { data: receta, error: errorReceta } = await supabase
+                .from('productos_recetas')
+                .insert(recetaArray)
+                .select();
+            
+            if (errorReceta) {
+                console.error('❌ Error insertando receta:', errorReceta);
+                throw new Error('Error al guardar la receta: ' + errorReceta.message);
+            }
+            
+            recetaInsertada = receta;
+            console.log('✅ Receta insertada:', recetaInsertada);
+        }
+
         console.log('🎯 CHECKPOINT 2: Antes de generar mensaje');
-console.log('🎯 apodosInsertados:', apodosInsertados);
+        console.log('🎯 apodosInsertados:', apodosInsertados);
         
         // Generar mensaje de confirmación
-const mensaje = generarMensajeConfirmacion(productoCreado, apodosInsertados, formData);
+        const mensaje = generarMensajeConfirmacion(productoCreado, apodosInsertados, formData, recetaInsertada);
 
-console.log('📝 Mensaje generado:', mensaje);
-console.log('📝 Longitud del mensaje:', mensaje.length);
+        console.log('📝 Mensaje generado:', mensaje);
+        console.log('📝 Longitud del mensaje:', mensaje.length);
 
-console.log('🎯 CHECKPOINT 3: Mensaje generado, ahora mostrar');
+        console.log('🎯 CHECKPOINT 3: Mensaje generado, ahora mostrar');
         
-// Mostrar mensaje de éxito
-const successDiv = document.getElementById('successMsg');
-const formDiv = document.getElementById('formCrearProducto');
+        // Mostrar mensaje de éxito
+        const successDiv = document.getElementById('successMsg');
+        const formDiv = document.getElementById('formCrearProducto');
 
-console.log('🎯 successDiv encontrado:', successDiv);
-console.log('🎯 formDiv encontrado:', formDiv);
-console.log('🎯 successDiv display actual:', successDiv ? successDiv.style.display : 'NO ENCONTRADO');
-console.log('🎯 formDiv display actual:', formDiv ? formDiv.style.display : 'NO ENCONTRADO');
+        console.log('🎯 successDiv encontrado:', successDiv);
+        console.log('🎯 formDiv encontrado:', formDiv);
+        console.log('🎯 successDiv display actual:', successDiv ? successDiv.style.display : 'NO ENCONTRADO');
+        console.log('🎯 formDiv display actual:', formDiv ? formDiv.style.display : 'NO ENCONTRADO');
 
-console.log('🔄 Intentando actualizar el DOM...');
+        console.log('🔄 Intentando actualizar el DOM...');
 
-successDiv.innerHTML = mensaje;
-console.log('✅ innerHTML actualizado');
+        successDiv.innerHTML = mensaje;
+        console.log('✅ innerHTML actualizado');
 
-successDiv.classList.add('show');
-console.log('✅ successDiv display = block');
+        successDiv.classList.add('show');
+        console.log('✅ successDiv display = block');
 
-formDiv.style.display = 'none';
-console.log('✅ formDiv display = none');
+        formDiv.style.display = 'none';
+        console.log('✅ formDiv display = none');
 
-console.log('🎯 successDiv display después:', successDiv.style.display);
-console.log('🎯 formDiv display después:', formDiv.style.display);
-console.log('🎯 successDiv innerHTML:', successDiv.innerHTML.substring(0, 100));
+        console.log('🎯 successDiv display después:', successDiv.style.display);
+        console.log('🎯 formDiv display después:', formDiv.style.display);
+        console.log('🎯 successDiv innerHTML:', successDiv.innerHTML.substring(0, 100));
 
-console.log('✅ Producto creado exitosamente');
+        console.log('✅ Producto creado exitosamente');
 
-// Agregar botón para cerrar y crear otro
-setTimeout(() => {
-    const btnCerrar = document.createElement('button');
-    btnCerrar.textContent = 'Cerrar';
-    btnCerrar.style.marginTop = '20px';
-    btnCerrar.onclick = () => closeModal();
-    successDiv.appendChild(btnCerrar);
-}, 100);
+        // Agregar botón para cerrar y crear otro
+        setTimeout(() => {
+            const btnCerrar = document.createElement('button');
+            btnCerrar.textContent = 'Cerrar';
+            btnCerrar.style.marginTop = '20px';
+            btnCerrar.onclick = () => closeModal();
+            successDiv.appendChild(btnCerrar);
+        }, 100);
         
     } catch (error) {
         console.error('❌ Error:', error);
@@ -2272,7 +2594,7 @@ setTimeout(() => {
 }
 
 // Generar mensaje de confirmación
-function generarMensajeConfirmacion(producto, apodos, formData) {
+function generarMensajeConfirmacion(producto, apodos, formData, receta = []) {
     const abreviaturaUnidad = formData.unidad_peso === 'libras' ? 'lbs' : 
                               formData.unidad_peso === 'kilogramos' ? 'kg' : 
                               formData.unidad_peso === 'gramos' ? 'g' : 
@@ -2288,33 +2610,43 @@ function generarMensajeConfirmacion(producto, apodos, formData) {
     let lineaUnidad, lineaStock, lineaPrecio;
     
     if (formData.tipo_venta === 'peso') {
-        lineaUnidad = `🔍 Unidad de compra: ${formData.unidad_compra} (x${formData.factor} ${abreviaturaUnidad})\n🔍 Unidad de venta: ${formData.unidad_peso}`;
+        lineaUnidad = `📏 Unidad de compra: ${formData.unidad_compra} (x${formData.factor} ${abreviaturaUnidad})\n📏 Unidad de venta: ${formData.unidad_peso}`;
         lineaStock = `📊 Stock inicial: ${producto.stock_actual} ${formData.unidad_peso}`;
         lineaPrecio = `💰 Precio por ${formData.unidad_peso}: $${parseFloat(producto.precio_venta).toLocaleString('es-CO')}`;
     } else if (formData.tipo_venta === 'medida') {
-        lineaUnidad = `🔍 Unidad de compra: ${formData.unidad_compra} (x${formData.factor} ${abreviaturaUnidad})\n🔍 Unidad de venta: ${formData.unidad_peso}`;
+        lineaUnidad = `📏 Unidad de compra: ${formData.unidad_compra} (x${formData.factor} ${abreviaturaUnidad})\n📏 Unidad de venta: ${formData.unidad_peso}`;
         lineaStock = `📊 Stock inicial: ${producto.stock_actual} ${formData.unidad_peso}`;
         lineaPrecio = `💰 Precio por ${formData.unidad_peso}: $${parseFloat(producto.precio_venta).toLocaleString('es-CO')}`;
     } else {
-        lineaUnidad = `🔍 Unidad de compra: ${formData.unidad_compra} (x${formData.factor} unidades)`;
+        lineaUnidad = `📏 Unidad de compra: ${formData.unidad_compra} (x${formData.factor} unidades)`;
         lineaStock = `📊 Stock inicial: ${producto.stock_actual} unidades`;
         lineaPrecio = `💰 Precio unitario: $${parseFloat(producto.precio_venta).toLocaleString('es-CO')}`;
     }
     
-    return `✅ ¡Producto creado exitosamente!
-📦 Producto: ${producto.producto}
+    // ✅ NUEVO: Agregar información de receta si es procesado
+    let seccionReceta = '';
+    if (formData.es_procesado && receta.length > 0) {
+        seccionReceta = '\n\n🍴 Receta (ingredientes por unidad):';
+        ingredientesReceta.forEach(ing => {
+            seccionReceta += `\n  • [${ing.codigo}] ${ing.nombre}: ${ing.cantidad} ${ing.unidad}`;
+        });
+    }
+    
+    return `✅ ¡Producto creado exitosamente!${formData.es_procesado ? ' 🍴' : ''}
+📦 Producto: ${producto.producto}${formData.es_procesado ? ' (Procesado)' : ''}
 🔢 Código: ${producto.codigo}
 ${lineaUnidad}
 ${lineaPrecio}
 💵 Costo: $${parseFloat(producto.costo || 0).toLocaleString('es-CO')}
 ${lineaStock}
 🏷️ Apodos registrados:
-${listaApodos}
+${listaApodos}${seccionReceta}
 👤 Creado por: ${userData.nombre}
 🏪 Negocio: ${userData.tenants.nombre_negocio}
 
 _El producto ya está disponible para ventas._`;
 }
+
 
  // =====================================================
 // FUNCIONES PARA INFORMES
@@ -3335,6 +3667,179 @@ function mostrarExitoEditApodosModal(mensaje) {
     }, 3000);
 }
 
+// =====================================================
+// FUNCIONES PARA PRODUCTOS PROCESADOS
+// =====================================================
+
+let ingredientesReceta = [];
+
+// Seleccionar tipo de producto
+function seleccionarTipoProducto(tipo, elemento) {
+    // Remover clase selected de todos
+    document.querySelectorAll('.tipo-producto-option').forEach(el => {
+        el.classList.remove('selected');
+    });
+    
+    // Agregar clase al seleccionado
+    elemento.classList.add('selected');
+    
+    // Marcar el radio
+    document.getElementById(tipo === 'simple' ? 'tipoSimple' : 'tipoProcesado').checked = true;
+    
+    // Mostrar/ocultar sección de receta
+    const seccionReceta = document.getElementById('seccionReceta');
+    if (tipo === 'procesado') {
+        seccionReceta.classList.add('active');
+        cargarProductosParaReceta();
+    } else {
+        seccionReceta.classList.remove('active');
+        ingredientesReceta = [];
+    }
+}
+
+// Cargar productos disponibles para la receta
+async function cargarProductosParaReceta() {
+    try {
+        const { data: productos, error } = await supabase
+            .from('productos')
+            .select('producto_id, codigo, producto, tipo_venta, unidad_peso')
+            .eq('tenant_id', userData.tenant_id)
+            .eq('activo', true)
+            .order('producto');
+        
+        if (error) throw error;
+        
+        const select = document.getElementById('selectIngrediente');
+select.innerHTML = '<option value="">Seleccionar ingrediente...</option>';
+
+productos.forEach(p => {
+    const option = document.createElement('option');
+    option.value = p.producto_id;
+    option.textContent = `[${p.codigo}] ${p.producto}`;
+    option.dataset.unidad = p.unidad_peso || 'unidades';
+    option.dataset.tipoVenta = p.tipo_venta;
+    option.dataset.codigo = p.codigo;
+    option.dataset.nombre = p.producto;
+    select.appendChild(option);
+});
+        
+        // Listener para actualizar opciones de unidad
+select.addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const selectUnidad = document.getElementById('unidadIngrediente');
+    
+    if (selectedOption.value) {
+        const tipoVenta = selectedOption.dataset.tipoVenta;
+        const unidadBase = selectedOption.dataset.unidad;
+        
+        selectUnidad.innerHTML = '';
+        
+        if (tipoVenta === 'peso') {
+            // Opciones para productos de peso
+            selectUnidad.innerHTML = `
+                <option value="gramos">Gramos</option>
+                <option value="kilogramos">Kilogramos</option>
+                <option value="libras" selected>Libras</option>
+                <option value="onzas">Onzas</option>
+            `;
+        } else if (tipoVenta === 'medida') {
+            // Opciones para productos de medida
+            selectUnidad.innerHTML = `
+                <option value="milimetros">Milímetros</option>
+                <option value="centimetros">Centímetros</option>
+                <option value="metros" selected>Metros</option>
+            `;
+        } else {
+            // Para unidades (tipo unidad)
+            selectUnidad.innerHTML = `
+                <option value="unidades" selected>Unidades</option>
+            `;
+        }
+    } else {
+        selectUnidad.innerHTML = '<option value="">Selecciona ingrediente primero</option>';
+    }
+});
+        
+    } catch (error) {
+        console.error('Error cargando productos:', error);
+        alert('Error al cargar ingredientes disponibles');
+    }
+}
+
+// Agregar ingrediente a la receta
+function agregarIngredienteReceta() {
+    const select = document.getElementById('selectIngrediente');
+    const cantidad = document.getElementById('cantidadIngrediente');
+    const unidad = document.getElementById('unidadIngrediente');
+    
+    if (!select.value) {
+        alert('Selecciona un ingrediente');
+        return;
+    }
+    
+    if (!cantidad.value || parseFloat(cantidad.value) <= 0) {
+        alert('Ingresa una cantidad válida');
+        return;
+    }
+    
+    const selectedOption = select.options[select.selectedIndex];
+    
+    // Verificar si ya existe
+    if (ingredientesReceta.find(i => i.ingrediente_id === select.value)) {
+        alert('Este ingrediente ya está en la receta');
+        return;
+    }
+    
+    // Agregar al array
+    ingredientesReceta.push({
+        ingrediente_id: select.value,
+        codigo: selectedOption.dataset.codigo,
+        nombre: selectedOption.dataset.nombre,
+        cantidad: parseFloat(cantidad.value),
+        unidad: unidad.value
+    });
+    
+    // Limpiar campos
+    select.value = '';
+    cantidad.value = '';
+    unidad.value = '';
+    
+    // Renderizar lista
+    renderizarIngredientesReceta();
+}
+
+// Renderizar lista de ingredientes
+function renderizarIngredientesReceta() {
+    const container = document.getElementById('listaIngredientes');
+    
+    if (ingredientesReceta.length === 0) {
+        container.innerHTML = '<div class="empty-receta">No hay ingredientes agregados aún</div>';
+        document.getElementById('ingredientesReceta').value = '';
+        return;
+    }
+    
+    container.innerHTML = ingredientesReceta.map((ing, index) => `
+        <div class="ingrediente-item">
+            <div class="ingrediente-info">
+                <div class="ingrediente-nombre">[${ing.codigo}] ${ing.nombre}</div>
+                <div class="ingrediente-cantidad">${ing.cantidad} ${ing.unidad}</div>
+            </div>
+            <button type="button" class="btn-remove-ingrediente" onclick="eliminarIngredienteReceta(${index})">
+                🗑️ Eliminar
+            </button>
+        </div>
+    `).join('');
+    
+    // Actualizar input oculto
+    document.getElementById('ingredientesReceta').value = JSON.stringify(ingredientesReceta);
+}
+
+// Eliminar ingrediente de la receta
+function eliminarIngredienteReceta(index) {
+    ingredientesReceta.splice(index, 1);
+    renderizarIngredientesReceta();
+}
+
     </script>
 </body>
 
@@ -3430,4 +3935,3 @@ function mostrarExitoEditApodosModal(mensaje) {
 </div>
 
 </html>
-
