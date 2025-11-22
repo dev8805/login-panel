@@ -211,6 +211,35 @@ select:focus {
             cursor: not-allowed;
             pointer-events: none;
         }
+
+        .menu-item {
+    transition: all 0.2s ease;
+}
+
+.menu-item.dragging {
+    opacity: 0.4;
+    transform: scale(0.95);
+    cursor: grabbing !important;
+}
+
+.menu-item.drag-over {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 3px #667eea;
+}
+
+.menu-item:not(.disabled) {
+    cursor: grab;
+}
+
+.menu-item:not(.disabled):active {
+    cursor: grabbing;
+}
+
+.drag-placeholder {
+    background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+    border: 3px dashed #667eea;
+    border-radius: 12px;
+}
         
         .menu-item-icon {
             font-size: 36px;
@@ -807,6 +836,14 @@ select:focus {
     font-weight: 700;
 }
 
+#inputMensajeChat {
+    padding: 4px 8px !important;
+}
+
+#inputMensajeChat:focus {
+    outline: none !important;
+}
+
 .seccion-ingredientes {
     margin-top: 6px;
     padding-top: 4px;
@@ -905,6 +942,8 @@ select:focus {
         console.log('✅ Supabase inicializado correctamente');
         
         let userData = null;
+        
+        let draggedItem = null;
         
         // Menú de opciones con sus URLs
         const menuOptions = [
@@ -1092,38 +1131,167 @@ select:focus {
             // Generar menú
             renderMenu();
         }
-        
         // Renderizar menú según permisos
         function renderMenu() {
-            const menuGrid = document.getElementById('menuGrid');
-            menuGrid.innerHTML = '';
-            
-            const permisos = userData.permisos || {};
-            
-            menuOptions.forEach(option => {
-                const hasPermission = checkPermission(permisos, option.permission);
-                
-                const menuItem = document.createElement('a');
-               menuItem.className = `menu-item ${!hasPermission ? 'disabled' : ''}`;
-if (option.modal) {
-    menuItem.href = '#';
-    menuItem.onclick = (e) => {
-        e.preventDefault();
-        if (hasPermission) openModal(option.id);
-    };
-} else {
-    menuItem.href = hasPermission ? `${option.url}?auth=true` : '#';
-    menuItem.target = hasPermission ? '_blank' : '';
-}
-                
-                menuItem.innerHTML = `
-                    <div class="menu-item-icon">${option.icon}</div>
-                    <div class="menu-item-title">${option.title}</div>
-                `;
-                
-                menuGrid.appendChild(menuItem);
-            });
+    const menuGrid = document.getElementById('menuGrid');
+    menuGrid.innerHTML = '';
+    
+    const permisos = userData.permisos || {};
+    
+    // Cargar orden guardado o usar el orden por defecto
+    const ordenGuardado = localStorage.getItem(`menu_orden_${userData.tenant_id}`);
+    let opcionesOrdenadas = [...menuOptions];
+    
+    if (ordenGuardado) {
+        const orden = JSON.parse(ordenGuardado);
+        opcionesOrdenadas.sort((a, b) => {
+            const indexA = orden.indexOf(a.id);
+            const indexB = orden.indexOf(b.id);
+            return indexA - indexB;
+        });
+    }
+    
+    opcionesOrdenadas.forEach(option => {
+        const hasPermission = checkPermission(permisos, option.permission);
+        
+        const menuItem = document.createElement('a');
+        menuItem.className = `menu-item ${!hasPermission ? 'disabled' : ''}`;
+        menuItem.dataset.optionId = option.id;
+        
+        if (hasPermission) {
+            menuItem.draggable = true;
+            configurarDragAndDrop(menuItem, option);
         }
+        
+        if (option.modal) {
+            menuItem.href = '#';
+            menuItem.onclick = (e) => {
+                e.preventDefault();
+                if (hasPermission) openModal(option.id);
+            };
+        } else {
+            menuItem.href = hasPermission ? `${option.url}?auth=true` : '#';
+            menuItem.target = hasPermission ? '_blank' : '';
+        }
+        
+        menuItem.innerHTML = `
+            <div class="menu-item-icon">${option.icon}</div>
+            <div class="menu-item-title">${option.title}</div>
+        `;
+        
+        menuGrid.appendChild(menuItem);
+    });
+}
+
+function configurarDragAndDrop(menuItem, option) {
+    // Prevenir que el drag interfiera con el click
+    let dragStarted = false;
+    let startX, startY;
+    
+    menuItem.addEventListener('mousedown', (e) => {
+        startX = e.clientX;
+        startY = e.clientY;
+        dragStarted = false;
+    });
+    
+    menuItem.addEventListener('dragstart', (e) => {
+        dragStarted = true;
+        draggedItem = menuItem;
+        menuItem.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', menuItem.dataset.optionId);
+        
+        // Pequeño delay para que no se confunda con el click
+        setTimeout(() => {
+            menuItem.style.opacity = '0.4';
+        }, 0);
+    });
+    
+    menuItem.addEventListener('dragend', (e) => {
+        menuItem.classList.remove('dragging');
+        menuItem.style.opacity = '1';
+        
+        // Remover todos los indicadores
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.classList.remove('drag-over');
+        });
+        
+        // Guardar el nuevo orden automáticamente
+        if (dragStarted) {
+            guardarOrdenAutomatico();
+        }
+        
+        draggedItem = null;
+        dragStarted = false;
+    });
+    
+    menuItem.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        
+        if (draggedItem && draggedItem !== menuItem) {
+            const menuGrid = document.getElementById('menuGrid');
+            const items = [...menuGrid.querySelectorAll('.menu-item:not(.dragging)')];
+            const afterElement = getDragAfterElement(menuGrid, e.clientX, e.clientY);
+            
+            if (afterElement == null) {
+                menuGrid.appendChild(draggedItem);
+            } else {
+                menuGrid.insertBefore(draggedItem, afterElement);
+            }
+        }
+    });
+    
+    menuItem.addEventListener('dragenter', (e) => {
+        if (draggedItem && draggedItem !== menuItem) {
+            menuItem.classList.add('drag-over');
+        }
+    });
+    
+    menuItem.addEventListener('dragleave', (e) => {
+        menuItem.classList.remove('drag-over');
+    });
+    
+    menuItem.addEventListener('drop', (e) => {
+        e.preventDefault();
+        menuItem.classList.remove('drag-over');
+    });
+}
+
+function getDragAfterElement(container, x, y) {
+    const draggableElements = [...container.querySelectorAll('.menu-item:not(.dragging)')];
+    
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const centerX = box.left + box.width / 2;
+        const centerY = box.top + box.height / 2;
+        
+        const offsetX = x - centerX;
+        const offsetY = y - centerY;
+        
+        // Distancia euclidiana desde el cursor al centro del elemento
+        const distance = Math.sqrt(offsetX * offsetX + offsetY * offsetY);
+        
+        if (distance < closest.distance) {
+            // Determinar si insertar antes o después basado en la posición
+            const insertBefore = (offsetY < 0) || (offsetY === 0 && offsetX < 0);
+            return { distance: distance, element: insertBefore ? child : child.nextElementSibling };
+        } else {
+            return closest;
+        }
+    }, { distance: Number.POSITIVE_INFINITY }).element;
+}
+
+function guardarOrdenAutomatico() {
+    const menuGrid = document.getElementById('menuGrid');
+    const items = menuGrid.querySelectorAll('.menu-item');
+    const nuevoOrden = Array.from(items).map(item => item.dataset.optionId);
+    
+    // Guardar en localStorage
+    localStorage.setItem(`menu_orden_${userData.tenant_id}`, JSON.stringify(nuevoOrden));
+    
+    console.log('✅ Orden guardado automáticamente');
+}
         
         // Verificar permiso
         function checkPermission(permisos, permissionPath) {
@@ -4028,6 +4196,14 @@ function abrirModalChat() {
     `;
     
     modal.classList.add('show');
+
+    // Configurar botón de micrófono después de abrir el modal
+    setTimeout(() => {
+        const btnMicrofono = document.getElementById('btnGrabarVoz');
+        if (btnMicrofono) {
+            configurarBotonMicrofono(btnMicrofono);
+        }
+    }, 100);
 }
 
 // Cerrar modal
@@ -4257,56 +4433,160 @@ async function toggleGrabacion() {
     }
 }
 
-// Iniciar grabación
-async function iniciarGrabacion() {
+// Variables para grabación por presión
+let grabacionTimer = null;
+let grabacionIniciada = false;
+
+// Configurar eventos del botón micrófono
+document.addEventListener('DOMContentLoaded', () => {
+    // ... código existente ...
+    
+    // Configurar botón de micrófono para mantener presionado
+    setTimeout(() => {
+        const btnMicrofono = document.getElementById('btnGrabarVoz');
+        if (btnMicrofono) {
+            configurarBotonMicrofono(btnMicrofono);
+        }
+    }, 1000);
+});
+
+function configurarBotonMicrofono(btn) {
+    // Touch events para móvil
+    btn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        iniciarGrabacionPresionado();
+    }, { passive: false });
+    
+    btn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        detenerGrabacionPresionado();
+    }, { passive: false });
+    
+    btn.addEventListener('touchcancel', (e) => {
+        e.preventDefault();
+        detenerGrabacionPresionado();
+    }, { passive: false });
+    
+    // Mouse events para desktop
+    btn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        iniciarGrabacionPresionado();
+    });
+    
+    btn.addEventListener('mouseup', (e) => {
+        e.preventDefault();
+        detenerGrabacionPresionado();
+    });
+    
+    btn.addEventListener('mouseleave', (e) => {
+        if (estaGrabando) {
+            detenerGrabacionPresionado();
+        }
+    });
+}
+
+// Iniciar grabación al presionar
+async function iniciarGrabacionPresionado() {
+    if (estaGrabando) return;
+    
+    const btn = document.getElementById('btnGrabarVoz');
+    const estado = document.getElementById('estadoGrabacion');
+    
+    // Feedback visual inmediato
+    btn.style.transform = 'scale(0.9)';
+    btn.style.boxShadow = '0 1px 3px rgba(102, 126, 234, 0.3)';
+    
+    // Mostrar estado
+    estado.style.display = 'block';
+    estado.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+    estado.style.color = 'white';
+    estado.innerHTML = '🎤 Grabando... Suelta para enviar';
+    
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder = new MediaRecorder(stream);
         audioChunks = [];
         
         mediaRecorder.ondataavailable = (event) => {
-            audioChunks.push(event.data);
+            if (event.data.size > 0) {
+                audioChunks.push(event.data);
+            }
         };
         
         mediaRecorder.onstop = async () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-            await enviarAudioChat(audioBlob);
+            // Detener tracks
+            stream.getTracks().forEach(track => track.stop());
+            
+            // Solo enviar si hay audio grabado
+            if (audioChunks.length > 0) {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                // Solo enviar si la grabación duró más de 0.5 segundos
+                if (audioBlob.size > 1000) {
+                    await enviarAudioChat(audioBlob);
+                }
+            }
+            
+            audioChunks = [];
         };
         
         mediaRecorder.start();
         estaGrabando = true;
+        grabacionIniciada = true;
         
-        // Actualizar UI
-        const btn = document.getElementById('btnGrabarVoz');
-        btn.style.background = '#10b981';
-        btn.textContent = '⏹️';
-        
-        const estado = document.getElementById('estadoGrabacion');
-        estado.style.display = 'block';
-        estado.style.background = '#d4edda';
-        estado.style.color = '#155724';
-        estado.textContent = '🎤 Grabando... Presiona de nuevo para detener';
+        // Cambiar ícono
+        btn.innerHTML = '⏹️';
+        btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
         
     } catch (error) {
         console.error('Error accediendo al micrófono:', error);
-        alert('No se pudo acceder al micrófono. Verifica los permisos.');
+        estado.style.display = 'block';
+        estado.style.background = '#fee';
+        estado.style.color = '#c33';
+        estado.textContent = '❌ No se pudo acceder al micrófono';
+        
+        // Restaurar botón
+        btn.style.transform = 'scale(1)';
+        btn.innerHTML = '🎤';
+        
+        setTimeout(() => {
+            estado.style.display = 'none';
+        }, 3000);
     }
 }
 
-// Detener grabación
-function detenerGrabacion() {
-    if (mediaRecorder && estaGrabando) {
+// Detener grabación al soltar
+function detenerGrabacionPresionado() {
+    if (!estaGrabando) return;
+    
+    const btn = document.getElementById('btnGrabarVoz');
+    const estado = document.getElementById('estadoGrabacion');
+    
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
         mediaRecorder.stop();
-        mediaRecorder.stream.getTracks().forEach(track => track.stop());
-        estaGrabando = false;
-        
-        // Restaurar UI
-        const btn = document.getElementById('btnGrabarVoz');
-        btn.style.background = '#ef4444';
-        btn.textContent = '🎤';
-        
-        const estado = document.getElementById('estadoGrabacion');
+    }
+    
+    estaGrabando = false;
+    grabacionIniciada = false;
+    
+    // Restaurar botón
+    btn.style.transform = 'scale(1)';
+    btn.style.boxShadow = '0 2px 5px rgba(102, 126, 234, 0.3)';
+    btn.innerHTML = '🎤';
+    btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+    
+    // Ocultar estado
+    setTimeout(() => {
         estado.style.display = 'none';
+    }, 300);
+}
+
+// Mantener compatibilidad con función anterior (por si acaso)
+async function toggleGrabacion() {
+    // Esta función ya no se usa, pero la dejamos por compatibilidad
+    if (estaGrabando) {
+        detenerGrabacionPresionado();
+    } else {
+        iniciarGrabacionPresionado();
     }
 }
 
@@ -4495,84 +4775,81 @@ async function enviarAudioChat(audioBlob) {
 
 <!-- Modal Chat Asistente -->
 <div id="modalChatAsistente" class="modal">
-    <div class="modal-content" style="max-width: 100%; width: 100%; height: 100vh; margin: 0; border-radius: 0; display: flex; flex-direction: column;">
+    <div class="modal-content" style="max-width: 100%; width: 100%; height: 100%; max-height: 100vh; margin: 0; border-radius: 0; display: flex; flex-direction: column;">
         <!-- Header -->
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="width: 38px; height: 38px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex-shrink: 0;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; font-size: 20px;">
                     💬
                 </div>
                 <div>
-                    <div style="font-weight: 600; font-size: 15px;">Chat Asistente</div>
-                    <div style="font-size: 11px; opacity: 0.9;">En línea</div>
+                    <div style="font-weight: 600; font-size: 16px;">Chat Asistente</div>
+                    <div style="font-size: 12px; opacity: 0.9;">En línea</div>
                 </div>
             </div>
-            <button onclick="closeModalChat()" style="background: rgba(255,255,255,0.2); border: none; color: white; font-size: 26px; cursor: pointer; padding: 0; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; min-width: auto; transition: background 0.2s;">
+            <button onclick="closeModalChat()" style="background: rgba(255,255,255,0.2); border: none; color: white; font-size: 28px; cursor: pointer; padding: 0; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; min-width: auto; transition: background 0.2s; flex-shrink: 0;">
                 ×
             </button>
         </div>
         
-        <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+        <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0;">
             <!-- Área de mensajes -->
-            <div id="chatMessages" style="flex: 1; overflow-y: auto; padding: 8px 12px; background: #e5ddd5;"></div>
+            <div id="chatMessages" style="flex: 1; overflow-y: auto; padding: 12px; background: #e5ddd5; -webkit-overflow-scrolling: touch;"></div>
             
             <!-- Área de input -->
-            <div style="padding: 6px 10px; background: #f0f0f0; border-top: 1px solid #d1d1d1;">
-                <div style="display: flex; gap: 6px; align-items: flex-end;">
+            <div style="padding: 8px 12px; background: #f0f0f0; border-top: 1px solid #d1d1d1; flex-shrink: 0;">
+                <div style="display: flex; gap: 8px; align-items: flex-end;">
                     
                     <!-- Input con clip dentro -->
-<div style="flex: 1; display: flex; align-items: center; background: white; border-radius: 20px; padding: 6px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
-    <input 
-        type="text" 
-        id="inputMensajeChat" 
-        placeholder="Mensaje"
-        style="flex: 1; border: none; font-size: 14px; background: transparent; outline: none; padding: 0; margin: 0; height: 28px;"
-        onkeypress="if(event.key === 'Enter') enviarMensajeChat()"
-        oninput="toggleInputButtons()"
-    >
-    
-    <!-- Botón clip DENTRO del input -->
-    <input 
-        type="file" 
-        id="inputImagenChat" 
-        accept="image/*" 
-        style="display: none;"
-        onchange="handleImageUpload(event)"
-    >
-    <button 
-        onclick="document.getElementById('inputImagenChat').click()" 
-        style="padding: 0; margin: 0; background: none; border: none; cursor: pointer; color: #999; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: color 0.2s; width: 20px; height: 20px; flex-shrink: 0;"
-        onmouseover="this.style.color='#667eea'"
-        onmouseout="this.style.color='#999'"
-    >
-        📎
-    </button>
-</div>
+                    <div style="flex: 1; display: flex; align-items: center; background: white; border-radius: 22px; padding: 8px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); min-height: 44px;">
+                        <input 
+                            type="text" 
+                            id="inputMensajeChat" 
+                            placeholder="Mensaje"
+                            style="flex: 1; border: none; font-size: 15px; background: transparent; outline: none; padding: 6px 4px; margin: 0; min-height: 28px; width: 100%;"
+                            onkeypress="if(event.key === 'Enter') { event.preventDefault(); enviarMensajeChat(); }"
+                            oninput="toggleInputButtons()"
+                        >
+                        
+                        <!-- Botón clip DENTRO del input -->
+                        <input 
+                            type="file" 
+                            id="inputImagenChat" 
+                            accept="image/*" 
+                            style="display: none;"
+                            onchange="handleImageUpload(event)"
+                        >
+                        <button 
+                            onclick="document.getElementById('inputImagenChat').click()" 
+                            style="padding: 0; margin: 0 0 0 4px; background: none; border: none; cursor: pointer; color: #999; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: color 0.2s; width: 32px; min-width: 32px; height: 32px; flex-shrink: 0;"
+                            ontouchstart="this.style.background='#f0f0f0'"
+                            ontouchend="this.style.background='none'"
+                        >
+                            📎
+                        </button>
+                    </div>
                     
                     <!-- Botón micrófono (visible cuando input vacío) -->
-<button 
-id="btnGrabarVoz"
-onclick="toggleGrabacion()" 
-style="min-width: 42px; width: 42px; height: 42px; padding: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; box-shadow: 0 2px 5px rgba(102, 126, 234, 0.3); transition: transform 0.15s;"
-onmouseover="this.style.transform='scale(1.05)'"
-onmouseout="this.style.transform='scale(1)'"
->
-🎤
-</button>
+                    <button 
+                        id="btnGrabarVoz"
+                        style="min-width: 48px; width: 48px; height: 48px; padding: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; box-shadow: 0 2px 5px rgba(102, 126, 234, 0.3); transition: transform 0.1s, box-shadow 0.1s; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;"
+                    >
+                        🎤
+                    </button>
 
-<!-- Botón enviar (oculto inicialmente) -->
-<button 
-id="btnEnviarMensaje"
-onclick="enviarMensajeChat()" 
-style="min-width: 42px; width: 42px; height: 42px; padding: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 50%; cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; box-shadow: 0 2px 5px rgba(102, 126, 234, 0.3); transition: transform 0.15s;"
-onmouseover="this.style.transform='scale(1.05)'"
-onmouseout="this.style.transform='scale(1)'"
->
-➤
-</button>
+                    <!-- Botón enviar (oculto inicialmente) -->
+                    <button 
+                        id="btnEnviarMensaje"
+                        onclick="enviarMensajeChat()" 
+                        style="min-width: 48px; width: 48px; height: 48px; padding: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 50%; cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; box-shadow: 0 2px 5px rgba(102, 126, 234, 0.3); transition: transform 0.1s;"
+                        ontouchstart="this.style.transform='scale(0.95)'"
+                        ontouchend="this.style.transform='scale(1)'"
+                    >
+                        ➤
+                    </button>
                 </div>
-                <div id="estadoGrabacion" style="display: none; margin-top: 6px; padding: 6px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 6px; text-align: center; color: white; font-size: 11px; font-weight: 600;">
-                    🎤 Grabando...
+                <div id="estadoGrabacion" style="display: none; margin-top: 8px; padding: 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; text-align: center; color: white; font-size: 12px; font-weight: 600;">
+                    🎤 Mantén presionado para grabar...
                 </div>
             </div>
         </div>
