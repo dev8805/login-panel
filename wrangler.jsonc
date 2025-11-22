@@ -1,6 +1,6 @@
 {
   "name": "login-panel",
-  "compatibility_date": "2025-11-20",
+  "compatibility_date": "2025-11-22",
   "pages_build_caching": true,
   "assets": {
     "directory": "./"
