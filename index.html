@@ -313,6 +313,38 @@ select:focus {
     position: relative;
 }
 
+.modal-chat-content {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    background: white;
+}
+
+.modal-chat-input-area {
+    position: sticky;
+    bottom: 0;
+    z-index: 100;
+}
+
+#modalChatAsistente .modal-content {
+    height: 100vh;
+    max-height: 100vh;
+    width: 100vw;
+    max-width: 100vw;
+    margin: 0;
+    border-radius: 0;
+}
+
+@supports (-webkit-touch-callout: none) {
+    #modalChatAsistente .modal-content {
+        height: -webkit-fill-available;
+    }
+}
+
 .modal-header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     padding: 20px;
@@ -4794,10 +4826,10 @@ async function enviarAudioChat(audioBlob) {
         
         <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0;">
             <!-- Área de mensajes -->
-            <div id="chatMessages" style="flex: 1; overflow-y: auto; padding: 12px; background: #e5ddd5; -webkit-overflow-scrolling: touch;"></div>
+            <div id="chatMessages" style="flex: 1; overflow-y: auto; padding: 12px; background: #e5ddd5; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;"></div>
             
             <!-- Área de input -->
-            <div style="padding: 8px 12px; background: #f0f0f0; border-top: 1px solid #d1d1d1; flex-shrink: 0;">
+            <div style="padding: 8px 12px; background: #f0f0f0; border-top: 1px solid #d1d1d1; flex-shrink: 0; position: sticky; bottom: 0; z-index: 100;">
                 <div style="display: flex; gap: 8px; align-items: flex-end;">
                     
                     <!-- Input con clip dentro -->
@@ -4832,7 +4864,7 @@ async function enviarAudioChat(audioBlob) {
                     <!-- Botón micrófono (visible cuando input vacío) -->
                     <button 
                         id="btnGrabarVoz"
-                        style="min-width: 48px; width: 48px; height: 48px; padding: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; box-shadow: 0 2px 5px rgba(102, 126, 234, 0.3); transition: transform 0.1s, box-shadow 0.1s; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;"
+                        style="min-width: 44px; width: 44px; height: 44px; padding: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; box-shadow: 0 2px 5px rgba(102, 126, 234, 0.3); transition: transform 0.1s, box-shadow 0.1s; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;"
                     >
                         🎤
                     </button>
@@ -4841,7 +4873,7 @@ async function enviarAudioChat(audioBlob) {
                     <button 
                         id="btnEnviarMensaje"
                         onclick="enviarMensajeChat()" 
-                        style="min-width: 48px; width: 48px; height: 48px; padding: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 50%; cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; box-shadow: 0 2px 5px rgba(102, 126, 234, 0.3); transition: transform 0.1s;"
+                        style="min-width: 48px; width: 48px; height: 48px; padding: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 50%; cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; box-shadow: 0 2px 5px rgba(102, 126, 234, 0.3); transition: transform 0.1s;"
                         ontouchstart="this.style.transform='scale(0.95)'"
                         ontouchend="this.style.transform='scale(1)'"
                     >
