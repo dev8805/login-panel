@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel POS WhatsApp</title>
+    <title>POS Rocket</title>
 
     <link rel="icon" href="/icono-192x192.png">
     <link rel="apple-touch-icon" href="/icono-180x180.png">
@@ -2026,8 +2026,8 @@ function generarOpcionesMedidaCompra(producto, medidaElement) {
     
     const medidas = [
         {
-            value: producto.unidad_peso,
-            label: producto.unidad_peso
+            value: producto.unidad_venta,
+            label: producto.unidad_venta
         },
         {
             value: producto.unidad_compra,
@@ -2061,25 +2061,25 @@ function generarOpcionesMedidaCompra(producto, medidaElement) {
 function calcularUnidadesIngresadasCompra(producto, cantidad, unidadMedida) {
     const stockActual = parseFloat(producto.stock_actual) || 0;
     const tipoVenta = producto.tipo_venta;
-    const unidadPeso = producto.unidad_peso;
+    const unidadVenta = producto.unidad_venta;
     const factor = parseFloat(producto.factor_unidades) || 1;
     
     let unidadesIngresadas;
     
     if (tipoVenta === 'peso') {
         const unidadMedidaNorm = unidadMedida.toLowerCase().replace(/s$/, '');
-        const unidadPesoNorm = unidadPeso.toLowerCase().replace(/s$/, '');
+        const unidadVentaNorm = unidadVenta.toLowerCase().replace(/s$/, '');
         
-        if (unidadMedidaNorm === unidadPesoNorm) {
+        if (unidadMedidaNorm === unidadVentaNorm) {
             unidadesIngresadas = cantidad;
         } else {
             unidadesIngresadas = cantidad * factor;
         }
     } else if (tipoVenta === 'medida') {
         const unidadMedidaNorm = unidadMedida.toLowerCase().replace(/s$/, '');
-        const unidadPesoNorm = unidadPeso.toLowerCase().replace(/s$/, '');
+        const unidadVentaNorm = unidadVenta.toLowerCase().replace(/s$/, '');
         
-        if (unidadMedidaNorm === unidadPesoNorm) {
+        if (unidadMedidaNorm === unidadVentaNorm) {
             unidadesIngresadas = cantidad;
         } else {
             unidadesIngresadas = cantidad * factor;
@@ -2280,10 +2280,10 @@ async function enviarCompraPanel() {
             unidadStock = 'und';
             stockFormateado = Math.round(nuevoStock);
         } else if (productoSeleccionado.tipo_venta === 'peso') {
-            unidadStock = productoSeleccionado.unidad_peso || 'libras';
+            unidadStock = productoSeleccionado.unidad_venta || 'libras';
             stockFormateado = nuevoStock.toFixed(2);
         } else if (productoSeleccionado.tipo_venta === 'medida') {
-            unidadStock = productoSeleccionado.unidad_peso || 'metros';
+            unidadStock = productoSeleccionado.unidad_venta || 'metros';
             stockFormateado = nuevoStock.toFixed(2);
         } else {
             unidadStock = 'und';
@@ -2401,13 +2401,13 @@ async function inicializarFormularioCompra() {
             div.className = 'autocomplete-item';
             div.innerHTML = `
                 <div class="autocomplete-item-nombre">${prod.producto}</div>
-                <div class="autocomplete-item-codigo">Código: ${prod.codigo} | Stock: ${prod.stock_actual} ${prod.unidad_peso}</div>
+                <div class="autocomplete-item-codigo">Código: ${prod.codigo} | Stock: ${prod.stock_actual} ${prod.unidad_venta}</div>
             `;
             div.addEventListener('click', () => {
                 productoSeleccionado = prod;
                 productoInput.value = `${prod.producto} (${prod.codigo})`;
                 listElement.classList.remove('active');
-                stockElement.textContent = `Stock actual: ${prod.stock_actual} ${prod.unidad_peso}`;
+                stockElement.textContent = `Stock actual: ${prod.stock_actual} ${prod.unidad_venta}`;
                 generarOpcionesMedidaCompra(prod, medidaElement);
             });
             listElement.appendChild(div);
@@ -2497,7 +2497,7 @@ function updateFormByType() {
         html = `
             <div class="form-group">
                 <label>Unidad de venta *</label>
-                <select id="unidadPeso" required>
+                <select id="unidadVenta" required>
                     <option value="">Seleccionar...</option>
                     <option value="libras">Libras</option>
                     <option value="kilogramos">Kilogramos</option>
@@ -2543,19 +2543,19 @@ function updateFormByType() {
         // ⭐ LISTENERS PARA PESO - SE AGREGAN AQUÍ
         setTimeout(() => {
             const labelStockPeso = document.getElementById('labelStockPeso');
-            const unidadPesoSelect = document.getElementById('unidadPeso');
+            const unidadVentaSelect = document.getElementById('unidadVenta');
             const unidadCompraSelect = document.getElementById('unidadCompra');
             const labelFactor = document.getElementById('labelFactorPeso');
             const labelPrecio = document.getElementById('labelPrecioPeso');
             const labelCosto = document.getElementById('labelCostoPeso');
 
             function actualizarLabelStockPeso() {
-    const unidadVenta = unidadPesoSelect.value || 'unidad de venta';
+    const unidadVenta = unidadVentaSelect.value || 'unidad de venta';
     labelStockPeso.textContent = `Stock inicial (en ${unidadVenta}) *`;
 }
             
             function actualizarLabelFactorPeso() {
-    const unidadVenta = unidadPesoSelect.value || 'unidad de venta';
+    const unidadVenta = unidadVentaSelect.value || 'unidad de venta';
     let unidadCompra;
     if (unidadCompraSelect.value === 'OTRA') {
         const unidadPersonalizada = document.getElementById('unidadCompraPersonalizada').value.trim().toUpperCase();
@@ -2567,12 +2567,12 @@ function updateFormByType() {
 }
             
             function actualizarLabelsPrecioCostoPeso() {
-                const unidadVenta = unidadPesoSelect.value || 'unidad de venta';
+                const unidadVenta = unidadVentaSelect.value || 'unidad de venta';
                 labelPrecio.textContent = `Precio por ${unidadVenta} *`;
                 labelCosto.textContent = `Costo por ${unidadVenta} *`;
             }
             
-            unidadPesoSelect.addEventListener('change', () => {
+            unidadVentaSelect.addEventListener('change', () => {
     actualizarLabelFactorPeso();
     actualizarLabelsPrecioCostoPeso();
     actualizarLabelStockPeso();
@@ -2586,7 +2586,7 @@ function updateFormByType() {
         html = `
             <div class="form-group">
                 <label>Unidad de venta *</label>
-                <select id="unidadPeso" required>
+                <select id="unidadVenta" required>
                     <option value="">Seleccionar...</option>
                     <option value="metros">Metros</option>
                     <option value="centimetros">Centímetros</option>
@@ -2632,19 +2632,19 @@ function updateFormByType() {
         // ⭐ LISTENERS PARA MEDIDA - SE AGREGAN AQUÍ
         setTimeout(() => {
             const labelStockMedida = document.getElementById('labelStockMedida');
-            const unidadPesoSelect = document.getElementById('unidadPeso');
+            const unidadVentaSelect = document.getElementById('unidadVenta');
             const unidadCompraSelect = document.getElementById('unidadCompra');
             const labelFactor = document.getElementById('labelFactorMedida');
             const labelPrecio = document.getElementById('labelPrecioMedida');
             const labelCosto = document.getElementById('labelCostoMedida');
 
             function actualizarLabelStockMedida() {
-    const unidadVenta = unidadPesoSelect.value || 'unidad de venta';
+    const unidadVenta = unidadVentaSelect.value || 'unidad de venta';
     labelStockMedida.textContent = `Stock inicial (en ${unidadVenta}) *`;
 }
             
             function actualizarLabelFactorMedida() {
-    const unidadVenta = unidadPesoSelect.value || 'unidad de venta';
+    const unidadVenta = unidadVentaSelect.value || 'unidad de venta';
     let unidadCompra;
     if (unidadCompraSelect.value === 'OTRA') {
         const unidadPersonalizada = document.getElementById('unidadCompraPersonalizada').value.trim().toUpperCase();
@@ -2656,12 +2656,12 @@ function updateFormByType() {
 }
             
             function actualizarLabelsPrecioCostoMedida() {
-                const unidadVenta = unidadPesoSelect.value || 'unidad de venta';
+                const unidadVenta = unidadVentaSelect.value || 'unidad de venta';
                 labelPrecio.textContent = `Precio por ${unidadVenta} *`;
                 labelCosto.textContent = `Costo por ${unidadVenta} *`;
             }
             
-            unidadPesoSelect.addEventListener('change', () => {
+            unidadVentaSelect.addEventListener('change', () => {
     actualizarLabelFactorMedida();
     actualizarLabelsPrecioCostoMedida();
     actualizarLabelStockMedida();
@@ -2788,7 +2788,7 @@ const formData = {
             precio: parseFloat(document.getElementById('precio').value),
             costo: parseFloat(document.getElementById('costo').value),
             apodos: window.apodosCrearProducto.join(','),
-            unidad_peso: document.getElementById('unidadPeso')?.value || 'unidades',
+            unidad_venta: document.getElementById('unidadVenta')?.value || 'unidades',
             tenant_id: userData.tenant_id,
             tenant_user_id: userData.tenant_user_id || null,
             es_procesado: esProcesado,  // ✅ NUEVO
@@ -2810,7 +2810,7 @@ const formData = {
                 p_factor_unidades: formData.factor,
                 p_apodos_input: formData.apodos || '',
                 p_tipo_venta: formData.tipo_venta,
-                p_unidad_peso: formData.unidad_peso,
+                p_unidad_venta: formData.unidad_venta,
                 p_unidad_compra: formData.unidad_compra,
                 p_stock_actual: formData.stock,
                 p_stock_inicial: formData.stock,
@@ -2966,10 +2966,10 @@ const formData = {
 
 // Generar mensaje de confirmación
 function generarMensajeConfirmacion(producto, apodos, formData, receta = []) {
-    const abreviaturaUnidad = formData.unidad_peso === 'libras' ? 'lbs' : 
-                              formData.unidad_peso === 'kilogramos' ? 'kg' : 
-                              formData.unidad_peso === 'gramos' ? 'g' : 
-                              formData.unidad_peso;
+    const abreviaturaUnidad = formData.unidad_venta === 'libras' ? 'lbs' : 
+                              formData.unidad_venta === 'kilogramos' ? 'kg' : 
+                              formData.unidad_venta === 'gramos' ? 'g' : 
+                              formData.unidad_venta;
     
     let listaApodos = '';
     if (apodos.length > 0) {
@@ -2981,13 +2981,13 @@ function generarMensajeConfirmacion(producto, apodos, formData, receta = []) {
     let lineaUnidad, lineaStock, lineaPrecio;
     
     if (formData.tipo_venta === 'peso') {
-        lineaUnidad = `📏 Unidad de compra: ${formData.unidad_compra} (x${formData.factor} ${abreviaturaUnidad})\n📏 Unidad de venta: ${formData.unidad_peso}`;
-        lineaStock = `📊 Stock inicial: ${producto.stock_actual} ${formData.unidad_peso}`;
-        lineaPrecio = `💰 Precio por ${formData.unidad_peso}: $${parseFloat(producto.precio_venta).toLocaleString('es-CO')}`;
+        lineaUnidad = `📏 Unidad de compra: ${formData.unidad_compra} (x${formData.factor} ${abreviaturaUnidad})\n📏 Unidad de venta: ${formData.unidad_venta}`;
+        lineaStock = `📊 Stock inicial: ${producto.stock_actual} ${formData.unidad_venta}`;
+        lineaPrecio = `💰 Precio por ${formData.unidad_venta}: $${parseFloat(producto.precio_venta).toLocaleString('es-CO')}`;
     } else if (formData.tipo_venta === 'medida') {
-        lineaUnidad = `📏 Unidad de compra: ${formData.unidad_compra} (x${formData.factor} ${abreviaturaUnidad})\n📏 Unidad de venta: ${formData.unidad_peso}`;
-        lineaStock = `📊 Stock inicial: ${producto.stock_actual} ${formData.unidad_peso}`;
-        lineaPrecio = `💰 Precio por ${formData.unidad_peso}: $${parseFloat(producto.precio_venta).toLocaleString('es-CO')}`;
+        lineaUnidad = `📏 Unidad de compra: ${formData.unidad_compra} (x${formData.factor} ${abreviaturaUnidad})\n📏 Unidad de venta: ${formData.unidad_venta}`;
+        lineaStock = `📊 Stock inicial: ${producto.stock_actual} ${formData.unidad_venta}`;
+        lineaPrecio = `💰 Precio por ${formData.unidad_venta}: $${parseFloat(producto.precio_venta).toLocaleString('es-CO')}`;
     } else {
         lineaUnidad = `📏 Unidad de compra: ${formData.unidad_compra} (x${formData.factor} unidades)`;
         lineaStock = `📊 Stock inicial: ${producto.stock_actual} unidades`;
@@ -4073,7 +4073,7 @@ async function cargarProductosParaReceta() {
     try {
         const { data: productos, error } = await supabase
             .from('productos')
-            .select('producto_id, codigo, producto, tipo_venta, unidad_peso')
+            .select('producto_id, codigo, producto, tipo_venta, unidad_venta')
             .eq('tenant_id', userData.tenant_id)
             .eq('activo', true)
             .order('producto');
@@ -4087,7 +4087,7 @@ productos.forEach(p => {
     const option = document.createElement('option');
     option.value = p.producto_id;
     option.textContent = `[${p.codigo}] ${p.producto}`;
-    option.dataset.unidad = p.unidad_peso || 'unidades';
+    option.dataset.unidad = p.unidad_venta || 'unidades';
     option.dataset.tipoVenta = p.tipo_venta;
     option.dataset.codigo = p.codigo;
     option.dataset.nombre = p.producto;
@@ -4895,4 +4895,3 @@ async function enviarAudioChat(audioBlob) {
 </div>
 
 </html>
-
