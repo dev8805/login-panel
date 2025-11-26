@@ -1347,27 +1347,32 @@ select:focus {
         border: 2px solid;
         transition: all 0.2s ease;
         cursor: pointer;
+        background: rgba(255, 255, 255, 0.05);
     }
     
+    /* Mesa Disponible - Cyan */
     .mesa-card.disponible {
-        border-color: #00d4ff;
-        background: rgba(0, 212, 255, 0.05);
-    }
-    
-    .mesa-card.ocupada {
-        border-color: #10b981;
-        background: rgba(16, 185, 129, 0.08);
-        box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+        border-color: rgba(0, 212, 255, 0.3);
+        background: rgba(255, 255, 255, 0.05);
     }
     
     .mesa-card.disponible:hover {
-        background: rgba(0, 212, 255, 0.12);
+        background: rgba(0, 212, 255, 0.1);
+        border-color: #00d4ff;
         transform: translateX(4px);
-        box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);
+        box-shadow: 0 4px 12px rgba(0, 212, 255, 0.15);
+    }
+    
+    /* Mesa Ocupada - Verde brillante */
+    .mesa-card.ocupada {
+        border-color: #10b981;
+        background: rgba(16, 185, 129, 0.08);
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
     }
     
     .mesa-card.ocupada:hover {
-        background: rgba(16, 185, 129, 0.15);
+        background: rgba(16, 185, 129, 0.12);
+        border-color: #059669;
         transform: translateX(4px);
         box-shadow: 0 6px 20px rgba(16, 185, 129, 0.25);
     }
@@ -1376,7 +1381,7 @@ select:focus {
         flex: 1;
         flex-direction: column;
         align-items: flex-start;
-        gap: 4px;
+        gap: 8px;
         margin: 0;
     }
     
@@ -1385,14 +1390,19 @@ select:focus {
     }
     
     .mesa-title-input {
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 600;
         color: white;
+        background: transparent;
+        border: none;
+        padding: 0;
+        cursor: pointer;
     }
     
     .mesa-info-mobile {
         display: flex;
-        align-items: center;
+        flex-direction: column;
+        align-items: flex-end;
         gap: 8px;
         flex-shrink: 0;
     }
@@ -1401,41 +1411,44 @@ select:focus {
         padding: 6px 12px;
         border-radius: 8px;
         font-weight: 700;
-        font-size: 16px;
+        font-size: 14px;
         white-space: nowrap;
     }
     
+    /* Total badge - Cyan para disponible */
     .mesa-card.disponible .mesa-total-badge {
         background: rgba(0, 212, 255, 0.2);
-        color: #00d4ff;
-        border: 1px solid #00d4ff;
-    }
-    
-    .mesa-card.ocupada .mesa-total-badge {
-        background: rgba(16, 185, 129, 0.25);
-        color: #10b981;
-        border: 1px solid #10b981;
-    }
-    
-    .mesa-estado-badge {
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .mesa-card.disponible .mesa-estado-badge {
-        background: rgba(0, 212, 255, 0.15);
         color: #00d4ff;
         border: 1px solid rgba(0, 212, 255, 0.3);
     }
     
+    /* Total badge - Verde para ocupada */
+    .mesa-card.ocupada .mesa-total-badge {
+        background: rgba(16, 185, 129, 0.3);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.5);
+        font-weight: 700;
+    }
+    
+    .mesa-estado-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    
+    /* Estado badge - Cyan para disponible */
+    .mesa-card.disponible .mesa-estado-badge {
+        background: rgba(0, 212, 255, 0.2);
+        color: #00d4ff;
+    }
+    
+    /* Estado badge - Verde para ocupada */
     .mesa-card.ocupada .mesa-estado-badge {
         background: rgba(16, 185, 129, 0.2);
         color: #10b981;
-        border: 1px solid rgba(16, 185, 129, 0.4);
     }
     
     .header-actions {
@@ -1449,20 +1462,21 @@ select:focus {
         display: none;
     }
     
+    /* Resumen total mesas ocupadas */
     .resumen-mesas-mobile {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.08) 100%);
-        border: 2px solid #10b981;
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.3);
         border-radius: 12px;
         padding: 20px;
-        margin-top: 8px;
+        margin-top: 12px;
         text-align: center;
     }
     
     .resumen-mesas-mobile .label {
         font-size: 12px;
-        color: rgba(255, 255, 255, 0.7);
+        color: rgba(255, 255, 255, 0.6);
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
         margin-bottom: 8px;
     }
     
@@ -1472,9 +1486,42 @@ select:focus {
         color: #10b981;
     }
     
+    /* Botón agregar mesa en mobile */
     .add-mesa-card {
         min-height: 64px;
         border-radius: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px dashed rgba(255, 255, 255, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-top: 12px;
+    }
+    
+    .add-mesa-card:hover {
+        background: rgba(102, 126, 234, 0.1);
+        border-color: #667eea;
+        transform: scale(1.02);
+    }
+    
+    .add-icon-mesa {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        font-weight: 300;
+    }
+    
+    .add-mesa-card:hover .add-icon-mesa {
+        border-color: #667eea;
+        color: #667eea;
     }
 }
 
@@ -5730,9 +5777,9 @@ function renderMesas() {
                     <div class="mesa-title-wrapper">
                         <div class="mesa-title-input">${mesa.nombre}</div>
                     </div>
+                    <div class="mesa-total-badge">${formatPrecioMesa(total)}</div>
                 </div>
                 <div class="mesa-info-mobile">
-                    <div class="mesa-total-badge">${formatPrecioMesa(total)}</div>
                     <div class="mesa-estado-badge">${estadoTexto}</div>
                 </div>
             `;
@@ -5740,18 +5787,18 @@ function renderMesas() {
             container.appendChild(mesaCard);
         });
         
-        // Resumen total de mesas ocupadas
+        // Resumen total de mesas ocupadas (solo si hay mesas ocupadas)
         if (totalOcupadas > 0) {
             const resumen = document.createElement('div');
             resumen.className = 'resumen-mesas-mobile';
             resumen.innerHTML = `
-                <div class="label">Total Mesas Ocupadas</div>
+                <div class="label">TOTAL MESAS OCUPADAS</div>
                 <div class="total">${formatPrecioMesa(totalOcupadas)}</div>
             `;
             container.appendChild(resumen);
         }
         
-        // Botón agregar mesa
+        // Botón agregar nueva mesa
         const addCard = document.createElement('div');
         addCard.className = 'add-mesa-card';
         addCard.onclick = agregarMesa;
