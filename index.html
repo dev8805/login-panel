@@ -1329,6 +1329,155 @@ select:focus {
     }
 }
 
+/* Vista mobile de mesas */
+@media (max-width: 767px) {
+    .mesas-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px;
+        max-height: none;
+    }
+    
+    .mesa-card {
+        flex-direction: row;
+        padding: 16px;
+        min-height: 64px;
+        border-radius: 12px;
+        border: 2px solid;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .mesa-card.disponible {
+        border-color: #00d4ff;
+        background: rgba(0, 212, 255, 0.05);
+    }
+    
+    .mesa-card.ocupada {
+        border-color: #10b981;
+        background: rgba(16, 185, 129, 0.08);
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+    }
+    
+    .mesa-card.disponible:hover {
+        background: rgba(0, 212, 255, 0.12);
+        transform: translateX(4px);
+        box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);
+    }
+    
+    .mesa-card.ocupada:hover {
+        background: rgba(16, 185, 129, 0.15);
+        transform: translateX(4px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.25);
+    }
+    
+    .mesa-header {
+        flex: 1;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        margin: 0;
+    }
+    
+    .mesa-title-wrapper {
+        width: 100%;
+    }
+    
+    .mesa-title-input {
+        font-size: 18px;
+        font-weight: 600;
+        color: white;
+    }
+    
+    .mesa-info-mobile {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+    
+    .mesa-total-badge {
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 16px;
+        white-space: nowrap;
+    }
+    
+    .mesa-card.disponible .mesa-total-badge {
+        background: rgba(0, 212, 255, 0.2);
+        color: #00d4ff;
+        border: 1px solid #00d4ff;
+    }
+    
+    .mesa-card.ocupada .mesa-total-badge {
+        background: rgba(16, 185, 129, 0.25);
+        color: #10b981;
+        border: 1px solid #10b981;
+    }
+    
+    .mesa-estado-badge {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .mesa-card.disponible .mesa-estado-badge {
+        background: rgba(0, 212, 255, 0.15);
+        color: #00d4ff;
+        border: 1px solid rgba(0, 212, 255, 0.3);
+    }
+    
+    .mesa-card.ocupada .mesa-estado-badge {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    
+    .header-actions {
+        display: none;
+    }
+    
+    .productos-container-mesa,
+    .total-section-mesa,
+    .buscar-section-mesa,
+    .registrar-venta-mesa-btn {
+        display: none;
+    }
+    
+    .resumen-mesas-mobile {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.08) 100%);
+        border: 2px solid #10b981;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 8px;
+        text-align: center;
+    }
+    
+    .resumen-mesas-mobile .label {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.7);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+    }
+    
+    .resumen-mesas-mobile .total {
+        font-size: 28px;
+        font-weight: 700;
+        color: #10b981;
+    }
+    
+    .add-mesa-card {
+        min-height: 64px;
+        border-radius: 12px;
+    }
+}
+
 .add-mesa-card {
     display: flex;
     align-items: center;
@@ -5216,6 +5365,13 @@ async function abrirModalMesas() {
     }
     
     renderMesas();
+
+    // Re-renderizar al cambiar tamaño de ventana
+    window.addEventListener('resize', () => {
+        if (document.getElementById('modalMesas').classList.contains('show')) {
+            renderMesas();
+        }
+    });
 }
 
 // Guardar mesas en localStorage
@@ -5544,114 +5700,203 @@ async function registrarVentaMesa(mesaId) {
     }
 }
 
-// Renderizar todas las mesas
 function renderMesas() {
     const container = document.getElementById('mesasGrid');
     container.innerHTML = '';
     
-    mesasData.forEach(mesa => {
-        const total = calcularTotalMesa(mesa.productos);
-        const tieneProductos = mesa.productos.length > 0;
-        const wrapperSizeClass = mesa.expanded ? 'size-expanded' : 'size-default';
-        
-        const expandIcon = mesa.expanded 
-            ? `<line x1="21" y1="3" x2="3" y2="21"></line>
-               <polyline points="15 3 3 3 3 15"></polyline>
-               <polyline points="9 21 21 21 21 9"></polyline>`
-            : `<polyline points="15 3 21 3 21 9"></polyline>
-               <polyline points="9 21 3 21 3 15"></polyline>
-               <line x1="21" y1="3" x2="3" y2="21"></line>`;
-        
-        const closeBtnHTML = !tieneProductos 
-            ? `<button class="close-mesa-btn" onclick="eliminarMesa(${mesa.id})" title="Eliminar mesa">
-                <svg class="close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>`
-            : '';
-        
-        const mesaCard = document.createElement('div');
-        mesaCard.className = 'mesa-card';
-        mesaCard.innerHTML = `
-            <div class="mesa-header">
-                <div class="mesa-title-wrapper">
-                    <input type="text" 
-                           class="mesa-title-input" 
-                           value="${mesa.nombre}" 
-                           onchange="editarNombreMesa(${mesa.id}, this.value)">
-                </div>
-                <div class="header-actions">
-                    <button class="expand-btn" onclick="toggleExpandMesa(${mesa.id})">
-                        <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            ${expandIcon}
-                        </svg>
-                    </button>
-                    ${closeBtnHTML}
-                </div>
-            </div>
-            
-            <div class="productos-container-mesa">
-                <div class="productos-wrapper-mesa ${wrapperSizeClass}">
-                    <table class="productos-table-mesa">
-                        <tbody>
-                            ${mesa.productos.map((p, idx) => `
-                                <tr class="producto-row-mesa">
-                                    <td>
-                                        <div class="cantidad-control-mesa">
-                                            <button class="cantidad-btn-mesa" onclick="cambiarCantidadMesa(${mesa.id}, ${idx}, -1)">−</button>
-                                            <span class="cantidad-display-mesa">${p.cantidad}</span>
-                                            <button class="cantidad-btn-mesa" onclick="cambiarCantidadMesa(${mesa.id}, ${idx}, 1)">+</button>
-                                        </div>
-                                    </td>
-                                    <td>${p.unidad}</td>
-                                    <td>${p.nombre}</td>
-                                    <td>${formatPrecioMesa(p.precio_total)}</td>
-                                    <td>
-                                        <button class="delete-producto-mesa-btn" onclick="eliminarProductoMesa(${mesa.id}, ${idx})">
-                                            <svg class="trash-icon-mesa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <polyline points="3 6 5 6 21 6"></polyline>
-                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                                <line x1="10" y1="11" x2="10" y2="17"></line>
-                                                <line x1="14" y1="11" x2="14" y2="17"></line>
-                                            </svg>
-                                        </button>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-                
-                <div class="total-section-mesa">
-                    <span>Total</span>
-                    <span class="total-amount-mesa">${formatPrecioMesa(total)}</span>
-                </div>
-                
-                <div class="buscar-section-mesa">
-                    <div class="cantidad-buscar-mesa">
-                        <button class="cantidad-btn-mesa" onclick="cambiarCantidadBusqueda(${mesa.id}, -1)">−</button>
-                        <input type="number" id="cantidad-${mesa.id}" value="1" min="0.01" step="0.01" style="width: 50px; text-align: center; border: 1px solid #ddd; border-radius: 4px; padding: 4px;">
-                        <button class="cantidad-btn-mesa" onclick="cambiarCantidadBusqueda(${mesa.id}, 1)">+</button>
-                    </div>
-                    <input type="text" id="buscar-${mesa.id}" class="buscar-input-mesa" placeholder="Buscar producto..." oninput="buscarProductoMesa(${mesa.id}, this.value)">
-                    <button id="mic-${mesa.id}" class="mic-btn-mesa" onclick="toggleGrabacionMesa(${mesa.id})">🎤</button>
-                    <div id="sugerencias-${mesa.id}" style="display: none; position: absolute; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; z-index: 100; width: calc(100% - 40px); margin-top: 2px;"></div>
-                </div>
-                
-                <button class="registrar-venta-mesa-btn" onclick="registrarVentaMesa(${mesa.id})">Registrar Venta</button>
-            </div>
-        `;
-        
-        container.appendChild(mesaCard);
-    });
+    // Detectar si es mobile
+    const isMobile = window.innerWidth < 768;
     
-    // Agregar botón para nueva mesa
-    const addCard = document.createElement('div');
-    addCard.className = 'add-mesa-card';
-    addCard.onclick = agregarMesa;
-    addCard.innerHTML = '<div class="add-icon-mesa">+</div>';
-    container.appendChild(addCard);
+    if (isMobile) {
+        // VISTA MOBILE - Lista vertical
+        let totalOcupadas = 0;
+        
+        mesasData.forEach(mesa => {
+            const total = calcularTotalMesa(mesa.productos);
+            const tieneProductos = mesa.productos.length > 0;
+            
+            if (tieneProductos) {
+                totalOcupadas += total;
+            }
+            
+            const estadoClass = tieneProductos ? 'ocupada' : 'disponible';
+            const estadoTexto = tieneProductos ? 'Ocupada' : 'Disponible';
+            
+            const mesaCard = document.createElement('div');
+            mesaCard.className = `mesa-card ${estadoClass}`;
+            mesaCard.onclick = () => abrirDetalleMesa(mesa.id);
+            mesaCard.innerHTML = `
+                <div class="mesa-header">
+                    <div class="mesa-title-wrapper">
+                        <div class="mesa-title-input">${mesa.nombre}</div>
+                    </div>
+                </div>
+                <div class="mesa-info-mobile">
+                    <div class="mesa-total-badge">${formatPrecioMesa(total)}</div>
+                    <div class="mesa-estado-badge">${estadoTexto}</div>
+                </div>
+            `;
+            
+            container.appendChild(mesaCard);
+        });
+        
+        // Resumen total de mesas ocupadas
+        if (totalOcupadas > 0) {
+            const resumen = document.createElement('div');
+            resumen.className = 'resumen-mesas-mobile';
+            resumen.innerHTML = `
+                <div class="label">Total Mesas Ocupadas</div>
+                <div class="total">${formatPrecioMesa(totalOcupadas)}</div>
+            `;
+            container.appendChild(resumen);
+        }
+        
+        // Botón agregar mesa
+        const addCard = document.createElement('div');
+        addCard.className = 'add-mesa-card';
+        addCard.onclick = agregarMesa;
+        addCard.innerHTML = '<div class="add-icon-mesa">+</div>';
+        container.appendChild(addCard);
+        
+    } else {
+        // VISTA DESKTOP - Grid original
+        mesasData.forEach(mesa => {
+            const total = calcularTotalMesa(mesa.productos);
+            const tieneProductos = mesa.productos.length > 0;
+            const wrapperSizeClass = mesa.expanded ? 'size-expanded' : 'size-default';
+            
+            const expandIcon = mesa.expanded 
+                ? `<line x1="21" y1="3" x2="3" y2="21"></line>
+                   <polyline points="15 3 3 3 3 15"></polyline>
+                   <polyline points="9 21 21 21 21 9"></polyline>`
+                : `<polyline points="15 3 21 3 21 9"></polyline>
+                   <polyline points="9 21 3 21 3 15"></polyline>
+                   <line x1="21" y1="3" x2="3" y2="21"></line>`;
+            
+            const closeBtnHTML = !tieneProductos 
+                ? `<button class="close-mesa-btn" onclick="eliminarMesa(${mesa.id})" title="Eliminar mesa">
+                    <svg class="close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>`
+                : '';
+            
+            const mesaCard = document.createElement('div');
+            mesaCard.className = 'mesa-card';
+            mesaCard.innerHTML = `
+                <div class="mesa-header">
+                    <div class="mesa-title-wrapper">
+                        <input type="text" 
+                               class="mesa-title-input" 
+                               value="${mesa.nombre}" 
+                               onchange="editarNombreMesa(${mesa.id}, this.value)">
+                    </div>
+                    <div class="header-actions">
+                        <button class="expand-btn" onclick="toggleExpandMesa(${mesa.id})">
+                            <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                ${expandIcon}
+                            </svg>
+                        </button>
+                        ${closeBtnHTML}
+                    </div>
+                </div>
+                
+                <div class="productos-container-mesa">
+                    <div class="productos-wrapper-mesa ${wrapperSizeClass}">
+                        <table class="productos-table-mesa">
+                            <tbody>
+                                ${mesa.productos.map((p, idx) => `
+                                    <tr class="producto-row-mesa">
+                                        <td>
+                                            <div class="cantidad-control-mesa">
+                                                <button class="cantidad-btn-mesa" onclick="cambiarCantidadMesa(${mesa.id}, ${idx}, -1)">−</button>
+                                                <span class="cantidad-display-mesa">${p.cantidad}</span>
+                                                <button class="cantidad-btn-mesa" onclick="cambiarCantidadMesa(${mesa.id}, ${idx}, 1)">+</button>
+                                            </div>
+                                        </td>
+                                        <td>${p.unidad}</td>
+                                        <td>${p.nombre}</td>
+                                        <td>${formatPrecioMesa(p.precio_total)}</td>
+                                        <td>
+                                            <button class="delete-producto-mesa-btn" onclick="eliminarProductoMesa(${mesa.id}, ${idx})">
+                                                <svg class="trash-icon-mesa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                                                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                                                </svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="total-section-mesa">
+                        <span>Total</span>
+                        <span class="total-amount-mesa">${formatPrecioMesa(total)}</span>
+                    </div>
+                    
+                    <div class="buscar-section-mesa">
+                        <div class="cantidad-buscar-mesa">
+                            <button class="cantidad-btn-mesa" onclick="cambiarCantidadBusqueda(${mesa.id}, -1)">−</button>
+                            <input type="number" id="cantidad-${mesa.id}" value="1" min="0.01" step="0.01" style="width: 50px; text-align: center; border: 1px solid #ddd; border-radius: 4px; padding: 4px;">
+                            <button class="cantidad-btn-mesa" onclick="cambiarCantidadBusqueda(${mesa.id}, 1)">+</button>
+                        </div>
+                        <input type="text" id="buscar-${mesa.id}" class="buscar-input-mesa" placeholder="Buscar producto..." oninput="buscarProductoMesa(${mesa.id}, this.value)">
+                        <button id="mic-${mesa.id}" class="mic-btn-mesa" onclick="toggleGrabacionMesa(${mesa.id})">🎤</button>
+                        <div id="sugerencias-${mesa.id}" style="display: none; position: absolute; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; z-index: 100; width: calc(100% - 40px); margin-top: 2px;"></div>
+                    </div>
+                    
+                    <button class="registrar-venta-mesa-btn" onclick="registrarVentaMesa(${mesa.id})">Registrar Venta</button>
+                </div>
+            `;
+            
+            container.appendChild(mesaCard);
+        });
+        
+        // Agregar botón para nueva mesa
+        const addCard = document.createElement('div');
+        addCard.className = 'add-mesa-card';
+        addCard.onclick = agregarMesa;
+        addCard.innerHTML = '<div class="add-icon-mesa">+</div>';
+        container.appendChild(addCard);
+    }
+}
+
+// Abrir detalle de mesa en mobile
+function abrirDetalleMesa(mesaId) {
+    const isMobile = window.innerWidth < 768;
+    if (!isMobile) return; // Solo funciona en mobile
+    
+    const mesa = mesasData.find(m => m.id === mesaId);
+    const container = document.getElementById('mesasGrid');
+    
+    // Renderizar vista detalle
+    container.innerHTML = `
+        <div style="padding: 16px;">
+            <button onclick="renderMesas()" style="background: rgba(255,255,255,0.1); border: 2px solid white; color: white; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                ← Volver
+            </button>
+            
+            <div class="mesa-card" style="border: 2px solid #10b981;">
+                <!-- Aquí va todo el contenido actual de la mesa card desktop -->
+            </div>
+        </div>
+    `;
+    
+    // Copiar el HTML de la mesa card actual (desktop) dentro del div
+    const tempContainer = document.createElement('div');
+    renderMesas(); // Renderizar temporalmente para obtener el HTML
+    const desktopCard = Array.from(document.querySelectorAll('.mesa-card')).find(card => 
+        card.querySelector(`input[value="${mesa.nombre}"]`)
+    );
+    
+    if (desktopCard) {
+        container.querySelector('.mesa-card').innerHTML = desktopCard.innerHTML;
+    }
 }
 
     </script>
