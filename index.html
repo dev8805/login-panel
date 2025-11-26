@@ -969,46 +969,24 @@ select:focus {
     30% {
         transform: translateY(-8px);
     }
+}
 
 /* Estilos para Modal de Mesas */
-.mesas-container {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-    padding: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-@media (max-width: 767px) {
-    .mesas-container {
-        grid-template-columns: 1fr;
-        padding: 15px;
-    }
-}
-
 .mesa-card {
     background: white;
-    border: 3px solid #e0e0e0;
-    border-radius: 16px;
+    border-radius: 15px;
     padding: 20px;
-    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    position: relative;
     transition: all 0.3s;
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    min-height: 400px;
-    position: relative;
 }
 
 .mesa-card:hover {
-    border-color: #667eea;
-    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
-    transform: translateY(-4px);
-}
-
-.mesa-card.ocupada {
-    border-color: #10b981;
-    background: linear-gradient(135deg, #d4fc79 0%, #96f550 20%);
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
 }
 
 .mesa-header {
@@ -1016,206 +994,370 @@ select:focus {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #e0e0e0;
 }
 
-.mesa-nombre {
-    font-size: 24px;
-    font-weight: 700;
-    color: #333;
-}
-
-.mesa-estado {
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.mesa-estado.disponible {
-    background: #e0e0e0;
-    color: #666;
-}
-
-.mesa-estado.ocupada {
-    background: #10b981;
-    color: white;
-}
-
-.mesa-descripcion {
-    font-size: 13px;
-    color: #666;
-    margin-bottom: 15px;
-    min-height: 40px;
-}
-
-.mesa-productos {
-    flex: 1;
-    overflow-y: auto;
-    max-height: 200px;
-    margin-bottom: 15px;
-}
-
-.producto-item {
+.mesa-title-wrapper {
     display: flex;
-    justify-content: space-between;
-    padding: 8px;
-    margin-bottom: 6px;
-    background: #f5f7ff;
-    border-radius: 6px;
-    font-size: 13px;
-}
-
-.producto-nombre {
-    font-weight: 600;
-    color: #333;
-}
-
-.producto-precio {
-    color: #10b981;
-    font-weight: 700;
-}
-
-.mesa-total {
-    padding: 12px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 8px;
-    text-align: center;
-    font-size: 18px;
-    font-weight: 700;
-    margin-top: auto;
-}
-
-.mesa-actions {
-    display: flex;
+    align-items: center;
     gap: 10px;
-    margin-top: 12px;
-}
-
-.btn-mesa {
     flex: 1;
-    padding: 10px;
+}
+
+.mesa-title-input {
+    font-size: 22px;
+    font-weight: bold;
+    color: #333;
     border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    font-size: 13px;
-    transition: all 0.2s;
+    background: transparent;
+    outline: none;
+    padding: 0;
+    flex: 1;
 }
 
-.btn-editar {
-    background: #667eea;
-    color: white;
+.mesa-title-input:hover,
+.mesa-title-input:focus {
+    color: #667eea;
 }
 
-.btn-editar:hover {
-    background: #5568d3;
-    transform: translateY(-2px);
-}
-
-.btn-cobrar {
-    background: #10b981;
-    color: white;
-}
-
-.btn-cobrar:hover {
-    background: #059669;
-    transform: translateY(-2px);
-}
-
-/* Botón agregar mesa (ahora en el grid) */
-.btn-agregar-mesa-card {
-    background: white;
-    border: 3px dashed #667eea;
-    border-radius: 16px;
-    padding: 20px;
-    cursor: pointer;
-    transition: all 0.3s;
+.header-actions {
     display: flex;
-    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+}
+
+.expand-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border-radius: 8px;
+    background: #f5f5f5;
+    color: #333;
+    border: 1px solid #ddd;
+    cursor: pointer;
+    display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 400px;
-    color: #667eea;
+    transition: all 0.3s;
+    flex-shrink: 0;
+    padding: 0;
 }
 
-.btn-agregar-mesa-card:hover {
-    background: #f5f7ff;
-    border-color: #5568d3;
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+.expand-btn:hover {
+    background: #e9e9e9;
+    border-color: #999;
 }
 
-.btn-agregar-mesa-card .icono-mas {
-    font-size: 80px;
-    font-weight: 300;
+.expand-icon {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2.5;
+    transition: transform 0.3s;
+}
+
+.close-mesa-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border-radius: 50%;
+    background: #000;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    flex-shrink: 0;
+    padding: 0;
+}
+
+.close-mesa-btn:hover {
+    background: #333;
+    transform: scale(1.05);
+}
+
+.close-icon {
+    width: 18px;
+    height: 18px;
+    stroke-width: 3;
+}
+
+.productos-container-mesa {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.productos-wrapper-mesa {
+    overflow-y: auto;
     margin-bottom: 15px;
-    line-height: 1;
+    transition: max-height 0.3s ease;
 }
 
-.btn-agregar-mesa-card .texto-agregar {
-    font-size: 16px;
+.productos-wrapper-mesa.size-default {
+    max-height: 240px;
+}
+
+.productos-wrapper-mesa.size-expanded {
+    max-height: 560px;
+}
+
+.productos-wrapper-mesa::-webkit-scrollbar {
+    width: 6px;
+}
+
+.productos-wrapper-mesa::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.productos-wrapper-mesa::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+.productos-table-mesa {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.producto-row-mesa {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.producto-row-mesa td {
+    padding: 10px 6px;
+    font-size: 12px;
+    vertical-align: middle;
+}
+
+.producto-row-mesa td:first-child {
+    width: 90px;
+}
+
+.producto-row-mesa td:nth-child(2) {
+    width: 45px;
+}
+
+.producto-row-mesa td:nth-child(3) {
+    max-width: 150px;
+    line-height: 1.4;
+}
+
+.producto-row-mesa td:nth-child(4) {
+    width: 75px;
     font-weight: 600;
 }
 
-/* Modal de Editar Mesa */
-.modal-mesa-content {
-    max-width: 500px;
-}
-
-.producto-search {
-    position: relative;
-    margin-bottom: 20px;
-}
-
-.cantidad-control {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin: 20px 0;
-}
-
-.cantidad-control button {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 2px solid #667eea;
-    background: white;
-    color: #667eea;
-    font-size: 20px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.cantidad-control button:hover {
-    background: #667eea;
-    color: white;
-}
-
-.cantidad-display {
-    font-size: 24px;
-    font-weight: 700;
-    color: #333;
-    min-width: 50px;
+.producto-row-mesa td:last-child {
+    width: 45px;
     text-align: center;
 }
 
-.btn-voice-search {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
-    padding: 5px;
+.cantidad-control-mesa {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
+.cantidad-btn-mesa {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    border-radius: 50%;
+    border: 2.5px solid #333;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: bold;
+    color: #333;
+    flex-shrink: 0;
+    line-height: 1;
+    transition: all 0.2s;
+}
+
+.cantidad-btn-mesa:hover {
+    background: #f5f5f5;
+    transform: scale(1.05);
+}
+
+.cantidad-display-mesa {
+    min-width: 18px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.delete-producto-mesa-btn {
+    width: 38px;
+    height: 26px;
+    min-width: 38px;
+    border-radius: 6px;
+    background: white;
+    border: 2px solid #ff4444;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    flex-shrink: 0;
+}
+
+.delete-producto-mesa-btn:hover {
+    background: #fff5f5;
+    transform: scale(1.05);
+}
+
+.trash-icon-mesa {
+    width: 15px;
+    height: 15px;
+    color: #ff4444;
+}
+
+.total-section-mesa {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 15px 0;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.total-amount-mesa {
+    background: #10b981;
+    color: white;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 15px;
+}
+
+.buscar-section-mesa {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    align-items: center;
+}
+
+.cantidad-buscar-mesa {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.buscar-input-mesa {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 13px;
+    min-width: 0;
+}
+
+.mic-btn-mesa {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    border-radius: 8px;
+    background: white;
+    border: 1px solid #ddd;
+    cursor: pointer;
+    font-size: 16px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mic-btn-mesa:hover {
+    background: #f8f9fa;
+}
+
+.mic-btn-mesa.recording {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    animation: pulse-recording 1.5s infinite;
+}
+
+@keyframes pulse-recording {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+    }
+}
+
+.registrar-venta-mesa-btn {
+    width: 100%;
+    padding: 10px;
+    background: #10b981;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.registrar-venta-mesa-btn:hover {
+    background: #059669;
+}
+
+.mesas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+@media (min-width: 768px) {
+    .mesas-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1200px) {
+    .mesas-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.add-mesa-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border: 3px dashed #ddd;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    min-height: 350px;
+}
+
+.add-mesa-card:hover {
+    border-color: #667eea;
+    background: #f5f7ff;
+}
+
+.add-icon-mesa {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: 3px solid #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+    color: #333;
+    font-weight: 300;
+    line-height: 1;
 }
         
     </style>
@@ -1343,7 +1485,7 @@ select:focus {
     icon: '🍽️',
     title: 'Mesas',
     url: '#',
-    permission: 'ventas.crear',
+    permission: 'ventas.registrar',
     modal: true
 }
         ];
@@ -1858,11 +2000,7 @@ else if (modalId === 'chat_asistente') {
 }
 
 else if (modalId === 'mesas') {
-    const modal = document.getElementById('modalMesas');
-    const modalBody = document.getElementById('modalBodyMesas');
-    
-    cargarMesas(modalBody);
-    modal.classList.add('show');
+    abrirModalMesas();
 }
 
 }
@@ -1913,6 +2051,15 @@ function toggleUnidadCompraPersonalizada() {
 // Cerrar modal de editar apodos
 function closeModalEditarApodos() {
     document.getElementById('modalEditarApodos').classList.remove('show');
+}
+
+// Cerrar modal de mesas
+function closeModalMesas() {
+    document.getElementById('modalMesas').classList.remove('show');
+    // Detener cualquier grabación activa
+    if (grabacionActivaMesas) {
+        detenerGrabacionMesa(mesaGrabandoId);
+    }
 }
 
         // Cargar formulario de usuario
@@ -2735,6 +2882,17 @@ async function inicializarFormularioCompra() {
             autocompleteList.classList.remove('active');
         }
     });
+
+    // Cerrar sugerencias de mesas al hacer click fuera
+document.addEventListener('click', (e) => {
+    document.querySelectorAll('[id^="sugerencias-"]').forEach(sugerencias => {
+        const mesaId = sugerencias.id.replace('sugerencias-', '');
+        const inputBuscar = document.getElementById(`buscar-${mesaId}`);
+        if (inputBuscar && e.target !== inputBuscar && !sugerencias.contains(e.target)) {
+            sugerencias.style.display = 'none';
+        }
+    });
+});
     
     // Guardar referencia al producto seleccionado para usarlo en enviarCompraPanel
     window.productoSeleccionadoCompra = () => productoSeleccionado;
@@ -4566,11 +4724,6 @@ function closeModalChat() {
     document.getElementById('modalChatAsistente').classList.remove('show');
 }
 
-// Cerrar modal de mesas
-function closeModalMesas() {
-    document.getElementById('modalMesas').classList.remove('show');
-}
-
 // Alternar entre botón micrófono y enviar
 function toggleInputButtons() {
     const input = document.getElementById('inputMensajeChat');
@@ -5037,94 +5190,468 @@ async function enviarAudioChat(audioBlob) {
 }
 
 // =====================================================
-// FUNCIONES PARA MESAS
+// FUNCIONES PARA MODAL DE MESAS
 // =====================================================
 
 let mesasData = [];
+let mesaCounter = 0;
+let grabacionActivaMesas = false;
+let mesaGrabandoId = null;
+let mediaRecorderMesas = null;
+let audioChunksMesas = [];
 
-// Cargar mesas
-async function cargarMesas(modalBody) {
-    modalBody.innerHTML = `
-        <div style="text-align: center; padding: 40px;">
-            <p>Cargando mesas...</p>
-        </div>
-    `;
+// Abrir modal de mesas
+async function abrirModalMesas() {
+    const modal = document.getElementById('modalMesas');
+    modal.classList.add('show');
     
-    try {
-        // Cargar mesas desde localStorage o crear Mesa 1 por defecto
-        const mesasGuardadas = localStorage.getItem(`mesas_${userData.tenant_id}`);
-        
-        if (mesasGuardadas) {
-            mesasData = JSON.parse(mesasGuardadas);
-        } else {
-            // Crear solo Mesa 1 por defecto
-            mesasData = [
-                { id: 1, nombre: 'Mesa 1', descripcion: '', productos: [], total: 0 }
-            ];
-            guardarMesas();
-        }
-        
-        renderizarMesas(modalBody);
-        
-    } catch (error) {
-        console.error('Error cargando mesas:', error);
-        modalBody.innerHTML = `
-            <div class="error show">
-                Error al cargar mesas: ${error.message}
-            </div>
-        `;
+    // Cargar mesas desde localStorage o crear inicial
+    const mesasGuardadas = localStorage.getItem(`mesas_${userData.tenant_id}`);
+    if (mesasGuardadas) {
+        mesasData = JSON.parse(mesasGuardadas);
+        mesaCounter = Math.max(...mesasData.map(m => m.id), 0);
+    } else {
+        mesasData = [];
+        mesaCounter = 0;
+    }
+    
+    renderMesas();
+}
+
+// Guardar mesas en localStorage
+function guardarMesas() {
+    localStorage.setItem(`mesas_${userData.tenant_id}`, JSON.stringify(mesasData));
+}
+
+// Calcular total de una mesa
+function calcularTotalMesa(productos) {
+    return productos.reduce((sum, p) => sum + p.precio_total, 0);
+}
+
+// Formatear precio
+function formatPrecioMesa(precio) {
+    return `$${Math.round(precio).toLocaleString('es-CO')}`;
+}
+
+// Cambiar cantidad de producto
+function cambiarCantidadMesa(mesaId, productoIdx, delta) {
+    const mesa = mesasData.find(m => m.id === mesaId);
+    const producto = mesa.productos[productoIdx];
+    
+    const nuevaCantidad = Math.max(0.01, producto.cantidad + delta);
+    producto.cantidad = nuevaCantidad;
+    producto.precio_total = producto.precio_unitario * nuevaCantidad;
+    
+    guardarMesas();
+    renderMesas();
+}
+
+// Eliminar producto de mesa
+function eliminarProductoMesa(mesaId, productoIdx) {
+    const mesa = mesasData.find(m => m.id === mesaId);
+    mesa.productos.splice(productoIdx, 1);
+    guardarMesas();
+    renderMesas();
+}
+
+// Eliminar mesa completa
+function eliminarMesa(mesaId) {
+    if (confirm('¿Seguro que deseas eliminar esta mesa?')) {
+        mesasData = mesasData.filter(m => m.id !== mesaId);
+        guardarMesas();
+        renderMesas();
     }
 }
 
-// Renderizar mesas
-function renderizarMesas(modalBody) {
-    modalBody.innerHTML = `
-        <div class="mesas-container">
-            ${mesasData.map(mesa => `
-                <div class="mesa-card ${mesa.productos.length > 0 ? 'ocupada' : ''}" onclick="abrirEditarMesa(${mesa.id})">
-                    <div class="mesa-header">
-                        <div class="mesa-nombre">${mesa.nombre}</div>
-                        <div class="mesa-estado ${mesa.productos.length > 0 ? 'ocupada' : 'disponible'}">
-                            ${mesa.productos.length > 0 ? 'Ocupada' : 'Disponible'}
-                        </div>
-                    </div>
-                    
-                    <div class="mesa-descripcion">
-                        ${mesa.descripcion || 'Sin descripción'}
-                    </div>
-                    
-                    <div class="mesa-productos">
-                        ${mesa.productos.length > 0 ? mesa.productos.map(p => `
-                            <div class="producto-item">
-                                <span class="producto-nombre">${p.cantidad}x ${p.nombre}</span>
-                                <span class="producto-precio">$${(p.precio * p.cantidad).toLocaleString('es-CO')}</span>
-                            </div>
-                        `).join('') : '<div style="text-align: center; color: #999; font-style: italic; padding: 40px 0;">Mesa vacía</div>'}
-                    </div>
-                    
-                    ${mesa.productos.length > 0 ? `
-                        <div class="mesa-total">
-                            Total: $${mesa.total.toLocaleString('es-CO')}
-                        </div>
-                        <div class="mesa-actions">
-                            <button class="btn-mesa btn-editar" onclick="event.stopPropagation(); abrirEditarMesa(${mesa.id})">
-                                ✏️ Editar
-                            </button>
-                            <button class="btn-mesa btn-cobrar" onclick="event.stopPropagation(); cobrarMesa(${mesa.id})">
-                                💰 Cobrar
-                            </button>
-                        </div>
-                    ` : ''}
-                </div>
-            `).join('')}
-            
-            <!-- Botón agregar nueva mesa -->
-            <div class="btn-agregar-mesa-card" onclick="agregarNuevaMesa()">
-                <div class="icono-mas">⊕</div>
-                <div class="texto-agregar">Agregar nueva mesa</div>
+// Agregar nueva mesa
+function agregarMesa() {
+    mesaCounter++;
+    mesasData.push({
+        id: mesaCounter,
+        nombre: `Mesa ${mesaCounter}`,
+        expanded: false,
+        productos: []
+    });
+    guardarMesas();
+    renderMesas();
+}
+
+// Editar nombre de mesa
+function editarNombreMesa(mesaId, nuevoNombre) {
+    const mesa = mesasData.find(m => m.id === mesaId);
+    if (mesa) {
+        mesa.nombre = nuevoNombre;
+        guardarMesas();
+    }
+}
+
+// Toggle expandir mesa
+function toggleExpandMesa(mesaId) {
+    const mesa = mesasData.find(m => m.id === mesaId);
+    if (mesa) {
+        mesa.expanded = !mesa.expanded;
+        renderMesas();
+    }
+}
+
+// Buscar productos en mesa
+async function buscarProductoMesa(mesaId, termino) {
+    if (!termino || termino.length < 2) return;
+    
+    const inputBuscar = document.getElementById(`buscar-${mesaId}`);
+    const listaSugerencias = document.getElementById(`sugerencias-${mesaId}`);
+    
+    try {
+        const { data: productos, error } = await supabase
+            .from('productos')
+            .select('producto_id, codigo, producto, precio_venta, tipo_venta, unidad_venta')
+            .eq('tenant_id', userData.tenant_id)
+            .eq('activo', true)
+            .or(`producto.ilike.%${termino}%,codigo.ilike.%${termino}%`)
+            .limit(5);
+        
+        if (error) throw error;
+        
+        if (productos.length === 0) {
+            listaSugerencias.innerHTML = '<div style="padding: 10px; color: #999;">No se encontraron productos</div>';
+            listaSugerencias.style.display = 'block';
+            return;
+        }
+        
+        listaSugerencias.innerHTML = productos.map(p => `
+            <div style="padding: 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0; transition: background 0.2s;" 
+                 onmouseover="this.style.background='#f5f7ff'" 
+                 onmouseout="this.style.background='white'"
+                 onclick="agregarProductoAMesa(${mesaId}, ${p.producto_id}, '${p.codigo}', '${p.producto.replace(/'/g, "\\'")}', ${p.precio_venta}, '${p.tipo_venta}', '${p.unidad_venta}')">
+                <div style="font-weight: 600;">[${p.codigo}] ${p.producto}</div>
+                <div style="font-size: 11px; color: #666;">${formatPrecioMesa(p.precio_venta)}</div>
             </div>
-        </div>
-    `;
+        `).join('');
+        
+        listaSugerencias.style.display = 'block';
+        
+    } catch (error) {
+        console.error('Error buscando productos:', error);
+    }
+}
+
+// Agregar producto a mesa
+function agregarProductoAMesa(mesaId, productoId, codigo, nombre, precioUnitario, tipoVenta, unidadVenta) {
+    const mesa = mesasData.find(m => m.id === mesaId);
+    const cantidadInput = document.getElementById(`cantidad-${mesaId}`);
+    const cantidad = parseFloat(cantidadInput.value) || 1;
+    
+    // Verificar si el producto ya existe en la mesa
+    const productoExistente = mesa.productos.find(p => p.producto_id === productoId);
+    
+    if (productoExistente) {
+        // Incrementar cantidad
+        productoExistente.cantidad += cantidad;
+        productoExistente.precio_total = productoExistente.precio_unitario * productoExistente.cantidad;
+    } else {
+        // Agregar nuevo producto
+        mesa.productos.push({
+            producto_id: productoId,
+            codigo: codigo,
+            nombre: nombre,
+            cantidad: cantidad,
+            unidad: unidadVenta || 'und',
+            precio_unitario: precioUnitario,
+            precio_total: precioUnitario * cantidad
+        });
+    }
+    
+    // Limpiar búsqueda
+    document.getElementById(`buscar-${mesaId}`).value = '';
+    document.getElementById(`sugerencias-${mesaId}`).style.display = 'none';
+    cantidadInput.value = '1';
+    
+    guardarMesas();
+    renderMesas();
+}
+
+// Cambiar cantidad de búsqueda
+function cambiarCantidadBusqueda(mesaId, delta) {
+    const input = document.getElementById(`cantidad-${mesaId}`);
+    const nuevaCantidad = Math.max(0.01, (parseFloat(input.value) || 1) + delta);
+    input.value = nuevaCantidad.toFixed(2).replace(/\.?0+$/, '');
+}
+
+// Toggle grabación de voz para mesa
+async function toggleGrabacionMesa(mesaId) {
+    if (grabacionActivaMesas && mesaGrabandoId === mesaId) {
+        detenerGrabacionMesa(mesaId);
+    } else if (!grabacionActivaMesas) {
+        iniciarGrabacionMesa(mesaId);
+    }
+}
+
+// Iniciar grabación
+async function iniciarGrabacionMesa(mesaId) {
+    const btnMic = document.getElementById(`mic-${mesaId}`);
+    
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorderMesas = new MediaRecorder(stream);
+        audioChunksMesas = [];
+        
+        mediaRecorderMesas.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+                audioChunksMesas.push(event.data);
+            }
+        };
+        
+        mediaRecorderMesas.onstop = async () => {
+            stream.getTracks().forEach(track => track.stop());
+            
+            if (audioChunksMesas.length > 0) {
+                const audioBlob = new Blob(audioChunksMesas, { type: 'audio/webm' });
+                if (audioBlob.size > 1000) {
+                    await enviarAudioMesa(mesaId, audioBlob);
+                }
+            }
+            
+            audioChunksMesas = [];
+        };
+        
+        mediaRecorderMesas.start();
+        grabacionActivaMesas = true;
+        mesaGrabandoId = mesaId;
+        
+        btnMic.classList.add('recording');
+        btnMic.innerHTML = '⏹️';
+        
+    } catch (error) {
+        console.error('Error accediendo al micrófono:', error);
+        alert('No se pudo acceder al micrófono');
+    }
+}
+
+// Detener grabación
+function detenerGrabacionMesa(mesaId) {
+    if (mediaRecorderMesas && mediaRecorderMesas.state === 'recording') {
+        mediaRecorderMesas.stop();
+    }
+    
+    grabacionActivaMesas = false;
+    mesaGrabandoId = null;
+    
+    const btnMic = document.getElementById(`mic-${mesaId}`);
+    if (btnMic) {
+        btnMic.classList.remove('recording');
+        btnMic.innerHTML = '🎤';
+    }
+}
+
+// Enviar audio al webhook
+async function enviarAudioMesa(mesaId, audioBlob) {
+    const mesa = mesasData.find(m => m.id === mesaId);
+    
+    try {
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        
+        reader.onloadend = async () => {
+            const base64Audio = reader.result.split(',')[1];
+            
+            const response = await fetch('https://n8n-n8n.aa7tej.easypanel.host/webhook/productos-mesas', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    audio: base64Audio,
+                    tipo: 'audio',
+                    mesa_id: mesaId,
+                    mesa_nombre: mesa.nombre,
+                    tenant_id: userData.tenant_id,
+                    user_id: userData.user_id
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.productos && Array.isArray(data.productos)) {
+                // Agregar productos reconocidos a la mesa
+                data.productos.forEach(p => {
+                    agregarProductoAMesa(
+                        mesaId, 
+                        p.producto_id, 
+                        p.codigo, 
+                        p.nombre, 
+                        p.precio, 
+                        p.tipo_venta, 
+                        p.unidad_venta
+                    );
+                });
+            }
+        };
+        
+    } catch (error) {
+        console.error('Error enviando audio:', error);
+        alert('Error al procesar el audio');
+    }
+}
+
+// Registrar venta de mesa
+async function registrarVentaMesa(mesaId) {
+    const mesa = mesasData.find(m => m.id === mesaId);
+    
+    if (mesa.productos.length === 0) {
+        alert('La mesa no tiene productos');
+        return;
+    }
+    
+    const total = calcularTotalMesa(mesa.productos);
+    
+    if (!confirm(`¿Confirmar venta de ${mesa.nombre} por ${formatPrecioMesa(total)}?`)) {
+        return;
+    }
+    
+    try {
+        // Enviar al webhook del chat asistente
+        const response = await fetch('https://n8n-n8n.aa7tej.easypanel.host/webhook/chat-panel', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                tipo: 'venta_mesa',
+                mesa_nombre: mesa.nombre,
+                productos: mesa.productos,
+                total: total,
+                usuario: userData.nombre,
+                tenant_id: userData.tenant_id,
+                user_id: userData.user_id
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.exito) {
+            alert(`✅ Venta registrada: ${formatPrecioMesa(total)}`);
+            // Limpiar mesa
+            mesa.productos = [];
+            guardarMesas();
+            renderMesas();
+        } else {
+            throw new Error(data.error || 'Error al registrar venta');
+        }
+        
+    } catch (error) {
+        console.error('Error registrando venta:', error);
+        alert('Error al registrar la venta: ' + error.message);
+    }
+}
+
+// Renderizar todas las mesas
+function renderMesas() {
+    const container = document.getElementById('mesasGrid');
+    container.innerHTML = '';
+    
+    mesasData.forEach(mesa => {
+        const total = calcularTotalMesa(mesa.productos);
+        const tieneProductos = mesa.productos.length > 0;
+        const wrapperSizeClass = mesa.expanded ? 'size-expanded' : 'size-default';
+        
+        const expandIcon = mesa.expanded 
+            ? `<line x1="21" y1="3" x2="3" y2="21"></line>
+               <polyline points="15 3 3 3 3 15"></polyline>
+               <polyline points="9 21 21 21 21 9"></polyline>`
+            : `<polyline points="15 3 21 3 21 9"></polyline>
+               <polyline points="9 21 3 21 3 15"></polyline>
+               <line x1="21" y1="3" x2="3" y2="21"></line>`;
+        
+        const closeBtnHTML = !tieneProductos 
+            ? `<button class="close-mesa-btn" onclick="eliminarMesa(${mesa.id})" title="Eliminar mesa">
+                <svg class="close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>`
+            : '';
+        
+        const mesaCard = document.createElement('div');
+        mesaCard.className = 'mesa-card';
+        mesaCard.innerHTML = `
+            <div class="mesa-header">
+                <div class="mesa-title-wrapper">
+                    <input type="text" 
+                           class="mesa-title-input" 
+                           value="${mesa.nombre}" 
+                           onchange="editarNombreMesa(${mesa.id}, this.value)">
+                </div>
+                <div class="header-actions">
+                    <button class="expand-btn" onclick="toggleExpandMesa(${mesa.id})">
+                        <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            ${expandIcon}
+                        </svg>
+                    </button>
+                    ${closeBtnHTML}
+                </div>
+            </div>
+            
+            <div class="productos-container-mesa">
+                <div class="productos-wrapper-mesa ${wrapperSizeClass}">
+                    <table class="productos-table-mesa">
+                        <tbody>
+                            ${mesa.productos.map((p, idx) => `
+                                <tr class="producto-row-mesa">
+                                    <td>
+                                        <div class="cantidad-control-mesa">
+                                            <button class="cantidad-btn-mesa" onclick="cambiarCantidadMesa(${mesa.id}, ${idx}, -1)">−</button>
+                                            <span class="cantidad-display-mesa">${p.cantidad}</span>
+                                            <button class="cantidad-btn-mesa" onclick="cambiarCantidadMesa(${mesa.id}, ${idx}, 1)">+</button>
+                                        </div>
+                                    </td>
+                                    <td>${p.unidad}</td>
+                                    <td>${p.nombre}</td>
+                                    <td>${formatPrecioMesa(p.precio_total)}</td>
+                                    <td>
+                                        <button class="delete-producto-mesa-btn" onclick="eliminarProductoMesa(${mesa.id}, ${idx})">
+                                            <svg class="trash-icon-mesa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                                            </svg>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="total-section-mesa">
+                    <span>Total</span>
+                    <span class="total-amount-mesa">${formatPrecioMesa(total)}</span>
+                </div>
+                
+                <div class="buscar-section-mesa">
+                    <div class="cantidad-buscar-mesa">
+                        <button class="cantidad-btn-mesa" onclick="cambiarCantidadBusqueda(${mesa.id}, -1)">−</button>
+                        <input type="number" id="cantidad-${mesa.id}" value="1" min="0.01" step="0.01" style="width: 50px; text-align: center; border: 1px solid #ddd; border-radius: 4px; padding: 4px;">
+                        <button class="cantidad-btn-mesa" onclick="cambiarCantidadBusqueda(${mesa.id}, 1)">+</button>
+                    </div>
+                    <input type="text" id="buscar-${mesa.id}" class="buscar-input-mesa" placeholder="Buscar producto..." oninput="buscarProductoMesa(${mesa.id}, this.value)">
+                    <button id="mic-${mesa.id}" class="mic-btn-mesa" onclick="toggleGrabacionMesa(${mesa.id})">🎤</button>
+                    <div id="sugerencias-${mesa.id}" style="display: none; position: absolute; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; z-index: 100; width: calc(100% - 40px); margin-top: 2px;"></div>
+                </div>
+                
+                <button class="registrar-venta-mesa-btn" onclick="registrarVentaMesa(${mesa.id})">Registrar Venta</button>
+            </div>
+        `;
+        
+        container.appendChild(mesaCard);
+    });
+    
+    // Agregar botón para nueva mesa
+    const addCard = document.createElement('div');
+    addCard.className = 'add-mesa-card';
+    addCard.onclick = agregarMesa;
+    addCard.innerHTML = '<div class="add-icon-mesa">+</div>';
+    container.appendChild(addCard);
 }
 
     </script>
@@ -5306,13 +5833,13 @@ function renderizarMesas(modalBody) {
 
 <!-- Modal Mesas -->
 <div id="modalMesas" class="modal">
-    <div class="modal-content" style="max-width: 100%; width: 100%; max-height: 100vh; height: 100vh; margin: 0; border-radius: 0;">
+    <div class="modal-content" style="max-width: 100%; width: 100%; height: 100vh; max-height: 100vh; margin: 0; border-radius: 0; display: flex; flex-direction: column;">
         <div class="modal-header">
             <h3>🍽️ Gestión de Mesas</h3>
             <button class="modal-close" onclick="closeModalMesas()">×</button>
         </div>
-        <div class="modal-body" id="modalBodyMesas" style="padding: 0; overflow-y: auto; height: calc(100vh - 80px);">
-            <!-- Aquí se cargarán las mesas -->
+        <div style="flex: 1; overflow-y: auto; padding: 0;">
+            <div id="mesasGrid" class="mesas-grid"></div>
         </div>
     </div>
 </div>
