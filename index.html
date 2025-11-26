@@ -970,16 +970,18 @@ select:focus {
         transform: translateY(-8px);
     }
 
-    /* Estilos para Modal de Mesas */
-.mesas-grid {
+/* Estilos para Modal de Mesas */
+.mesas-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 20px;
     padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 @media (max-width: 767px) {
-    .mesas-grid {
+    .mesas-container {
         grid-template-columns: 1fr;
         padding: 15px;
     }
@@ -995,6 +997,7 @@ select:focus {
     display: flex;
     flex-direction: column;
     min-height: 400px;
+    position: relative;
 }
 
 .mesa-card:hover {
@@ -1123,33 +1126,39 @@ select:focus {
     transform: translateY(-2px);
 }
 
-.btn-agregar-mesa {
-    position: fixed;
-    bottom: 80px;
-    right: 20px;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    font-size: 30px;
+/* Botón agregar mesa (ahora en el grid) */
+.btn-agregar-mesa-card {
+    background: white;
+    border: 3px dashed #667eea;
+    border-radius: 16px;
+    padding: 20px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     transition: all 0.3s;
-    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    color: #667eea;
 }
 
-.btn-agregar-mesa:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+.btn-agregar-mesa-card:hover {
+    background: #f5f7ff;
+    border-color: #5568d3;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
 }
 
-@media (min-width: 768px) {
-    .btn-agregar-mesa {
-        bottom: 30px;
-        right: 30px;
-    }
+.btn-agregar-mesa-card .icono-mas {
+    font-size: 80px;
+    font-weight: 300;
+    margin-bottom: 15px;
+    line-height: 1;
+}
+
+.btn-agregar-mesa-card .texto-agregar {
+    font-size: 16px;
+    font-weight: 600;
 }
 
 /* Modal de Editar Mesa */
@@ -5042,20 +5051,15 @@ async function cargarMesas(modalBody) {
     `;
     
     try {
-        // Cargar mesas desde localStorage o crear mesas por defecto
+        // Cargar mesas desde localStorage o crear Mesa 1 por defecto
         const mesasGuardadas = localStorage.getItem(`mesas_${userData.tenant_id}`);
         
         if (mesasGuardadas) {
             mesasData = JSON.parse(mesasGuardadas);
         } else {
-            // Crear 6 mesas por defecto
+            // Crear solo Mesa 1 por defecto
             mesasData = [
-                { id: 1, nombre: 'Mesa 1', descripcion: '', productos: [], total: 0 },
-                { id: 2, nombre: 'Mesa 2', descripcion: '', productos: [], total: 0 },
-                { id: 3, nombre: 'Mesa 3', descripcion: '', productos: [], total: 0 },
-                { id: 4, nombre: 'Mesa 4', descripcion: '', productos: [], total: 0 },
-                { id: 5, nombre: 'Mesa 5', descripcion: '', productos: [], total: 0 },
-                { id: 6, nombre: 'Mesa 6', descripcion: '', productos: [], total: 0 }
+                { id: 1, nombre: 'Mesa 1', descripcion: '', productos: [], total: 0 }
             ];
             guardarMesas();
         }
@@ -5075,7 +5079,7 @@ async function cargarMesas(modalBody) {
 // Renderizar mesas
 function renderizarMesas(modalBody) {
     modalBody.innerHTML = `
-        <div class="mesas-grid">
+        <div class="mesas-container">
             ${mesasData.map(mesa => `
                 <div class="mesa-card ${mesa.productos.length > 0 ? 'ocupada' : ''}" onclick="abrirEditarMesa(${mesa.id})">
                     <div class="mesa-header">
@@ -5095,7 +5099,7 @@ function renderizarMesas(modalBody) {
                                 <span class="producto-nombre">${p.cantidad}x ${p.nombre}</span>
                                 <span class="producto-precio">$${(p.precio * p.cantidad).toLocaleString('es-CO')}</span>
                             </div>
-                        `).join('') : '<div style="text-align: center; color: #999; font-style: italic;">Mesa vacía</div>'}
+                        `).join('') : '<div style="text-align: center; color: #999; font-style: italic; padding: 40px 0;">Mesa vacía</div>'}
                     </div>
                     
                     ${mesa.productos.length > 0 ? `
@@ -5113,43 +5117,14 @@ function renderizarMesas(modalBody) {
                     ` : ''}
                 </div>
             `).join('')}
+            
+            <!-- Botón agregar nueva mesa -->
+            <div class="btn-agregar-mesa-card" onclick="agregarNuevaMesa()">
+                <div class="icono-mas">⊕</div>
+                <div class="texto-agregar">Agregar nueva mesa</div>
+            </div>
         </div>
-        
-        <button class="btn-agregar-mesa" onclick="agregarNuevaMesa()">+</button>
     `;
-}
-
-// Guardar mesas en localStorage
-function guardarMesas() {
-    localStorage.setItem(`mesas_${userData.tenant_id}`, JSON.stringify(mesasData));
-}
-
-// Abrir editor de mesa
-function abrirEditarMesa(mesaId) {
-    alert(`Función de editar mesa ${mesaId} - próximamente`);
-}
-
-// Cobrar mesa
-function cobrarMesa(mesaId) {
-    alert(`Función de cobrar mesa ${mesaId} - próximamente`);
-}
-
-// Agregar nueva mesa
-function agregarNuevaMesa() {
-    const nuevoId = Math.max(...mesasData.map(m => m.id), 0) + 1;
-    const nuevaMesa = {
-        id: nuevoId,
-        nombre: `Mesa ${nuevoId}`,
-        descripcion: '',
-        productos: [],
-        total: 0
-    };
-    
-    mesasData.push(nuevaMesa);
-    guardarMesas();
-    
-    const modalBody = document.getElementById('modalBodyMesas');
-    renderizarMesas(modalBody);
 }
 
     </script>
