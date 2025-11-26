@@ -830,33 +830,14 @@ select:focus {
 }
 
 /* Estilos para Mesas */
-.btn-add-table {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 16px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.btn-add-table:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.mesas-grid {
+.modal-mesas-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    padding: 20px;
 }
 
-.mesa-card {
+.mesa-card-simple {
     background: white;
     border: 2px solid #e0e0e0;
     border-radius: 12px;
@@ -864,166 +845,281 @@ select:focus {
     cursor: pointer;
     transition: all 0.3s ease;
     text-align: center;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-.mesa-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+.mesa-card-simple:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     border-color: #667eea;
 }
 
-.mesa-card.ocupada {
-    border-color: #f093fb;
-    background: linear-gradient(135deg, #fff 0%, #fef9ff 100%);
+.mesa-card-simple.ocupada {
+    border-color: #10b981;
+    background: linear-gradient(135deg, #fff 0%, #f0fdf4 100%);
 }
 
-.mesa-card .mesa-icon {
-    font-size: 48px;
-    margin-bottom: 10px;
-    color: #667eea;
-}
-
-.mesa-card .mesa-nombre {
+.mesa-card-nombre {
     font-size: 18px;
     font-weight: bold;
     color: #333;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
 }
 
-.mesa-card .mesa-descripcion {
-    font-size: 14px;
+.mesa-card-info {
+    font-size: 13px;
     color: #666;
-    margin-bottom: 10px;
 }
 
-.mesa-card .mesa-productos-count {
-    font-size: 14px;
-    color: #999;
-}
-
-.mesa-nombre-input, .mesa-descripcion-input {
-    width: 100%;
-    padding: 12px;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
-    font-size: 16px;
-    margin-bottom: 10px;
-}
-
-.mesa-descripcion-input {
-    min-height: 60px;
-    resize: vertical;
-}
-
-.btn-guardar-mesa {
-    background: #4CAF50;
+.btn-add-mesa-circular {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
+    font-size: 32px;
     cursor: pointer;
-    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    transition: transform 0.2s;
 }
 
-.mesa-productos-section, .mesa-chat-section {
-    margin-top: 20px;
-    padding: 20px;
-    background: #f9f9f9;
-    border-radius: 8px;
+.btn-add-mesa-circular:hover {
+    transform: scale(1.1);
 }
 
-.btn-agregar-producto-mesa {
-    background: #667eea;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-bottom: 15px;
+/* Modal Detalle Mesa - Nueva Estructura */
+.modal-detalle-mesa {
+    max-width: 95%;
+    width: 1200px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
-.producto-mesa-item {
+.detalle-mesa-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px;
-    background: white;
-    border-radius: 8px;
-    margin-bottom: 10px;
+    padding: 20px;
+    border-bottom: 2px solid #e0e0e0;
 }
 
-.mesa-total {
+.detalle-mesa-header h2 {
     font-size: 24px;
     font-weight: bold;
     color: #333;
-    text-align: right;
-    margin: 20px 0;
-    padding: 15px;
-    background: white;
-    border-radius: 8px;
+    margin: 0;
 }
 
-.btn-cerrar-mesa {
-    width: 100%;
-    background: #4CAF50;
+.btn-cerrar-detalle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #333;
     color: white;
     border: none;
-    padding: 15px;
-    border-radius: 8px;
+    font-size: 24px;
     cursor: pointer;
-    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.detalle-mesa-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.detalle-mesa-left {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    border-right: 2px solid #e0e0e0;
+}
+
+.detalle-mesa-right {
+    width: 400px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    background: #f9f9f9;
+}
+
+.campo-descripcion {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.tabla-productos-mesa {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.tabla-productos-mesa thead {
+    background: #f5f5f5;
+}
+
+.tabla-productos-mesa th {
+    padding: 12px 8px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.tabla-productos-mesa td {
+    padding: 12px 8px;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 14px;
+}
+
+.producto-cantidad-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-cantidad {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid #333;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
     font-weight: bold;
 }
 
-.btn-eliminar-mesa {
-    width: 100%;
-    background: #f44336;
+.btn-eliminar-producto {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    background: #ef4444;
     color: white;
     border: none;
-    padding: 12px;
-    border-radius: 8px;
     cursor: pointer;
-    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.btn-nota-voz {
-    background: #FF6B6B;
+.total-mesa-box {
+    background: #10b981;
     color: white;
-    border: none;
-    padding: 10px 20px;
+    padding: 15px 20px;
     border-radius: 8px;
-    cursor: pointer;
+    text-align: right;
+    margin-bottom: 20px;
+}
+
+.total-mesa-label {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.total-mesa-valor {
+    font-size: 24px;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.buscar-producto-mesa {
+    display: flex;
+    gap: 10px;
+    align-items: center;
     margin-bottom: 15px;
 }
 
-.nota-voz-item {
-    background: white;
-    padding: 10px;
-    border-radius: 8px;
-    margin-bottom: 10px;
+.contador-cantidad-mesa {
     display: flex;
     align-items: center;
     gap: 10px;
-}
-
-.productos-lista {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.producto-seleccionable {
-    padding: 15px;
-    background: white;
     border: 2px solid #e0e0e0;
     border-radius: 8px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    padding: 8px 12px;
 }
 
-.producto-seleccionable:hover {
-    border-color: #667eea;
-    background: #f0f4ff;
+.input-buscar-producto {
+    flex: 1;
+    padding: 10px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.btn-microfono-mesa {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #667eea;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.btn-registrar-venta-mesa {
+    width: 100%;
+    padding: 15px;
+    background: #10b981;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: auto;
+}
+
+.btn-registrar-venta-mesa:hover {
+    background: #059669;
+}
+
+@media (max-width: 768px) {
+    .detalle-mesa-body {
+        flex-direction: column;
+    }
+    
+    .detalle-mesa-left {
+        border-right: none;
+        border-bottom: 2px solid #e0e0e0;
+    }
+    
+    .detalle-mesa-right {
+        width: 100%;
+    }
+    
+    .modal-detalle-mesa {
+        max-width: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+    }
 }
 
 /* Estilos para Chat */
@@ -4466,21 +4562,21 @@ function eliminarIngredienteReceta(index) {
 
 let mesas = JSON.parse(localStorage.getItem('mesas')) || [];
 let mesaActual = null;
+let cantidadBusqueda = 1;
 
 function cargarMesas() {
     const container = document.getElementById('mesas-container');
     container.innerHTML = '';
     
     mesas.forEach((mesa, index) => {
+        const cantidadProductos = mesa.productos ? mesa.productos.length : 0;
         const mesaCard = document.createElement('div');
-        mesaCard.className = `mesa-card ${mesa.productos && mesa.productos.length > 0 ? 'ocupada' : ''}`;
+        mesaCard.className = `mesa-card-simple ${cantidadProductos > 0 ? 'ocupada' : ''}`;
         mesaCard.onclick = () => abrirDetalleMesa(index);
         
         mesaCard.innerHTML = `
-            <div class="mesa-icon">🍽️</div>
-            <div class="mesa-nombre">${mesa.nombre}</div>
-            <div class="mesa-descripcion">${mesa.descripcion || ''}</div>
-            <div class="mesa-productos-count">${mesa.productos ? mesa.productos.length : 0} productos</div>
+            <div class="mesa-card-nombre">${mesa.nombre}</div>
+            <div class="mesa-card-info">${cantidadProductos} productos</div>
         `;
         
         container.appendChild(mesaCard);
@@ -4488,11 +4584,11 @@ function cargarMesas() {
 }
 
 function agregarMesa() {
+    const numeroMesa = mesas.length + 1;
     const nuevaMesa = {
-        nombre: `Mesa ${mesas.length + 1}`,
+        nombre: `Mesa ${numeroMesa}`,
         descripcion: '',
-        productos: [],
-        notasVoz: []
+        productos: []
     };
     mesas.push(nuevaMesa);
     localStorage.setItem('mesas', JSON.stringify(mesas));
@@ -4503,29 +4599,41 @@ function abrirDetalleMesa(index) {
     mesaActual = index;
     const mesa = mesas[index];
     
-    document.getElementById('mesa-nombre-edit').value = mesa.nombre;
-    document.getElementById('mesa-descripcion-edit').value = mesa.descripcion || '';
+    // Actualizar título
+    document.getElementById('titulo-mesa-actual').textContent = mesa.nombre;
+    document.getElementById('descripcion-mesa').value = mesa.descripcion || '';
     
-    cargarProductosMesa();
-    cargarNotasVozMesa();
+    // Cargar productos
+    cargarProductosDetalleMesa();
     
+    // Resetear búsqueda
+    cantidadBusqueda = 1;
+    document.getElementById('cantidad-busqueda').textContent = '1';
+    document.getElementById('input-buscar-producto-mesa').value = '';
+    document.getElementById('sugerencias-productos-mesa').innerHTML = '';
+    
+    // Abrir modal
     closeModal('modal-mesas');
-    openModalGenerico('modal-detalle-mesa');
+    document.getElementById('modal-detalle-mesa').classList.add('show');
 }
 
-function guardarDetallesMesa() {
+function cerrarDetalleMesa() {
+    document.getElementById('modal-detalle-mesa').classList.remove('show');
+    document.getElementById('modal-mesas').classList.add('show');
+    cargarMesas();
+}
+
+function guardarDescripcionMesa() {
     if (mesaActual !== null) {
-        mesas[mesaActual].nombre = document.getElementById('mesa-nombre-edit').value;
-        mesas[mesaActual].descripcion = document.getElementById('mesa-descripcion-edit').value;
+        mesas[mesaActual].descripcion = document.getElementById('descripcion-mesa').value;
         localStorage.setItem('mesas', JSON.stringify(mesas));
-        alert('Detalles guardados correctamente');
     }
 }
 
-function cargarProductosMesa() {
-    const lista = document.getElementById('productos-mesa-lista');
+function cargarProductosDetalleMesa() {
+    const tbody = document.getElementById('tabla-productos-mesa-body');
     const mesa = mesas[mesaActual];
-    lista.innerHTML = '';
+    tbody.innerHTML = '';
     
     let total = 0;
     
@@ -4533,94 +4641,178 @@ function cargarProductosMesa() {
         mesa.productos.forEach((prod, index) => {
             total += parseFloat(prod.precio) * prod.cantidad;
             
-            const item = document.createElement('div');
-            item.className = 'producto-mesa-item';
-            item.innerHTML = `
-                <span>${prod.nombre} x${prod.cantidad}</span>
-                <span>$${(prod.precio * prod.cantidad).toFixed(2)}</span>
-                <button onclick="eliminarProductoMesa(${index})" style="background:#f44336;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">
-                    🗑️
-                </button>
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <div class="producto-cantidad-controls">
+                        <button class="btn-cantidad" onclick="ajustarCantidadProducto(${index}, -1)">−</button>
+                        <span style="font-weight: bold; min-width: 20px; text-align: center;">${prod.cantidad}</span>
+                        <button class="btn-cantidad" onclick="ajustarCantidadProducto(${index}, 1)">+</button>
+                    </div>
+                </td>
+                <td>${prod.unidad || 'und'}</td>
+                <td><strong>${prod.nombre}</strong></td>
+                <td>$ ${parseFloat(prod.precio).toLocaleString('es-CO')}</td>
+                <td>
+                    <button class="btn-eliminar-producto" onclick="eliminarProductoDetalle(${index})">
+                        🗑️
+                    </button>
+                </td>
             `;
-            lista.appendChild(item);
+            tbody.appendChild(tr);
         });
     }
     
-    document.getElementById('mesa-total-amount').textContent = total.toFixed(2);
+    document.getElementById('total-mesa-display').textContent = total.toLocaleString('es-CO');
 }
 
-function mostrarProductosDisponibles() {
-    const lista = document.getElementById('productos-disponibles-lista');
-    lista.innerHTML = '<p style="text-align:center;padding:20px;">Cargando productos...</p>';
-    
-    // Cargar productos reales de Supabase
-    cargarProductosParaMesa(lista);
-    
-    openModalGenerico('modal-productos-mesa');
+function ajustarCantidadProducto(indexProducto, cambio) {
+    const mesa = mesas[mesaActual];
+    if (mesa.productos[indexProducto]) {
+        mesa.productos[indexProducto].cantidad += cambio;
+        if (mesa.productos[indexProducto].cantidad <= 0) {
+            mesa.productos.splice(indexProducto, 1);
+        }
+        localStorage.setItem('mesas', JSON.stringify(mesas));
+        cargarProductosDetalleMesa();
+    }
 }
 
-async function cargarProductosParaMesa(lista) {
+function eliminarProductoDetalle(indexProducto) {
+    mesas[mesaActual].productos.splice(indexProducto, 1);
+    localStorage.setItem('mesas', JSON.stringify(mesas));
+    cargarProductosDetalleMesa();
+}
+
+function ajustarCantidadBusqueda(cambio) {
+    cantidadBusqueda += cambio;
+    if (cantidadBusqueda < 1) cantidadBusqueda = 1;
+    document.getElementById('cantidad-busqueda').textContent = cantidadBusqueda;
+}
+
+// Buscar productos mientras escribe
+let timeoutBusqueda;
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        const inputBuscar = document.getElementById('input-buscar-producto-mesa');
+        if (inputBuscar) {
+            inputBuscar.addEventListener('input', (e) => {
+                clearTimeout(timeoutBusqueda);
+                timeoutBusqueda = setTimeout(() => {
+                    buscarProductosParaMesa(e.target.value);
+                }, 300);
+            });
+        }
+    }, 1000);
+});
+
+async function buscarProductosParaMesa(termino) {
+    const sugerenciasDiv = document.getElementById('sugerencias-productos-mesa');
+    
+    if (!termino || termino.trim() === '') {
+        sugerenciasDiv.innerHTML = '';
+        return;
+    }
+    
     try {
         const { data: productos, error } = await supabase
             .from('productos')
-            .select('producto_id, codigo, producto, precio_venta')
+            .select('producto_id, codigo, producto, precio_venta, unidad_venta')
             .eq('tenant_id', userData.tenant_id)
             .eq('activo', true)
-            .order('producto');
+            .or(`producto.ilike.%${termino}%,codigo.ilike.%${termino}%,apodos_input.ilike.%${termino}%`)
+            .limit(5);
         
         if (error) throw error;
         
-        lista.innerHTML = '';
+        sugerenciasDiv.innerHTML = '';
+        
+        if (productos.length === 0) {
+            sugerenciasDiv.innerHTML = '<div style="padding: 10px; color: #999;">No se encontraron productos</div>';
+            return;
+        }
         
         productos.forEach(prod => {
-            const item = document.createElement('div');
-            item.className = 'producto-seleccionable';
-            item.innerHTML = `
-                <div><strong>${prod.producto}</strong></div>
-                <div style="font-size:12px;color:#666;">[${prod.codigo}]</div>
-                <div>$${parseFloat(prod.precio_venta).toLocaleString('es-CO')}</div>
+            const div = document.createElement('div');
+            div.style.cssText = 'padding: 10px; border-bottom: 1px solid #e0e0e0; cursor: pointer; transition: background 0.2s;';
+            div.onmouseover = () => div.style.background = '#f5f5f5';
+            div.onmouseout = () => div.style.background = 'white';
+            div.onclick = () => agregarProductoAMesaActual(prod);
+            
+            div.innerHTML = `
+                <div style="font-weight: 600;">${prod.producto}</div>
+                <div style="font-size: 12px; color: #666;">[${prod.codigo}] - $ ${parseFloat(prod.precio_venta).toLocaleString('es-CO')}</div>
             `;
-            item.onclick = () => agregarProductoAMesa(prod);
-            lista.appendChild(item);
+            
+            sugerenciasDiv.appendChild(div);
         });
         
     } catch (error) {
-        console.error('Error cargando productos:', error);
-        lista.innerHTML = '<p style="text-align:center;padding:20px;color:#f44336;">Error al cargar productos</p>';
+        console.error('Error buscando productos:', error);
     }
 }
 
-function agregarProductoAMesa(producto) {
+async function buscarYAgregarProducto() {
+    const termino = document.getElementById('input-buscar-producto-mesa').value.trim();
+    
+    if (!termino) return;
+    
+    try {
+        const { data: productos, error } = await supabase
+            .from('productos')
+            .select('producto_id, codigo, producto, precio_venta, unidad_venta')
+            .eq('tenant_id', userData.tenant_id)
+            .eq('activo', true)
+            .or(`producto.ilike.%${termino}%,codigo.ilike.%${termino}%,apodos_input.ilike.%${termino}%`)
+            .limit(1)
+            .single();
+        
+        if (error) throw error;
+        
+        agregarProductoAMesaActual(productos);
+        
+    } catch (error) {
+        console.error('Error buscando producto:', error);
+        alert('No se encontró el producto');
+    }
+}
+
+function agregarProductoAMesaActual(producto) {
     const mesa = mesas[mesaActual];
     
     if (!mesa.productos) {
         mesa.productos = [];
     }
     
-    const existente = mesa.productos.find(p => p.nombre === producto.producto);
+    const existente = mesa.productos.find(p => p.codigo === producto.codigo);
+    
     if (existente) {
-        existente.cantidad++;
+        existente.cantidad += cantidadBusqueda;
     } else {
         mesa.productos.push({
             nombre: producto.producto,
             codigo: producto.codigo,
             precio: parseFloat(producto.precio_venta),
-            cantidad: 1
+            cantidad: cantidadBusqueda,
+            unidad: producto.unidad_venta || 'und'
         });
     }
     
     localStorage.setItem('mesas', JSON.stringify(mesas));
-    cargarProductosMesa();
-    closeModal('modal-productos-mesa');
+    cargarProductosDetalleMesa();
+    
+    // Limpiar búsqueda
+    document.getElementById('input-buscar-producto-mesa').value = '';
+    document.getElementById('sugerencias-productos-mesa').innerHTML = '';
+    cantidadBusqueda = 1;
+    document.getElementById('cantidad-busqueda').textContent = '1';
 }
 
-function eliminarProductoMesa(index) {
-    mesas[mesaActual].productos.splice(index, 1);
-    localStorage.setItem('mesas', JSON.stringify(mesas));
-    cargarProductosMesa();
+function iniciarBusquedaPorVoz() {
+    alert('Funcionalidad de búsqueda por voz en desarrollo');
 }
 
-async function cerrarMesa() {
+async function registrarVentaMesa() {
     const mesa = mesas[mesaActual];
     
     if (!mesa.productos || mesa.productos.length === 0) {
@@ -4628,24 +4820,22 @@ async function cerrarMesa() {
         return;
     }
     
-    if (!confirm(`¿Cerrar mesa "${mesa.nombre}" y registrar venta?`)) {
+    if (!confirm(`¿Registrar venta de ${mesa.nombre}?`)) {
         return;
     }
     
-    // Calcular total
     let total = 0;
     mesa.productos.forEach(prod => {
         total += parseFloat(prod.precio) * prod.cantidad;
     });
     
     try {
-        // Registrar venta en Supabase
         const { data: venta, error } = await supabase
             .from('ventas')
             .insert({
                 tenant_id: userData.tenant_id,
                 total: total,
-                observaciones: `Mesa: ${mesa.nombre}`,
+                observaciones: `${mesa.nombre} - ${mesa.descripcion || ''}`,
                 activo: true,
                 created_at: new Date().toISOString()
             })
@@ -4656,81 +4846,16 @@ async function cerrarMesa() {
         
         // Limpiar mesa
         mesa.productos = [];
+        mesa.descripcion = '';
         localStorage.setItem('mesas', JSON.stringify(mesas));
         
-        alert(`✅ Mesa cerrada y venta registrada\nTotal: $${total.toLocaleString('es-CO')}`);
-        closeModal('modal-detalle-mesa');
-        openModalGenerico('modal-mesas');
-        cargarMesas();
+        alert(`✅ Venta registrada\nTotal: $ ${total.toLocaleString('es-CO')}`);
+        
+        cerrarDetalleMesa();
         
     } catch (error) {
         console.error('Error registrando venta:', error);
         alert('Error al registrar la venta: ' + error.message);
-    }
-}
-
-function eliminarMesa() {
-    if (!confirm('¿Estás seguro de eliminar esta mesa?')) {
-        return;
-    }
-    mesas.splice(mesaActual, 1);
-    localStorage.setItem('mesas', JSON.stringify(mesas));
-    closeModal('modal-detalle-mesa');
-    openModalGenerico('modal-mesas');
-    cargarMesas();
-}
-
-function cargarNotasVozMesa() {
-    const lista = document.getElementById('notas-voz-lista');
-    const mesa = mesas[mesaActual];
-    lista.innerHTML = '';
-    
-    if (mesa.notasVoz && mesa.notasVoz.length > 0) {
-        mesa.notasVoz.forEach((nota, index) => {
-            const item = document.createElement('div');
-            item.className = 'nota-voz-item';
-            item.innerHTML = `
-                <span>🎤</span>
-                <span>${new Date(nota.fecha).toLocaleString()}</span>
-                <audio controls src="${nota.audio}" style="max-width:200px;"></audio>
-                <button onclick="eliminarNotaVoz(${index})" style="background:#f44336;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">
-                    🗑️
-                </button>
-            `;
-            lista.appendChild(item);
-        });
-    } else {
-        lista.innerHTML = '<p style="color:#999;">No hay notas de voz</p>';
-    }
-}
-
-function iniciarNotaVoz() {
-    alert('Funcionalidad de notas de voz en desarrollo. Requiere permisos de micrófono.');
-}
-
-function eliminarNotaVoz(index) {
-    mesas[mesaActual].notasVoz.splice(index, 1);
-    localStorage.setItem('mesas', JSON.stringify(mesas));
-    cargarNotasVozMesa();
-}
-
-// Función auxiliar para abrir modales genéricos
-function openModalGenerico(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.add('show');
-        
-        if (modalId === 'modal-mesas') {
-            cargarMesas();
-        }
-    }
-}
-
-// Función auxiliar para cerrar modales
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('show');
     }
 }
 
@@ -5420,70 +5545,100 @@ async function enviarAudioChat(audioBlob) {
 <!-- Modal Mesas -->
 <div id="modal-mesas" class="modal">
     <div class="modal-content">
-        <button class="modal-close-btn" onclick="closeModal('modal-mesas')">×</button>
-        <h2 style="margin-bottom: 20px;"><i>🍽️</i> Gestión de Mesas</h2>
+        <div class="modal-header">
+            <h3>🍽️ Gestión de Mesas</h3>
+            <button class="modal-close" onclick="closeModal('modal-mesas')">×</button>
+        </div>
+        <div class="modal-body" style="padding: 0;">
+            <div id="mesas-container" class="modal-mesas-grid">
+                <!-- Las mesas se cargarán aquí -->
+            </div>
+        </div>
         
-        <button class="btn-add-table" onclick="agregarMesa()">
-            <span>➕</span> Agregar Mesa
-        </button>
-
-        <div id="mesas-container" class="mesas-grid">
-            <!-- Las mesas se cargarán aquí dinámicamente -->
-        </div>
+        <!-- Botón flotante para agregar mesa -->
+        <button class="btn-add-mesa-circular" onclick="agregarMesa()">+</button>
     </div>
 </div>
 
-<!-- Modal Detalle de Mesa -->
+<!-- Modal Detalle Mesa -->
 <div id="modal-detalle-mesa" class="modal">
-    <div class="modal-content">
-        <button class="modal-close-btn" onclick="closeModal('modal-detalle-mesa')">×</button>
-        <div class="mesa-header">
-            <input type="text" id="mesa-nombre-edit" class="mesa-nombre-input" placeholder="Nombre de la mesa">
-            <textarea id="mesa-descripcion-edit" class="mesa-descripcion-input" placeholder="Descripción..."></textarea>
-            <button class="btn-guardar-mesa" onclick="guardarDetallesMesa()">
-                💾 Guardar
-            </button>
+    <div class="modal-content modal-detalle-mesa">
+        <!-- Header -->
+        <div class="detalle-mesa-header">
+            <h2 id="titulo-mesa-actual">Mesa 1</h2>
+            <button class="btn-cerrar-detalle" onclick="cerrarDetalleMesa()">×</button>
         </div>
-
-        <div class="mesa-productos-section">
-            <h3>Productos en la mesa</h3>
-            <button class="btn-agregar-producto-mesa" onclick="mostrarProductosDisponibles()">
-                ➕ Agregar Producto
-            </button>
-            <div id="productos-mesa-lista">
-                <!-- Productos agregados a la mesa -->
+        
+        <!-- Body con dos columnas -->
+        <div class="detalle-mesa-body">
+            <!-- Columna Izquierda: Lista de productos -->
+            <div class="detalle-mesa-left">
+                <input 
+                    type="text" 
+                    id="descripcion-mesa" 
+                    class="campo-descripcion" 
+                    placeholder="Descripción"
+                    onchange="guardarDescripcionMesa()"
+                >
+                
+                <table class="tabla-productos-mesa">
+                    <thead>
+                        <tr>
+                            <th>CANTIDAD</th>
+                            <th>UND</th>
+                            <th>PRODUCTO</th>
+                            <th>PRECIO UNIT.</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-productos-mesa-body">
+                        <!-- Productos se cargan aquí -->
+                    </tbody>
+                </table>
             </div>
-            <div class="mesa-total">
-                Total: $<span id="mesa-total-amount">0</span>
+            
+            <!-- Columna Derecha: Total y controles -->
+            <div class="detalle-mesa-right">
+                <!-- Total -->
+                <div class="total-mesa-box">
+                    <div class="total-mesa-label">Total</div>
+                    <div class="total-mesa-valor">$ <span id="total-mesa-display">0</span></div>
+                </div>
+                
+                <!-- Controles de búsqueda -->
+                <div class="buscar-producto-mesa">
+                    <!-- Contador de cantidad -->
+                    <div class="contador-cantidad-mesa">
+                        <button class="btn-cantidad" onclick="ajustarCantidadBusqueda(-1)">−</button>
+                        <span id="cantidad-busqueda" style="font-weight: bold; min-width: 20px; text-align: center;">1</span>
+                        <button class="btn-cantidad" onclick="ajustarCantidadBusqueda(1)">+</button>
+                    </div>
+                    
+                    <!-- Input de búsqueda -->
+                    <input 
+                        type="text" 
+                        id="input-buscar-producto-mesa" 
+                        class="input-buscar-producto" 
+                        placeholder="Buscar"
+                        onkeypress="if(event.key === 'Enter') buscarYAgregarProducto()"
+                    >
+                    
+                    <!-- Botón micrófono -->
+                    <button class="btn-microfono-mesa" onclick="iniciarBusquedaPorVoz()">
+                        🎤
+                    </button>
+                </div>
+                
+                <!-- Lista de sugerencias de búsqueda -->
+                <div id="sugerencias-productos-mesa" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px;">
+                    <!-- Sugerencias aparecen aquí -->
+                </div>
+                
+                <!-- Botón Registrar Venta -->
+                <button class="btn-registrar-venta-mesa" onclick="registrarVentaMesa()">
+                    Registrar Venta
+                </button>
             </div>
-            <button class="btn-cerrar-mesa" onclick="cerrarMesa()">
-                ✅ Cerrar Mesa y Registrar Venta
-            </button>
-        </div>
-
-        <div class="mesa-chat-section">
-            <h3>Notas de Voz</h3>
-            <button class="btn-nota-voz" onclick="iniciarNotaVoz()">
-                🎤 Grabar Nota
-            </button>
-            <div id="notas-voz-lista">
-                <!-- Notas de voz de esta mesa -->
-            </div>
-        </div>
-
-        <button class="btn-eliminar-mesa" onclick="eliminarMesa()">
-            🗑️ Eliminar Mesa
-        </button>
-    </div>
-</div>
-
-<!-- Modal Seleccionar Productos -->
-<div id="modal-productos-mesa" class="modal">
-    <div class="modal-content" style="max-width: 600px;">
-        <button class="modal-close-btn" onclick="closeModal('modal-productos-mesa')">×</button>
-        <h2>Seleccionar Producto</h2>
-        <div id="productos-disponibles-lista" class="productos-lista">
-            <!-- Lista de productos disponibles -->
         </div>
     </div>
 </div>
