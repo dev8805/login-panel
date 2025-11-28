@@ -1066,13 +1066,15 @@ select:focus {
 }
 
 .mesa-detalle {
-    padding: 16px;
+    padding: 12px;
     border-top: 1px solid #e5e7eb;
-    display: none;
+    display: none !important;
+    overflow: hidden;
+    transition: none; /* Sin animaciones que puedan causar conflictos */
 }
 
 .mesa-detalle.expanded {
-    display: block;
+    display: block !important;
 }
 
 .producto-mesa-item {
@@ -1169,14 +1171,53 @@ select:focus {
 /* Desktop */
 @media (min-width: 768px) {
     .mesas-container {
-        padding: 24px;
+        max-width: 900px;
     }
     
     .mesa-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 16px;
+        align-items: start;
     }
+}
+
+/* Responsividad para mesas */
+@media (max-width: 767px) {
+    .mesas-container {
+        padding: 12px !important;
+    }
+    
+    .mesa-nombre {
+        font-size: 15px !important;
+    }
+    
+    .mesa-productos-preview {
+        font-size: 11px !important;
+    }
+    
+    .producto-mesa-item {
+        flex-wrap: nowrap !important;
+        font-size: 13px !important;
+    }
+    
+    .btn-nueva-mesa {
+        padding: 12px !important;
+        font-size: 14px !important;
+    }
+}
+
+@media (min-width: 768px) {
+    .mesas-container {
+        max-width: 900px;
+    }
+    
+    .mesa-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+    align-items: start;
+  }
 }
         
     </style>
@@ -4557,29 +4598,52 @@ toggleInputButtons();
     
     try {
         // Enviar al webhook
-        const response = await fetch('https://n8n-n8n.aa7tej.easypanel.host/webhook/chat-panel', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                mensaje: mensaje,
-                tipo: 'texto',
-                usuario: userData.nombre,
-                tenant_id: userData.tenant_id,
-                user_id: userData.user_id,
-                sessionid: `panel_${userData.user_id}`
-            })
-        });
-        
-        const data = await response.json();
+        console.log('📤 Enviando al webhook...');
+
+const response = await fetch('https://n8n-n8n.aa7tej.easypanel.host/webhook/chat-panel', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        mensaje: mensaje,
+        tipo: 'texto',
+        usuario: userData.nombre,
+        tenant_id: userData.tenant_id,
+        user_id: userData.user_id,
+        sessionid: `mesa_${mesaId}`,
+        mesa_id: mesaId,
+        mesa_nombre: mesa.nombre
+    })
+});
+
+console.log('📥 Response status:', response.status);
+console.log('📥 Response ok:', response.ok);
+
+// Verificar si hay contenido antes de parsear
+const responseText = await response.text();
+console.log('📥 Response text:', responseText);
+
+let data;
+if (responseText) {
+    try {
+        data = JSON.parse(responseText);
+        console.log('📥 Data parseada:', data);
+    } catch (e) {
+        console.error('❌ Error parseando JSON:', e);
+        throw new Error('Respuesta inválida del servidor');
+    }
+} else {
+    console.error('❌ Respuesta vacía del servidor');
+    throw new Error('El servidor no devolvió ninguna respuesta');
+}
         
         // Quitar indicador de escritura
         quitarIndicadorEscritura();
         
         // Mostrar respuesta
-        if (data.respuesta) {
-            agregarMensaje(data.respuesta, 'asistente');
+        if (respuestaFinal.mensaje) {
+            agregarMensaje(respuestaFinal.mensaje, 'asistente');
         } else {
             agregarMensaje('Lo siento, no pude procesar tu mensaje.', 'asistente');
         }
@@ -4608,7 +4672,7 @@ function agregarMensaje(texto, tipo) {
     let textoFormateado = texto;
     if (tipo === 'asistente') {
         // Detectar si es un mensaje de confirmación de venta
-        if (texto.includes('Registro de ventas')) {
+        if (texto.includes('Registro de ventas') || texto.includes('✅ Registro de ventas')) {
             textoFormateado = formatearMensajeVenta(texto);
         } else {
             // Mensaje normal: solo saltos de línea
@@ -4929,8 +4993,8 @@ async function enviarImagenChat(imageFile) {
             const data = await response.json();
             quitarIndicadorEscritura();
             
-            if (data.respuesta) {
-                agregarMensaje(data.respuesta, 'asistente');
+            if (respuestaFinal.mensaje) {
+                agregarMensaje(respuestaFinal.mensaje, 'asistente');
             } else {
                 agregarMensaje('No pude procesar la imagen.', 'asistente');
             }
@@ -4974,8 +5038,8 @@ async function enviarAudioChat(audioBlob) {
             const data = await response.json();
             quitarIndicadorEscritura();
             
-            if (data.respuesta) {
-                agregarMensaje(data.respuesta, 'asistente');
+            if (respuestaFinal.mensaje) {
+                agregarMensaje(respuestaFinal.mensaje, 'asistente');
             } else {
                 agregarMensaje('No pude procesar el audio.', 'asistente');
             }
@@ -4998,7 +5062,18 @@ let mesasData = {};
 function inicializarMesas() {
     const mesasGuardadas = localStorage.getItem(`mesas_${userData.tenant_id}`);
     if (mesasGuardadas) {
-        mesasData = JSON.parse(mesasGuardadas);
+        const mesasCargadas = JSON.parse(mesasGuardadas);
+        
+        // Limpiar mesas con estructura incorrecta
+        mesasData = {};
+        Object.values(mesasCargadas).forEach(mesa => {
+            // Solo cargar mesas que tengan el formato correcto (id tipo string)
+            if (typeof mesa.id === 'string' && mesa.id.startsWith('mesa-')) {
+                mesasData[mesa.id] = mesa;
+            }
+        });
+        
+        console.log('📋 Mesas inicializadas:', mesasData);
     }
 }
 
@@ -5027,143 +5102,277 @@ function renderizarMesas(modalBody) {
     
     // Calcular total de productos y monto por mesa
     mesasArray.forEach(mesa => {
-        mesa.totalProductos = mesa.productos ? mesa.productos.length : 0;
-        mesa.totalMonto = mesa.productos ? 
-            mesa.productos.reduce((sum, p) => sum + (p.precio * p.cantidad), 0) : 0;
-    });
+    mesa.totalProductos = mesa.productos ? mesa.productos.length : 0;
+    mesa.totalMonto = mesa.productos ? 
+        mesa.productos.reduce((sum, p) => {
+            const precio = p.precio_unitario || p.precio || 0;
+            return sum + (precio * p.cantidad);
+        }, 0) : 0;
+});
     
-    const mesasHTML = mesasArray.map(mesa => {
-        const estaOcupada = mesa.totalProductos > 0;
-        const productosPreview = mesa.productos && mesa.productos.length > 0 ? 
-            mesa.productos.map(p => p.nombre).slice(0, 3).join(', ') : 'Vacía';
-        
-        return `
-            <div class="mesa-card ${estaOcupada ? 'ocupada' : ''}">
-                <div class="mesa-header-row" onclick="toggleMesa('${mesa.id}')">
-                    <div class="mesa-info">
-                        <div class="mesa-nombre">${mesa.nombre}</div>
-                        <div class="mesa-productos-preview">${productosPreview}</div>
-                        <div class="mesa-resumen">
-                            <span>${mesa.totalProductos} items</span>
-                            <span>$${mesa.totalMonto.toLocaleString('es-CO')}</span>
-                        </div>
+const mesasHTML = mesasArray.map(mesa => {
+    console.log('🎨 Renderizando mesa:', mesa.id, 'Productos:', mesa.productos?.length || 0);
+    const estaOcupada = mesa.totalProductos > 0;
+    const productosPreview = mesa.productos && mesa.productos.length > 0 ? 
+        mesa.productos.map(p => `${p.cantidad} ${p.nombre}`).slice(0, 2).join(', ') + (mesa.productos.length > 2 ? '...' : '') : 'Vacía';
+    
+    return `
+        <div class="mesa-card ${estaOcupada ? 'ocupada' : ''}" style="background: white; border: 2px solid ${estaOcupada ? '#10b981' : '#e0e0e0'}; border-radius: 12px; margin-bottom: 12px; overflow: hidden;">
+            <div class="mesa-header-row" onclick="toggleMesa('${mesa.id}')" style="display: flex; justify-content: space-between; align-items: center; padding: 14px; cursor: pointer; background: #f9fafb;">
+                <div class="mesa-info" style="flex: 1; min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                        <div class="mesa-nombre" style="font-size: 16px; font-weight: 700; color: #333;">${mesa.nombre}</div>
+                        <button onclick="event.stopPropagation(); editarDescripcionMesa('${mesa.id}')" style="background: none; border: none; color: #667eea; cursor: pointer; font-size: 14px; padding: 0; min-width: auto; width: auto;" title="Editar descripción">✏️</button>
                     </div>
-                    <div class="mesa-actions">
-                        <div class="mesa-estado ${estaOcupada ? 'ocupada' : 'libre'}">
-                            ${estaOcupada ? '🟢 Ocupada' : '⚪ Libre'}
-                        </div>
-                        ${!estaOcupada ? `<button class="btn-delete-mesa" onclick="event.stopPropagation(); eliminarMesa('${mesa.id}')">×</button>` : ''}
-                        <span style="font-size: 20px; margin-left: 8px;">➜</span>
+                    ${mesa.descripcion ? `<div class="mesa-descripcion-${mesa.id}" style="font-size: 11px; color: #888; margin-bottom: 4px; font-style: italic;">${mesa.descripcion}</div>` : `<div class="mesa-descripcion-${mesa.id}" style="display: none;"></div>`}
+                    <div class="mesa-productos-preview mesa-preview-${mesa.id}" style="font-size: 12px; color: #666; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${productosPreview}</div>
+                    <div class="mesa-resumen mesa-resumen-${mesa.id}" style="display: flex; gap: 10px; font-size: 12px; color: #888;">
+                        <span>${mesa.totalProductos} items</span>
+                        <span style="color: #10b981; font-weight: 600;">$${mesa.totalMonto.toLocaleString('es-CO')}</span>
                     </div>
                 </div>
-                <div class="mesa-detalle" id="detalle-${mesa.id}">
-                    ${renderizarDetalleMesa(mesa)}
+                <div class="mesa-actions" style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                    <div class="mesa-estado ${estaOcupada ? 'ocupada' : 'libre'}" style="font-weight: 600; font-size: 12px; color: ${estaOcupada ? '#10b981' : '#9ca3af'};">
+                        ${estaOcupada ? '🟢' : '⚪'}
+                    </div>
+                    ${!estaOcupada ? `<button onclick="event.stopPropagation(); eliminarMesa('${mesa.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 20px; padding: 4px; display: flex; align-items: center; justify-content: center; min-width: auto; width: auto;">×</button>` : ''}
+                    <span style="font-size: 18px; color: #999;">➜</span>
                 </div>
             </div>
-        `;
-    }).join('');
+            <div class="mesa-detalle" id="detalle-${mesa.id}" style="padding: 12px; border-top: 1px solid #e5e7eb; display: none;">
+    ${renderizarDetalleMesa(mesa)}
+</div>
+        </div>
+    `;
+}).join('');
     
     modalBody.innerHTML = `
-        <div class="mesas-container">
-            <div class="mesas-header">
-                <h3 style="margin: 0;">🍽️ Mesas</h3>
-                <button onclick="abrirHistorialMesas()" style="background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">
-                    📋 Historial
-                </button>
+        <div class="mesas-container" style="padding: 16px; max-width: 100%; margin: 0 auto;">
+            <div class="mesas-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px;">
+                
+                <button onclick="abrirHistorialMesas()" style="background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; white-space: nowrap; width: auto; min-width: auto;">
+            📋 Historial
+        </button>
             </div>
             <div class="mesa-grid">
                 ${mesasHTML}
             </div>
-            <button class="btn-nueva-mesa" onclick="crearNuevaMesa()">
-                ➕ Nueva Mesa
-            </button>
+            <button class="btn-nueva-mesa" onclick="crearNuevaMesa()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+    ➕ Nueva Mesa
+</button>
         </div>
     `;
+    console.log('✅ Mesas renderizadas. Total:', mesasArray.length);
 }
 
 function renderizarDetalleMesa(mesa) {
-    if (!mesa.productos || mesa.productos.length === 0) {
-        return `
-            <div style="padding: 20px; text-align: center; color: #999;">
-                Mesa vacía
-            </div>
-        `;
-    }
     
+    console.log('🎨 Productos en mesa:', mesa.productos?.length || 0);
+
+if (!mesa.productos || mesa.productos.length === 0) {
+    // Mostrar solo el formulario de agregar productos
+    return `
+        <div style="padding: 8px;">
+            <div style="padding: 20px; text-align: center; color: #999; margin-bottom: 12px;">
+                Mesa vacía - Agrega productos
+            </div>
+            
+            <div style="padding: 8px 12px; background: #f5f7ff; border-radius: 8px; margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 20px;">➕</span>
+                    <input 
+                        type="text" 
+                        class="input-producto-buscar" 
+                        id="buscar-${mesa.id}"
+                        placeholder="Buscar producto..."
+                        onkeyup="buscarProductoMesa('${mesa.id}')"
+                        style="flex: 1; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
+                    >
+                    <button onclick="event.stopPropagation(); abrirMicrofonoMesa('${mesa.id}')" style="background: #667eea; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 18px; min-width: auto; width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                        🎤
+                    </button>
+                </div>
+            </div>
+            
+            <div id="resultados-busqueda-${mesa.id}" style="display: none; background: white; border: 2px solid #667eea; border-radius: 8px; max-height: 200px; overflow-y: auto; margin-bottom: 12px;"></div>
+        </div>
+    `;
+}
+    
+    // Productos en formato compacto horizontal
     const productosHTML = mesa.productos.map((p, index) => `
-        <div class="producto-mesa-item">
-            <div class="producto-cantidad-controls">
-                <button class="btn-cantidad" onclick="ajustarCantidad('${mesa.id}', ${index}, -1)">-</button>
-                <span class="cantidad-display">${p.cantidad}</span>
-                <button class="btn-cantidad" onclick="ajustarCantidad('${mesa.id}', ${index}, 1)">+</button>
+        <div class="producto-mesa-item" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; margin-bottom: 6px; gap: 8px; border-bottom: 1px solid #f0f0f0;">
+            <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+                <button onclick="event.stopPropagation(); ajustarCantidad('${mesa.id}', ${index}, -1)" style="background: none; border: 1px solid #d1d5db; color: #667eea; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0; min-width: 28px; flex-shrink: 0;">−</button>
+                <span style="font-weight: 600; min-width: 20px; text-align: center; font-size: 14px; flex-shrink: 0;">${p.cantidad}</span>
+                <button onclick="event.stopPropagation(); ajustarCantidad('${mesa.id}', ${index}, 1)" style="background: none; border: 1px solid #d1d5db; color: #667eea; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0; min-width: 28px; flex-shrink: 0;">+</button>
+                <span style="font-size: 12px; color: #888; flex-shrink: 0;">${p.unidad || 'und'}</span>
+                <span style="font-size: 14px; color: #333; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;">${p.nombre}</span>
             </div>
-            <div class="producto-info-mesa">
-                <div class="producto-nombre-mesa">${p.cantidad} ${p.unidad || 'und'} ${p.nombre}</div>
-                <div class="producto-precio-mesa">$${(p.precio * p.cantidad).toLocaleString('es-CO')}</div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                <span style="font-weight: 700; color: #10b981; font-size: 14px; white-space: nowrap;">$${((p.precio_unitario || p.precio || 0) * p.cantidad).toLocaleString('es-CO')}</span>
+                <button onclick="event.stopPropagation(); eliminarProductoMesa('${mesa.id}', ${index})" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 18px; padding: 4px; display: flex; align-items: center; justify-content: center; min-width: auto; width: auto; flex-shrink: 0;" title="Eliminar">🗑️</button>
             </div>
-            <button class="btn-cantidad" style="background: #ef4444;" onclick="eliminarProductoMesa('${mesa.id}', ${index})">🗑️</button>
         </div>
     `).join('');
     
-    const maxProductos = 5;
-    const contenedorStyle = mesa.productos.length > maxProductos ? 
-        'max-height: 300px; overflow-y: auto;' : '';
+    // Contenedor con scroll si hay más de 5 productos
+    const contenedorStyle = mesa.productos.length > 5 ? 
+        'max-height: 320px; overflow-y: auto; margin-bottom: 12px;' : 
+        'margin-bottom: 12px;';
     
     return `
-        <div style="${contenedorStyle}">
+        <div style="${contenedorStyle} padding: 8px;">
             ${productosHTML}
         </div>
         
-        <div class="agregar-producto-row">
-            <span style="font-size: 24px;">➕</span>
-            <input 
-                type="text" 
-                class="input-producto-buscar" 
-                id="buscar-${mesa.id}"
-                placeholder="Buscar producto..."
-                onkeyup="buscarProductoMesa('${mesa.id}')"
-            >
-            <button onclick="abrirMicrofonoMesa('${mesa.id}')" style="background: #667eea; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 20px; min-width: auto; width: auto;">
-                🎤
-            </button>
+        <div style="padding: 8px 12px; background: #f5f7ff; border-radius: 8px; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 20px;">➕</span>
+                <input 
+                    type="text" 
+                    class="input-producto-buscar" 
+                    id="buscar-${mesa.id}"
+                    placeholder="Buscar producto..."
+                    onkeyup="buscarProductoMesa('${mesa.id}')"
+                    style="flex: 1; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
+                >
+                <button onclick="abrirMicrofonoMesa('${mesa.id}')" style="background: #667eea; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 18px; min-width: auto; width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                    🎤
+                </button>
+            </div>
         </div>
         
-        <div id="resultados-busqueda-${mesa.id}" style="display: none;"></div>
+        <div id="resultados-busqueda-${mesa.id}" style="display: none; background: white; border: 2px solid #667eea; border-radius: 8px; max-height: 200px; overflow-y: auto; margin-bottom: 12px;"></div>
         
-        <button class="btn-registrar-venta-mesa" onclick="registrarVentaMesa('${mesa.id}')">
-            Registrar venta
-        </button>
+        <button class="btn-registrar-venta-mesa" onclick="registrarVentaMesa('${mesa.id}')" style="background: #10b981; color: white; border: none; padding: 14px; border-radius: 8px; font-weight: 600; width: 100%; cursor: pointer; font-size: 15px;">
+    Registrar venta • $${(mesa.productos?.reduce((sum, p) => sum + ((p.precio_unitario || p.precio || 0) * p.cantidad), 0) || 0).toLocaleString('es-CO')}
+</button>
     `;
 }
 
+// Nueva función para actualizar solo el preview sin redibujar todo
+function actualizarPreviewMesa(mesaId, mesa) {
+    // Calcular totales
+    mesa.totalProductos = mesa.productos ? mesa.productos.length : 0;
+    mesa.totalMonto = mesa.productos ? 
+        mesa.productos.reduce((sum, p) => {
+            const precio = p.precio_unitario || p.precio || 0;
+            return sum + (precio * p.cantidad);
+        }, 0) : 0;
+    
+    // Actualizar el preview text
+    const previewElement = document.querySelector(`.mesa-preview-${mesaId}`);
+    if (previewElement) {
+        const productosPreview = mesa.productos && mesa.productos.length > 0 ? 
+            mesa.productos.map(p => `${p.cantidad} ${p.nombre}`).slice(0, 2).join(', ') + (mesa.productos.length > 2 ? '...' : '') : 'Vacía';
+        previewElement.textContent = productosPreview;
+    }
+    
+    // Actualizar el resumen
+    const resumenElement = document.querySelector(`.mesa-resumen-${mesaId}`);
+    if (resumenElement) {
+        resumenElement.innerHTML = `
+            <span>${mesa.totalProductos} items</span>
+            <span style="color: #10b981; font-weight: 600;">$${mesa.totalMonto.toLocaleString('es-CO')}</span>
+        `;
+    }
+}
+
 function toggleMesa(mesaId) {
+    console.log('🖱️ CLICK EN MESA:', mesaId, 'Timestamp:', Date.now());
+    
     const detalle = document.getElementById(`detalle-${mesaId}`);
-    if (detalle) {
-        const estaExpandida = detalle.classList.contains('expanded');
-        
-        // Cerrar todas las mesas
+    
+    if (!detalle) {
+        console.log('❌ No se encontró el detalle de la mesa');
+        return;
+    }
+    
+    const estaExpandida = detalle.classList.contains('expanded');
+    console.log('📊 ¿Estaba expandida?:', estaExpandida);
+    
+    // Detectar si es desktop (ancho > 768px)
+    const esDesktop = window.innerWidth >= 768;
+    
+    if (!esDesktop) {
+        // MÓVIL: Cerrar todas las demás mesas antes de abrir esta
+        console.log('📱 Modo móvil: cerrando otras mesas...');
         document.querySelectorAll('.mesa-detalle').forEach(d => {
-            d.classList.remove('expanded');
+            if (d.id !== `detalle-${mesaId}`) {
+                const otroMesaId = d.id.replace('detalle-', '');
+                d.classList.remove('expanded');
+                d.style.display = 'none';
+                
+                const otroPreview = document.querySelector(`.mesa-preview-${otroMesaId}`);
+                const otroResumen = document.querySelector(`.mesa-resumen-${otroMesaId}`);
+                if (otroPreview) otroPreview.style.display = 'block';
+                if (otroResumen) otroResumen.style.display = 'flex';
+            }
         });
+    }
+    
+    // Toggle esta mesa específica
+    if (!estaExpandida) {
+        console.log('✅ Abriendo mesa:', mesaId);
+        detalle.classList.add('expanded');
+        detalle.style.display = 'block';
         
-        // Si no estaba expandida, expandirla
-        if (!estaExpandida) {
-            detalle.classList.add('expanded');
-        }
+        const preview = document.querySelector(`.mesa-preview-${mesaId}`);
+        const resumen = document.querySelector(`.mesa-resumen-${mesaId}`);
+        if (preview) preview.style.display = 'none';
+        if (resumen) resumen.style.display = 'none';
+    } else {
+        console.log('✅ Cerrando mesa:', mesaId);
+        detalle.classList.remove('expanded');
+        detalle.style.display = 'none';
+        
+        const preview = document.querySelector(`.mesa-preview-${mesaId}`);
+        const resumen = document.querySelector(`.mesa-resumen-${mesaId}`);
+        if (preview) preview.style.display = 'block';
+        if (resumen) resumen.style.display = 'flex';
+    }
+}
+
+function ocultarResumenSiExpandida(mesaId) {
+    console.log('👁️ Actualizando visibilidad para:', mesaId);
+    const detalle = document.getElementById(`detalle-${mesaId}`);
+    const preview = document.querySelector(`.mesa-preview-${mesaId}`);
+    const resumen = document.querySelector(`.mesa-resumen-${mesaId}`);
+    
+    if (!detalle || !preview || !resumen) {
+        console.log('⚠️ Elementos no encontrados');
+        return;
+    }
+    
+    const estaExpandida = detalle.classList.contains('expanded');
+    console.log('👁️ ¿Expandida?:', estaExpandida);
+    
+    if (estaExpandida) {
+        preview.style.display = 'none';
+        resumen.style.display = 'none';
+        detalle.style.display = 'block';
+    } else {
+        preview.style.display = 'block';
+        resumen.style.display = 'flex';
+        detalle.style.display = 'none';
     }
 }
 
 function crearNuevaMesa() {
+    console.log('➕ CREAR NUEVA MESA');
     const numeroMesa = Object.keys(mesasData).length + 1;
     const mesaId = `mesa-${Date.now()}`;
     
     mesasData[mesaId] = {
         id: mesaId,
         nombre: `Mesa ${numeroMesa}`,
+        descripcion: '',  // ✅ NUEVO CAMPO
         productos: [],
         createdAt: new Date().toISOString()
     };
     
+    console.log('➕ Nueva mesa creada:', mesasData[mesaId]);
     guardarMesas();
     
     const modalBody = document.getElementById('modalBodyMesas');
@@ -5187,40 +5396,82 @@ function eliminarMesa(mesaId) {
     renderizarMesas(modalBody);
 }
 
-function ajustarCantidad(mesaId, productoIndex, delta) {
+function editarDescripcionMesa(mesaId) {
     const mesa = mesasData[mesaId];
-    if (!mesa || !mesa.productos[productoIndex]) return;
+    if (!mesa) return;
     
+    const descripcionActual = mesa.descripcion || '';
+    const nuevaDescripcion = prompt(`Descripción para ${mesa.nombre}:`, descripcionActual);
+    
+    if (nuevaDescripcion === null) return; // Canceló
+    
+    mesa.descripcion = nuevaDescripcion.trim();
+    guardarMesas();
+    
+    // Actualizar solo el preview
+    const descripcionElement = document.querySelector(`.mesa-descripcion-${mesaId}`);
+    if (descripcionElement) {
+        if (mesa.descripcion) {
+            descripcionElement.textContent = mesa.descripcion;
+            descripcionElement.style.display = 'block';
+        } else {
+            descripcionElement.style.display = 'none';
+        }
+    }
+}
+
+function ajustarCantidad(mesaId, productoIndex, delta) {
+    console.log('🔢 AJUSTAR - mesaId:', mesaId, 'productoIndex:', productoIndex, 'delta:', delta);
+    console.log('🔢 mesasData:', JSON.stringify(mesasData));
+    
+    const mesa = mesasData[mesaId];
+    console.log('🔢 mesa encontrada:', mesa);
+    
+    if (!mesa || !mesa.productos[productoIndex]) {
+        console.log('❌ Mesa o producto no encontrado');
+        return;
+    }
+    
+    console.log('🔢 Producto antes:', mesa.productos[productoIndex]);
     mesa.productos[productoIndex].cantidad += delta;
+    console.log('🔢 Producto después:', mesa.productos[productoIndex]);
     
     // Si la cantidad llega a 0, eliminar el producto
     if (mesa.productos[productoIndex].cantidad <= 0) {
+        console.log('🔢 Cantidad <= 0, eliminando producto');
         mesa.productos.splice(productoIndex, 1);
     }
     
     guardarMesas();
     
-    // Actualizar solo el detalle de esta mesa
-    const detalle = document.getElementById(`detalle-${mesaId}`);
-    if (detalle) {
-        detalle.innerHTML = renderizarDetalleMesa(mesa);
-    }
+// Actualizar solo el detalle de esta mesa
+const detalle = document.getElementById(`detalle-${mesaId}`);
+if (detalle) {
+    detalle.innerHTML = renderizarDetalleMesa(mesa);
+}
+
+// Actualizar SOLO el preview y resumen de esta mesa específica
+actualizarPreviewMesa(mesaId, mesa);
     
-    // Actualizar también el header (preview y total)
-    const modalBody = document.getElementById('modalBodyMesas');
-    renderizarMesas(modalBody);
     
-    // Re-expandir la mesa
-    setTimeout(() => {
-        toggleMesa(mesaId);
-    }, 50);
 }
 
 function eliminarProductoMesa(mesaId, productoIndex) {
-    const mesa = mesasData[mesaId];
-    if (!mesa || !mesa.productos[productoIndex]) return;
+    console.log('🗑️ ELIMINAR - mesaId:', mesaId, 'productoIndex:', productoIndex);
+    console.log('🗑️ mesasData antes:', JSON.stringify(mesasData));
     
+    const mesa = mesasData[mesaId];
+    console.log('🗑️ mesa encontrada:', mesa);
+    
+    if (!mesa || !mesa.productos[productoIndex]) {
+        console.log('❌ Mesa o producto no encontrado');
+        return;
+    }
+    
+    console.log('🗑️ Producto a eliminar:', mesa.productos[productoIndex]);
     mesa.productos.splice(productoIndex, 1);
+    console.log('🗑️ Productos después de eliminar:', mesa.productos);
+    
     guardarMesas();
     
     // Actualizar solo el detalle
@@ -5229,14 +5480,10 @@ function eliminarProductoMesa(mesaId, productoIndex) {
         detalle.innerHTML = renderizarDetalleMesa(mesa);
     }
     
-    // Actualizar el header
-    const modalBody = document.getElementById('modalBodyMesas');
-    renderizarMesas(modalBody);
+    // Actualizar SOLO el preview y resumen
+    actualizarPreviewMesa(mesaId, mesa);
     
-    // Re-expandir
-    setTimeout(() => {
-        toggleMesa(mesaId);
-    }, 50);
+    
 }
 
 async function abrirMicrofonoMesa(mesaId) {
@@ -5323,36 +5570,48 @@ async function enviarAudioMesa(mesaId, audioBlob) {
 }
 
 function agregarProductosAMesa(mesaId, productos) {
+    console.log('📦 AGREGAR PRODUCTOS - mesaId:', mesaId, 'cantidad:', productos.length);
+    
     const mesa = mesasData[mesaId];
-    if (!mesa) return;
+    if (!mesa) {
+        console.log('❌ Mesa no encontrada');
+        return;
+    }
     
     if (!mesa.productos) {
         mesa.productos = [];
     }
     
-    // Validar máximo de 5 productos
-    if (mesa.productos.length + productos.length > 5) {
-        alert('Una mesa puede tener máximo 5 productos');
-        return;
-    }
-    
     // Agregar productos
     productos.forEach(producto => {
+        console.log('📦 Procesando producto:', producto);
+        
         // Buscar si ya existe
         const existente = mesa.productos.find(p => p.codigo === producto.codigo);
         
         if (existente) {
             existente.cantidad += producto.cantidad;
+            console.log('📦 Producto existente, nueva cantidad:', existente.cantidad);
         } else {
+            // Validar máximo de 10 productos diferentes
+            if (mesa.productos.length >= 10) {
+                alert('Una mesa puede tener máximo 10 productos diferentes');
+                return;
+            }
+            
+            console.log('📦 Agregando nuevo producto a mesa');
             mesa.productos.push({
                 codigo: producto.codigo,
                 nombre: producto.nombre,
                 cantidad: producto.cantidad,
-                precio: producto.precio,
+                precio: parseFloat(producto.precio) || 0,
+                precio_unitario: parseFloat(producto.precio) || 0,
                 unidad: producto.unidad || 'und'
             });
         }
     });
+    
+    console.log('📦 Total productos en mesa:', mesa.productos.length);
     
     guardarMesas();
     
@@ -5360,9 +5619,17 @@ function agregarProductosAMesa(mesaId, productos) {
     const modalBody = document.getElementById('modalBodyMesas');
     renderizarMesas(modalBody);
     
-    setTimeout(() => {
-        toggleMesa(mesaId);
-    }, 50);
+    // Re-expandir esta mesa específicamente
+    const detalle = document.getElementById(`detalle-${mesaId}`);
+    if (detalle) {
+        detalle.style.display = 'block';
+        detalle.classList.add('expanded');
+        
+        const preview = document.querySelector(`.mesa-preview-${mesaId}`);
+        const resumen = document.querySelector(`.mesa-resumen-${mesaId}`);
+        if (preview) preview.style.display = 'none';
+        if (resumen) resumen.style.display = 'none';
+    }
 }
 
 async function registrarVentaMesa(mesaId) {
@@ -5376,13 +5643,31 @@ async function registrarVentaMesa(mesaId) {
     if (!confirm(`¿Registrar venta de ${mesa.nombre}?`)) {
         return;
     }
+
+    console.log('🔵 INICIANDO REGISTRO DE VENTA');
+console.log('🔵 Mesa ID:', mesaId);
+console.log('🔵 Mesa data:', mesa);
+console.log('🔵 Productos:', mesa.productos);
     
     try {
         // Construir mensaje en formato que entiende el flujo registra_ventas
-        const mensaje = mesa.productos.map(p => 
-            `"${p.codigo}" ${p.cantidad} ${p.unidad || ''}`
-        ).join(', ');
+// SOLO código y cantidad (sin unidades)
+const mensaje = mesa.productos.map(p => 
+    `"${p.codigo}" ${p.cantidad}`
+).join(', ');
         
+        console.log('🔵 Mensaje a enviar:', mensaje);
+console.log('🔵 Datos completos:', {
+    mensaje: mensaje,
+    tipo: 'texto',
+    usuario: userData.nombre,
+    tenant_id: userData.tenant_id,
+    user_id: userData.user_id,
+    sessionid: `mesa_${mesaId}`,
+    mesa_id: mesaId,
+    mesa_nombre: mesa.nombre
+});
+
         const response = await fetch('https://n8n-n8n.aa7tej.easypanel.host/webhook/chat-panel', {
             method: 'POST',
             headers: {
@@ -5400,25 +5685,52 @@ async function registrarVentaMesa(mesaId) {
             })
         });
         
-        const data = await response.json();
-        
-        if (data.respuesta) {
-            // Guardar en historial de Supabase
-            await guardarHistorialMesa(mesa, data);
-            
-            // Limpiar mesa
-            mesa.productos = [];
-            guardarMesas();
-            
-            // Mostrar confirmación
-            alert(data.respuesta);
-            
-            // Actualizar vista
-            const modalBody = document.getElementById('modalBodyMesas');
-            renderizarMesas(modalBody);
-        } else {
-            alert('Error al registrar la venta');
-        }
+        const responseText = await response.text();
+console.log('🔥 Response text:', responseText);
+
+let data;
+if (responseText) {
+    try {
+        data = JSON.parse(responseText);
+        console.log('🔥 Data parseada:', data);
+    } catch (e) {
+        console.error('❌ Error parseando JSON:', e);
+        throw new Error('Respuesta inválida del servidor');
+    }
+} else {
+    console.error('❌ Respuesta vacía del servidor');
+    throw new Error('El servidor no devolvió ninguna respuesta');
+}
+
+// Si la respuesta es un array, tomar el primer elemento
+const respuestaFinal = Array.isArray(data) ? data[0] : data;
+console.log('🔥 Respuesta final:', respuestaFinal);
+
+if (respuestaFinal && (respuestaFinal.mensaje || respuestaFinal.respuesta)) {
+    console.log('✅ Venta registrada con éxito');
+    
+    const mensajeConfirmacion = respuestaFinal.mensaje || respuestaFinal.respuesta || 'Venta registrada correctamente';
+    
+    // Guardar en historial de Supabase
+    await guardarHistorialMesa(mesa, data);
+
+    // Mostrar mensaje de confirmación
+    alert(mensajeConfirmacion);
+    
+    // Limpiar mesa
+    mesa.productos = [];
+    guardarMesas();
+    
+    // Mostrar confirmación (ahora con el formato correcto del flujo)
+    alert(respuestaFinal.mensaje);
+    
+    // Actualizar vista
+    const modalBody = document.getElementById('modalBodyMesas');
+    renderizarMesas(modalBody);
+} else {
+    console.error('❌ No hay respuesta válida:', data);
+    alert('Error: El servidor no devolvió una confirmación válida');
+}
         
     } catch (error) {
         console.error('Error:', error);
@@ -5497,17 +5809,22 @@ async function buscarProductoMesa(mesaId) {
 }
 
 function seleccionarProductoMesa(mesaId, producto) {
+    console.log('📦 SELECCIONAR PRODUCTO - mesaId:', mesaId);
+    console.log('📦 Producto recibido:', producto);
+    console.log('📦 Precio del producto:', producto.precio_venta, 'parseFloat:', parseFloat(producto.precio_venta));
+    
     const mesa = mesasData[mesaId];
-    if (!mesa) return;
+    
+    if (!mesa) {
+        console.log('❌ Mesa no encontrada');
+        return;
+    }
+    
+    console.log('📦 Mesa encontrada:', mesa.id);
+    console.log('📦 Productos actuales:', mesa.productos?.length || 0);
     
     if (!mesa.productos) {
         mesa.productos = [];
-    }
-    
-    // Validar máximo de 5 productos
-    if (mesa.productos.length >= 5) {
-        alert('Una mesa puede tener máximo 5 productos');
-        return;
     }
     
     // Buscar si ya existe
@@ -5515,36 +5832,59 @@ function seleccionarProductoMesa(mesaId, producto) {
     
     if (existente) {
         existente.cantidad += 1;
+        console.log('📦 Producto existente, incrementando cantidad');
     } else {
+        // Validar máximo de 10 productos diferentes
+        if (mesa.productos.length >= 10) {
+            alert('Una mesa puede tener máximo 10 productos diferentes');
+            return;
+        }
+        
+        console.log('📦 Agregando nuevo producto');
         mesa.productos.push({
             codigo: producto.codigo,
             nombre: producto.producto,
             cantidad: 1,
-            precio: parseFloat(producto.precio_venta),
+            precio: parseFloat(producto.precio_venta) || 0,
+            precio_unitario: parseFloat(producto.precio_venta) || 0,
             unidad: producto.tipo_venta === 'peso' || producto.tipo_venta === 'medida' ? producto.unidad_venta : 'und'
         });
     }
+    
+    console.log('📦 Productos después:', mesa.productos);
     
     guardarMesas();
     
     // Limpiar búsqueda
     const input = document.getElementById(`buscar-${mesaId}`);
     const resultadosDiv = document.getElementById(`resultados-busqueda-${mesaId}`);
-    input.value = '';
-    resultadosDiv.style.display = 'none';
+    if (input) input.value = '';
+    if (resultadosDiv) resultadosDiv.style.display = 'none';
     
-    // Actualizar vista
-    const detalle = document.getElementById(`detalle-${mesaId}`);
-    if (detalle) {
-        detalle.innerHTML = renderizarDetalleMesa(mesa);
+    // Actualizar solo el detalle
+const detalle = document.getElementById(`detalle-${mesaId}`);
+if (detalle) {
+    console.log('📦 Actualizando detalle de la mesa');
+    detalle.innerHTML = renderizarDetalleMesa(mesa);
+    detalle.style.display = 'block';
+    detalle.classList.add('expanded');
+}
+
+// Actualizar SOLO el preview y resumen
+actualizarPreviewMesa(mesaId, mesa);
+    
+    // Re-expandir esta mesa específicamente
+    const detalleNuevo = document.getElementById(`detalle-${mesaId}`);
+    if (detalleNuevo) {
+        detalleNuevo.style.display = 'block';
+        detalleNuevo.classList.add('expanded');
+        
+        // Ocultar preview
+        const preview = document.querySelector(`.mesa-preview-${mesaId}`);
+        const resumen = document.querySelector(`.mesa-resumen-${mesaId}`);
+        if (preview) preview.style.display = 'none';
+        if (resumen) resumen.style.display = 'none';
     }
-    
-    const modalBody = document.getElementById('modalBodyMesas');
-    renderizarMesas(modalBody);
-    
-    setTimeout(() => {
-        toggleMesa(mesaId);
-    }, 50);
 }
 
 async function abrirHistorialMesas() {
@@ -5581,9 +5921,26 @@ async function abrirHistorialMesas() {
         
         const historialHTML = historial.map(registro => {
             const fecha = new Date(registro.created_at).toLocaleString('es-CO');
-            const productosTexto = registro.productos.map(p => 
-                `${p.cantidad} ${p.unidad || 'und'} ${p.nombre}`
-            ).join(', ');
+            // Función para abreviar unidades
+const abreviarUnidad = (unidad) => {
+    const abreviaturas = {
+        'unidades': 'und',
+        'unidad': 'und',
+        'libras': 'lbs',
+        'kilogramos': 'kg',
+        'gramos': 'g',
+        'metros': 'm',
+        'centimetros': 'cm',
+        'milimetros': 'mm',
+        'litros': 'L',
+        'mililitros': 'ml'
+    };
+    return abreviaturas[unidad?.toLowerCase()] || unidad || 'und';
+};
+
+const productosTexto = registro.productos.map(p => 
+    `${p.cantidad} ${abreviarUnidad(p.unidad)} ${p.nombre}`
+).join(', ');
             
             return `
                 <div style="background: white; border: 2px solid #e0e0e0; border-radius: 12px; padding: 16px; margin-bottom: 12px;">
@@ -5607,14 +5964,14 @@ async function abrirHistorialMesas() {
         }).join('');
         
         modalBody.innerHTML = `
-            <div class="mesas-container">
-                <div class="mesas-header">
-                    <button onclick="volverAMesas()" style="background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">
-                        ← Mesas
-                    </button>
-                    <h3 style="margin: 0;">📋 Historial</h3>
-                    <div style="width: 80px;"></div>
-                </div>
+    <div class="mesas-container">
+        <div class="mesas-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <button onclick="volverAMesas()" style="background: #667eea; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; width: auto; min-width: auto;">
+                ← Mesas
+            </button>
+            <h3 style="margin: 0; flex: 1; text-align: center;">📋 Historial</h3>
+            <div style="width: 75px;"></div>
+        </div>
                 <div style="padding: 16px;">
                     ${historialHTML}
                 </div>
