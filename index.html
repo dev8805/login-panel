@@ -5058,38 +5058,75 @@ async function enviarAudioChat(audioBlob) {
 
 let mesasData = {};
 
-// Inicializar mesas desde localStorage
-function inicializarMesas() {
-    const mesasGuardadas = localStorage.getItem(`mesas_${userData.tenant_id}`);
-    if (mesasGuardadas) {
-        const mesasCargadas = JSON.parse(mesasGuardadas);
+// Inicializar mesas desde Supabase
+async function inicializarMesas() {
+    try {
+        const { data: mesas, error } = await supabase
+            .from('mesas_activas')
+            .select('*')
+            .eq('tenant_id', userData.tenant_id);
         
-        // Limpiar mesas con estructura incorrecta
+        if (error) throw error;
+        
         mesasData = {};
-        Object.values(mesasCargadas).forEach(mesa => {
-            // Solo cargar mesas que tengan el formato correcto (id tipo string)
-            if (typeof mesa.id === 'string' && mesa.id.startsWith('mesa-')) {
-                mesasData[mesa.id] = mesa;
-            }
-        });
+        if (mesas && mesas.length > 0) {
+            mesas.forEach(mesa => {
+                mesasData[mesa.mesa_id] = {
+                    id: mesa.mesa_id,
+                    nombre: mesa.nombre,
+                    descripcion: mesa.descripcion || '',
+                    productos: mesa.productos || [],
+                    createdAt: mesa.created_at
+                };
+            });
+        }
         
-        console.log('📋 Mesas inicializadas:', mesasData);
+        console.log('📋 Mesas inicializadas desde Supabase:', mesasData);
+    } catch (error) {
+        console.error('❌ Error cargando mesas:', error);
+        mesasData = {};
     }
 }
 
-// Guardar mesas en localStorage
-function guardarMesas() {
-    localStorage.setItem(`mesas_${userData.tenant_id}`, JSON.stringify(mesasData));
+// Guardar mesas en Supabase
+async function guardarMesas() {
+    try {
+        // Preparar datos para upsert
+        const mesasArray = Object.values(mesasData).map(mesa => ({
+            tenant_id: userData.tenant_id,
+            mesa_id: mesa.id,
+            nombre: mesa.nombre,
+            descripcion: mesa.descripcion || '',
+            productos: mesa.productos || [],
+            updated_at: new Date().toISOString()
+        }));
+        
+        // Upsert (insert o update)
+        const { error } = await supabase
+            .from('mesas_activas')
+            .upsert(mesasArray, {
+                onConflict: 'tenant_id,mesa_id'
+            });
+        
+        if (error) throw error;
+        
+        console.log('✅ Mesas guardadas en Supabase');
+    } catch (error) {
+        console.error('❌ Error guardando mesas:', error);
+    }
 }
 
 // Abrir modal de mesas
-function abrirModalMesas() {
-    inicializarMesas();
+async function abrirModalMesas() {
     const modal = document.getElementById('modalMesas');
     const modalBody = document.getElementById('modalBodyMesas');
     
-    renderizarMesas(modalBody);
+    // Mostrar loading
+    modalBody.innerHTML = '<div style="text-align: center; padding: 40px;"><p>Cargando mesas...</p></div>';
     modal.classList.add('show');
+    
+    await inicializarMesas();
+    renderizarMesas(modalBody);
 }
 
 // Cerrar modal
@@ -5188,7 +5225,13 @@ if (!mesa.productos || mesa.productos.length === 0) {
                         onkeyup="buscarProductoMesa('${mesa.id}')"
                         style="flex: 1; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
                     >
-                    <button onclick="event.stopPropagation(); abrirMicrofonoMesa('${mesa.id}')" style="background: #667eea; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 18px; min-width: auto; width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                    <button 
+    onmousedown="iniciarGrabacionMesa('${mesa.id}')" 
+    onmouseup="detenerGrabacionMesa()" 
+    onmouseleave="if(estaGrabandoMesa) detenerGrabacionMesa()"
+    ontouchstart="event.preventDefault(); iniciarGrabacionMesa('${mesa.id}')" 
+    ontouchend="event.preventDefault(); detenerGrabacionMesa()"
+    style="background: none; color: #667eea; border: 2px solid #667eea; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 18px; min-width: auto; width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
                         🎤
                     </button>
                 </div>
@@ -5390,16 +5433,30 @@ function crearNuevaMesa() {
     }, 100);
 }
 
-function eliminarMesa(mesaId) {
+async function eliminarMesa(mesaId) {
     if (!confirm('¿Seguro que deseas eliminar esta mesa?')) {
         return;
     }
     
-    delete mesasData[mesaId];
-    guardarMesas();
-    
-    const modalBody = document.getElementById('modalBodyMesas');
-    renderizarMesas(modalBody);
+    try {
+        // Eliminar de Supabase
+        const { error } = await supabase
+            .from('mesas_activas')
+            .delete()
+            .eq('tenant_id', userData.tenant_id)
+            .eq('mesa_id', mesaId);
+        
+        if (error) throw error;
+        
+        // Eliminar del objeto local
+        delete mesasData[mesaId];
+        
+        const modalBody = document.getElementById('modalBodyMesas');
+        renderizarMesas(modalBody);
+    } catch (error) {
+        console.error('Error eliminando mesa:', error);
+        alert('Error al eliminar la mesa');
+    }
 }
 
 function editarDescripcionMesa(mesaId) {
@@ -5545,6 +5602,23 @@ async function iniciarGrabacionMesa(mesaId) {
         btn.style.background = '#667eea';
         btn.innerHTML = '🎤';
     }
+}
+
+function detenerGrabacionMesa() {
+    if (!estaGrabandoMesa) return;
+    
+    const btn = event.target;
+    
+    if (mediaRecorderMesa && mediaRecorderMesa.state === 'recording') {
+        mediaRecorderMesa.stop();
+    }
+    
+    estaGrabandoMesa = false;
+    
+    // Restaurar botón
+    btn.style.transform = 'scale(1)';
+    btn.style.background = '#667eea';
+    btn.innerHTML = '🎤';
 }
 
 function detenerGrabacionMesa() {
@@ -5750,9 +5824,21 @@ if (respuestaFinal && (respuestaFinal.mensaje || respuestaFinal.respuesta)) {
     // Mostrar mensaje de confirmación
     alert(mensajeConfirmacion);
     
-    // Limpiar mesa
-    mesa.productos = [];
-    guardarMesas();
+   // Eliminar mesa de Supabase
+try {
+    const { error } = await supabase
+        .from('mesas_activas')
+        .delete()
+        .eq('tenant_id', userData.tenant_id)
+        .eq('mesa_id', mesaId);
+    
+    if (error) throw error;
+} catch (error) {
+    console.error('Error eliminando mesa:', error);
+}
+
+// Limpiar del objeto local
+delete mesasData[mesaId];
     
     // Actualizar vista
     const modalBody = document.getElementById('modalBodyMesas');
