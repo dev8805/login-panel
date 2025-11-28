@@ -5747,7 +5747,7 @@ async function guardarHistorialMesa(mesa, dataVenta) {
             .from('historial_ventas_mesas')
             .insert({
                 tenant_id: userData.tenant_id,
-                mesa_id: mesa.id,
+                mesa_id: null,  // ← CAMBIAR a null porque mesa.id es string, no UUID
                 mesa_nombre: mesa.nombre,
                 productos: mesa.productos,
                 total: total,
