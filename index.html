@@ -1444,14 +1444,20 @@ select:focus {
         
         // Logout
         async function logout() {
-            try {
-                await supabase.auth.signOut();
-                userData = null;
-                showLogin();
-            } catch (error) {
-                console.error('Logout error:', error);
-            }
+    try {
+        // Desuscribirse de cambios en tiempo real
+        if (suscripcionMesas) {
+            supabase.channel(suscripcionMesas).unsubscribe();
+            suscripcionMesas = null;
         }
+        
+        await supabase.auth.signOut();
+        userData = null;
+        showLogin();
+    } catch (error) {
+        console.error('Logout error:', error);
+    }
+}
         
         // Mostrar login
         function showLogin() {
@@ -5116,6 +5122,52 @@ async function guardarMesas() {
     }
 }
 
+// Variable global para la suscripción
+let suscripcionMesas = null;
+
+// Suscribirse a cambios en tiempo real
+function suscribirseACambiosMesas() {
+    // Si ya existe una suscripción, cancelarla primero
+    if (suscripcionMesas) {
+        supabase.channel(suscripcionMesas).unsubscribe();
+    }
+    
+    // Crear nueva suscripción
+    suscripcionMesas = supabase
+        .channel('mesas-changes')
+        .on(
+            'postgres_changes',
+            {
+                event: '*', // INSERT, UPDATE, DELETE
+                schema: 'public',
+                table: 'mesas_activas',
+                filter: `tenant_id=eq.${userData.tenant_id}`
+            },
+            async (payload) => {
+                console.log('🔄 Cambio detectado en mesas:', payload);
+                
+                // Recargar datos
+                await inicializarMesas();
+                
+                // Renderizar solo si el modal está abierto
+                const modal = document.getElementById('modalMesas');
+                if (modal.classList.contains('show')) {
+                    const modalBody = document.getElementById('modalBodyMesas');
+                    
+                    // Verificar si estamos en vista de historial
+                    const enHistorial = modalBody.innerHTML.includes('📋 Historial');
+                    
+                    if (!enHistorial) {
+                        renderizarMesas(modalBody);
+                    }
+                }
+            }
+        )
+        .subscribe();
+    
+    console.log('✅ Suscrito a cambios en mesas');
+}
+
 // Abrir modal de mesas
 async function abrirModalMesas() {
     const modal = document.getElementById('modalMesas');
@@ -5127,11 +5179,20 @@ async function abrirModalMesas() {
     
     await inicializarMesas();
     renderizarMesas(modalBody);
+
+    suscribirseACambiosMesas();
 }
 
 // Cerrar modal
 function closeModalMesas() {
     document.getElementById('modalMesas').classList.remove('show');
+    
+    // Desuscribirse de cambios en tiempo real
+    if (suscripcionMesas) {
+        supabase.channel(suscripcionMesas).unsubscribe();
+        suscripcionMesas = null;
+        console.log('❌ Desuscrito de cambios en mesas');
+    }
 }
 
 function renderizarMesas(modalBody) {
