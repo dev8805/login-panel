@@ -5091,6 +5091,14 @@ async function inicializarMesas() {
                 };
             });
         }
+
+        // Mapeo para eventos DELETE de Realtime
+window.mesaIdMap = {};
+if (mesas && mesas.length > 0) {
+    mesas.forEach(mesa => {
+        window.mesaIdMap[mesa.id] = mesa.mesa_id;
+    });
+}
         
         console.log('📋 Mesas inicializadas desde Supabase:', mesasData);
     } catch (error) {
@@ -5122,9 +5130,23 @@ async function guardarMesas() {
         if (error) throw error;
         
         console.log('✅ Mesas guardadas en Supabase');
+        console.log('📡 Realtime sincronizará este cambio en otros dispositivos');
     } catch (error) {
         console.error('❌ Error guardando mesas:', error);
     }
+
+    // Actualizar mapeo después de guardar
+const { data: mesasActualizadas } = await supabase
+    .from('mesas_activas')
+    .select('id, mesa_id')
+    .eq('tenant_id', userData.tenant_id);
+
+if (mesasActualizadas) {
+    window.mesaIdMap = {};
+    mesasActualizadas.forEach(m => {
+        window.mesaIdMap[m.id] = m.mesa_id;
+    });
+}
 }
 
 // Variables globales para la suscripción
@@ -5149,6 +5171,8 @@ function suscribirseACambiosMesas() {
     
     console.log('📡 Iniciando suscripción Realtime...');
     console.log('🔑 Tenant ID:', userData.tenant_id);
+
+    console.log('🔄 Recreando suscripción con configuración actualizada...');
     
     // Crear nueva suscripción
     canalMesas = supabase
@@ -5168,47 +5192,98 @@ function suscribirseACambiosMesas() {
             },
             async (payload) => {
                 console.log('🔔 ¡CAMBIO DETECTADO EN MESAS!');
-console.log('📊 Tipo:', payload.eventType);
-const mesaModificadaId = payload.new?.mesa_id || payload.old?.mesa_id;
-console.log('🆔 Mesa:', mesaModificadaId);
-
-// ✅ DETENER POLLING (Realtime funciona)
-detenerPollingMesas();
-
-// Recargar datos desde Supabase
-await inicializarMesas();
-
-// Verificar si el modal está abierto
-const modal = document.getElementById('modalMesas');
-if (!modal || !modal.classList.contains('show')) {
-    console.log('⏸️ Modal cerrado, no actualizar UI');
-    return;
-}
-
-// Verificar qué mesa está expandida
-const detalleExpandido = document.getElementById(`detalle-${mesaModificadaId}`);
-const estaExpandida = detalleExpandido?.classList.contains('expanded');
-
-console.log('🔍 Mesa modificada expandida:', estaExpandida);
-
-if (estaExpandida) {
-    // ✅ SOLO actualizar el detalle de esta mesa específica (SIN parpadeo)
-    const mesa = mesasData[mesaModificadaId];
-    if (mesa) {
-        console.log('🎯 Actualización quirúrgica del detalle');
-        detalleExpandido.innerHTML = renderizarDetalleMesa(mesa);
-        
-        // Actualizar preview y resumen sin re-renderizar todo
-        actualizarPreviewMesa(mesaModificadaId, mesa);
-    }
+                console.log('📊 Tipo:', payload.eventType);
+                // IMPORTANTE: Usar mesa_id (no id de PostgreSQL)
+                let mesaModificadaId;
+if (payload.eventType === 'DELETE') {
+    mesaModificadaId = window.mesaIdMap[payload.old?.id];
 } else {
-    // Mesa comprimida: solo actualizar preview y resumen (ya funciona bien)
-    const mesa = mesasData[mesaModificadaId];
-    if (mesa) {
-        console.log('📋 Actualización solo de preview');
-        actualizarPreviewMesa(mesaModificadaId, mesa);
-    }
+    mesaModificadaId = payload.new?.mesa_id;
 }
+
+                console.log('📦 Payload completo:', JSON.stringify(payload, null, 2));
+                console.log('🔎 payload.old:', JSON.stringify(payload.old, null, 2));
+console.log('🔎 payload.new:', JSON.stringify(payload.new, null, 2));
+console.log('🆔 mesa_id extraído:', mesaModificadaId);
+        console.log('🆔 Mesa:', mesaModificadaId);
+
+        // ✅ DETENER POLLING (Realtime funciona)
+        detenerPollingMesas();
+
+        // ✅ MANEJAR SEGÚN EL TIPO DE EVENTO
+        if (payload.eventType === 'INSERT') {
+            console.log('➕ Nueva mesa creada en otro dispositivo');
+            // Recargar datos desde Supabase
+            await inicializarMesas();
+            
+            // Verificar si el modal está abierto
+            const modal = document.getElementById('modalMesas');
+            if (!modal || !modal.classList.contains('show')) {
+                console.log('⏸️ Modal cerrado, no actualizar UI');
+                return;
+            }
+            
+            // Re-renderizar TODO (porque es una mesa nueva)
+            const modalBody = document.getElementById('modalBodyMesas');
+            renderizarMesas(modalBody);
+            
+        } else if (payload.eventType === 'DELETE') {
+    console.log('🗑️ Mesa eliminada en otro dispositivo');
+    console.log('🆔 ID a eliminar:', mesaModificadaId);
+    console.log('🗂️ mesasData antes:', Object.keys(mesasData));
+    
+    // Eliminar directamente del objeto local
+    delete mesasData[mesaModificadaId];
+    console.log('🗂️ mesasData después:', Object.keys(mesasData));
+            
+    // Verificar si el modal está abierto
+    const modal = document.getElementById('modalMesas');
+    if (!modal || !modal.classList.contains('show')) {
+        console.log('⏸️ Modal cerrado, no actualizar UI');
+        return;
+    }
+    
+    // Re-renderizar TODO
+    const modalBody = document.getElementById('modalBodyMesas');
+    renderizarMesas(modalBody);
+            
+        } else if (payload.eventType === 'UPDATE') {
+            console.log('🔄 Mesa actualizada en otro dispositivo');
+            // Recargar datos desde Supabase
+            await inicializarMesas();
+
+            // Verificar si el modal está abierto
+            const modal = document.getElementById('modalMesas');
+            if (!modal || !modal.classList.contains('show')) {
+                console.log('⏸️ Modal cerrado, no actualizar UI');
+                return;
+            }
+
+            // Verificar qué mesa está expandida
+            const detalleExpandido = document.getElementById(`detalle-${mesaModificadaId}`);
+            const estaExpandida = detalleExpandido?.classList.contains('expanded');
+
+            console.log('🔍 Mesa modificada expandida:', estaExpandida);
+
+            if (estaExpandida) {
+                // ✅ SOLO actualizar el detalle de esta mesa específica (SIN parpadeo)
+                const mesa = mesasData[mesaModificadaId];
+                if (mesa) {
+                    console.log('🎯 Actualización quirúrgica del detalle');
+                    detalleExpandido.innerHTML = renderizarDetalleMesa(mesa);
+                    
+                    // Actualizar preview y resumen sin re-renderizar todo
+                    actualizarPreviewMesa(mesaModificadaId, mesa);
+                }
+            } else {
+                // Mesa comprimida: solo actualizar preview y resumen
+                const mesa = mesasData[mesaModificadaId];
+                if (mesa) {
+                    console.log('📋 Actualización solo de preview');
+                    actualizarPreviewMesa(mesaModificadaId, mesa);
+                }
+            }
+        }
             }
         )
         .subscribe((status, err) => {
@@ -5471,6 +5546,12 @@ function actualizarIndicadorEstado() {
 
 function renderizarMesas(modalBody) {
     const mesasArray = Object.values(mesasData);
+    // Ordenar mesas por número
+mesasArray.sort((a, b) => {
+    const numA = parseInt(a.nombre.match(/\d+/)?.[0] || 0);
+    const numB = parseInt(b.nombre.match(/\d+/)?.[0] || 0);
+    return numA - numB;
+});
     
     // Calcular total de productos y monto por mesa
     mesasArray.forEach(mesa => {
@@ -5654,6 +5735,17 @@ function actualizarPreviewMesa(mesaId, mesa) {
             const precio = p.precio_unitario || p.precio || 0;
             return sum + (precio * p.cantidad);
         }, 0) : 0;
+
+       // ✅ Actualizar descripción
+    const descripcionElement = document.querySelector(`.mesa-descripcion-${mesaId}`);
+    if (descripcionElement) {
+        if (mesa.descripcion && mesa.descripcion.trim() !== '') {
+            descripcionElement.textContent = mesa.descripcion;
+            descripcionElement.style.display = 'block';
+        } else {
+            descripcionElement.style.display = 'none';
+        }
+    } 
     
     // Actualizar el preview text
     const previewElement = document.querySelector(`.mesa-preview-${mesaId}`);
@@ -5755,7 +5847,23 @@ function ocultarResumenSiExpandida(mesaId) {
 
 function crearNuevaMesa() {
     console.log('➕ CREAR NUEVA MESA');
-    const numeroMesa = Object.keys(mesasData).length + 1;
+    // Obtener todos los números de mesa existentes
+const numerosExistentes = Object.values(mesasData)
+    .map(m => {
+        const match = m.nombre.match(/Mesa (\d+)/);
+        return match ? parseInt(match[1]) : 0;
+    })
+    .sort((a, b) => a - b);
+
+// Encontrar el primer número disponible
+let numeroMesa = 1;
+for (let i = 0; i < numerosExistentes.length; i++) {
+    if (numerosExistentes[i] === numeroMesa) {
+        numeroMesa++;
+    } else {
+        break;
+    }
+}
     const mesaId = `mesa-${Date.now()}`;
     
     mesasData[mesaId] = {
@@ -5764,6 +5872,8 @@ function crearNuevaMesa() {
         descripcion: '',  // ✅ NUEVO CAMPO
         productos: [],
         createdAt: new Date().toISOString()
+
+        
     };
     
     console.log('➕ Nueva mesa creada:', mesasData[mesaId]);
@@ -5804,7 +5914,7 @@ async function eliminarMesa(mesaId) {
     }
 }
 
-function editarDescripcionMesa(mesaId) {
+async function editarDescripcionMesa(mesaId) {
     const mesa = mesasData[mesaId];
     if (!mesa) return;
     
@@ -5814,18 +5924,9 @@ function editarDescripcionMesa(mesaId) {
     if (nuevaDescripcion === null) return; // Canceló
     
     mesa.descripcion = nuevaDescripcion.trim();
-    guardarMesas();
+    await guardarMesas();
     
-    // Actualizar solo el preview
-    const descripcionElement = document.querySelector(`.mesa-descripcion-${mesaId}`);
-    if (descripcionElement) {
-        if (mesa.descripcion) {
-            descripcionElement.textContent = mesa.descripcion;
-            descripcionElement.style.display = 'block';
-        } else {
-            descripcionElement.style.display = 'none';
-        }
-    }
+    console.log('📝 Descripción actualizada en Supabase, Realtime se encargará de sincronizar');
 }
 
 function ajustarCantidad(mesaId, productoIndex, delta) {
