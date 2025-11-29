@@ -5067,6 +5067,8 @@ async function enviarAudioChat(audioBlob) {
 
 let mesasData = {};
 
+
+
 // Inicializar mesas desde Supabase
 async function inicializarMesas() {
     try {
@@ -5148,7 +5150,7 @@ function suscribirseACambiosMesas() {
     console.log('📡 Iniciando suscripción Realtime...');
     console.log('🔑 Tenant ID:', userData.tenant_id);
     
-    // Crear nueva suscripción con configuración explícita
+    // Crear nueva suscripción
     canalMesas = supabase
         .channel(`mesas-activas-${userData.tenant_id}`, {
             config: {
@@ -5159,156 +5161,167 @@ function suscribirseACambiosMesas() {
         .on(
             'postgres_changes',
             {
-                event: '*', // INSERT, UPDATE, DELETE
+                event: '*',
                 schema: 'public',
                 table: 'mesas_activas',
                 filter: `tenant_id=eq.${userData.tenant_id}`
             },
             async (payload) => {
-    console.log('🔔 ¡CAMBIO DETECTADO EN MESAS!');
-    console.log('📊 Tipo de evento:', payload.eventType);
-    console.log('🆔 Mesa ID:', payload.new?.mesa_id || payload.old?.mesa_id);
-    console.log('📦 Datos completos:', payload);
-    
-    // Detener polling si estaba activo (ya que Realtime funciona)
-    detenerPollingMesas();
-    
-    // Recargar datos
-    await inicializarMesas();
-    
-    // Renderizar solo si el modal está abierto
-    const modal = document.getElementById('modalMesas');
-    if (modal.classList.contains('show')) {
-        const modalBody = document.getElementById('modalBodyMesas');
+                console.log('🔔 ¡CAMBIO DETECTADO EN MESAS!');
+console.log('📊 Tipo:', payload.eventType);
+const mesaModificadaId = payload.new?.mesa_id || payload.old?.mesa_id;
+console.log('🆔 Mesa:', mesaModificadaId);
+
+// ✅ DETENER POLLING (Realtime funciona)
+detenerPollingMesas();
+
+// Recargar datos desde Supabase
+await inicializarMesas();
+
+// Verificar si el modal está abierto
+const modal = document.getElementById('modalMesas');
+if (!modal || !modal.classList.contains('show')) {
+    console.log('⏸️ Modal cerrado, no actualizar UI');
+    return;
+}
+
+// Verificar qué mesa está expandida
+const detalleExpandido = document.getElementById(`detalle-${mesaModificadaId}`);
+const estaExpandida = detalleExpandido?.classList.contains('expanded');
+
+console.log('🔍 Mesa modificada expandida:', estaExpandida);
+
+if (estaExpandida) {
+    // ✅ SOLO actualizar el detalle de esta mesa específica (SIN parpadeo)
+    const mesa = mesasData[mesaModificadaId];
+    if (mesa) {
+        console.log('🎯 Actualización quirúrgica del detalle');
+        detalleExpandido.innerHTML = renderizarDetalleMesa(mesa);
         
-        // Verificar si estamos en vista de historial
-        const enHistorial = modalBody.innerHTML.includes('📋 Historial');
-        
-        if (!enHistorial) {
-            console.log('🔄 Actualizando vista de mesas...');
-            
-            // 🆕 GUARDAR ESTADO de mesas expandidas ANTES de renderizar
-            const mesasExpandidas = Array.from(document.querySelectorAll('.mesa-detalle.expanded'))
-                .map(detalle => detalle.id.replace('detalle-', ''));
-            
-            console.log('💾 Mesas expandidas antes:', mesasExpandidas);
-            
-            // Re-renderizar
-            renderizarMesas(modalBody);
-            
-            // 🆕 RESTAURAR ESTADO después de renderizar
-            setTimeout(() => {
-                mesasExpandidas.forEach(mesaId => {
-                    const detalle = document.getElementById(`detalle-${mesaId}`);
-                    if (detalle) {
-                        console.log('♻️ Restaurando mesa expandida:', mesaId);
-                        detalle.style.display = 'block';
-                        detalle.classList.add('expanded');
-                        
-                        // Ocultar preview y resumen
-                        const preview = document.querySelector(`.mesa-preview-${mesaId}`);
-                        const resumen = document.querySelector(`.mesa-resumen-${mesaId}`);
-                        if (preview) preview.style.display = 'none';
-                        if (resumen) resumen.style.display = 'none';
-                    }
-                });
-            }, 50);
-        }
+        // Actualizar preview y resumen sin re-renderizar todo
+        actualizarPreviewMesa(mesaModificadaId, mesa);
+    }
+} else {
+    // Mesa comprimida: solo actualizar preview y resumen (ya funciona bien)
+    const mesa = mesasData[mesaModificadaId];
+    if (mesa) {
+        console.log('📋 Actualización solo de preview');
+        actualizarPreviewMesa(mesaModificadaId, mesa);
     }
 }
+            }
         )
         .subscribe((status, err) => {
-            console.log('📡 Estado de suscripción Realtime:', status);
+            console.log('📡 Estado Realtime:', status);
             
             if (status === 'SUBSCRIBED') {
-                console.log('✅ REALTIME ACTIVO - Suscrito exitosamente');
-                console.log('👂 Escuchando cambios en mesas_activas...');
-                intentosReconexion = 0;
-                
-                // Detener polling si estaba activo
-                detenerPollingMesas();
-            }
+    console.log('✅ REALTIME ACTIVO');
+    intentosReconexion = 0;
+    detenerPollingMesas();
+    
+    // 🆕 INICIAR HEARTBEAT (ping cada 30s)
+    iniciarHeartbeat();
+    
+    // ✅ ACTUALIZAR INDICADOR
+    actualizarIndicadorEstado();
+}
             
-            if (status === 'CHANNEL_ERROR') {
-                console.error('❌ ERROR EN CANAL REALTIME:', err);
-                console.log('🔄 Intentando reconexión...');
-                
-                // Intentar reconexión
-                if (intentosReconexion < MAX_INTENTOS_RECONEXION) {
-                    intentosReconexion++;
-                    setTimeout(() => {
-                        console.log(`🔄 Intento de reconexión ${intentosReconexion}/${MAX_INTENTOS_RECONEXION}`);
-                        suscribirseACambiosMesas();
-                    }, 2000 * intentosReconexion);
-                } else {
-                    console.log('⚠️ Realtime no disponible después de 3 intentos');
-                    console.log('🔄 Activando polling como fallback...');
-                    iniciarPollingMesas();
-                }
-            }
-            
-            if (status === 'TIMED_OUT') {
-                console.error('⏱️ TIMEOUT en suscripción Realtime');
-                console.log('🔄 Activando polling como fallback...');
+            if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                console.error('❌ ERROR REALTIME:', err || status);
+                console.log('🔄 Activando polling...');
                 iniciarPollingMesas();
             }
             
             if (status === 'CLOSED') {
-                console.log('🔒 Canal Realtime cerrado');
+                console.log('🔒 Canal cerrado, activando polling...');
+                iniciarPollingMesas();
             }
         });
 }
 
-// Iniciar polling como fallback
-function iniciarPollingMesas() {
-    // Detener cualquier polling anterior
-    if (pollingInterval) {
-        clearInterval(pollingInterval);
+// 🆕 NUEVA FUNCIÓN: Actualizar mesas preservando estado
+async function actualizarMesasConEstado() {
+    console.log('🔄 Actualizando mesas...');
+    
+    // Guardar estado de mesas expandidas
+    const mesasExpandidas = Array.from(document.querySelectorAll('.mesa-detalle.expanded'))
+        .map(detalle => detalle.id.replace('detalle-', ''));
+    
+    console.log('💾 Mesas expandidas:', mesasExpandidas);
+    
+    // Recargar datos
+    await inicializarMesas();
+    
+    // Actualizar UI solo si modal abierto
+    const modal = document.getElementById('modalMesas');
+    if (!modal || !modal.classList.contains('show')) {
+        console.log('⏭️ Modal cerrado');
+        return;
     }
     
-    console.log('🔄 Iniciando polling cada 3 segundos (fallback)...');
+    const modalBody = document.getElementById('modalBodyMesas');
+    if (modalBody.innerHTML.includes('📋 Historial')) {
+        console.log('⏭️ En historial');
+        return;
+    }
     
-    // Guardar hash del último estado para detectar cambios
-    let ultimoHash = '';
+    // Re-renderizar
+    renderizarMesas(modalBody);
     
-    pollingInterval = setInterval(async () => {
-        const modal = document.getElementById('modalMesas');
-        
-        // Solo actualizar si el modal está abierto
-        if (modal && modal.classList.contains('show')) {
-            const modalBody = document.getElementById('modalBodyMesas');
-            const enHistorial = modalBody && modalBody.innerHTML.includes('📋 Historial');
-            
-            if (!enHistorial) {
-                try {
-                    // Obtener datos actuales
-                    const { data: mesasActuales, error } = await supabase
-                        .from('mesas_activas')
-                        .select('*')
-                        .eq('tenant_id', userData.tenant_id);
+    // Restaurar estado expandido
+    if (mesasExpandidas.length > 0) {
+        setTimeout(() => {
+            mesasExpandidas.forEach(mesaId => {
+                const detalle = document.getElementById(`detalle-${mesaId}`);
+                if (detalle) {
+                    detalle.style.display = 'block';
+                    detalle.classList.add('expanded');
                     
-                    if (error) {
-                        console.error('❌ Error en polling:', error);
-                        return;
-                    }
-                    
-                    // Calcular hash simple de los datos
-                    const nuevoHash = JSON.stringify(mesasActuales);
-                    
-                    // Solo actualizar si hay cambios
-                    if (nuevoHash !== ultimoHash) {
-                        console.log('🔄 Cambios detectados (polling), actualizando...');
-                        ultimoHash = nuevoHash;
-                        
-                        await inicializarMesas();
-                        renderizarMesas(modalBody);
-                    }
-                } catch (error) {
-                    console.error('❌ Error en polling:', error);
+                    const preview = document.querySelector(`.mesa-preview-${mesaId}`);
+                    const resumen = document.querySelector(`.mesa-resumen-${mesaId}`);
+                    if (preview) preview.style.display = 'none';
+                    if (resumen) resumen.style.display = 'none';
                 }
-            }
+            });
+        }, 50);
+    }
+    
+    console.log('✅ Actualización completa');
+}
+
+// 🆕 NUEVA FUNCIÓN: Heartbeat para mantener conexión viva
+let heartbeatInterval = null;
+
+function iniciarHeartbeat() {
+    // Limpiar heartbeat anterior
+    if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+    }
+    
+    console.log('💓 Heartbeat iniciado (30s)');
+    
+    heartbeatInterval = setInterval(async () => {
+        // Verificar si el canal sigue activo
+        if (!canalMesas || canalMesas.state !== 'joined') {
+            console.log('💔 Heartbeat: Canal desconectado, reconectando...');
+            clearInterval(heartbeatInterval);
+            suscribirseACambiosMesas();
+            return;
         }
-    }, 3000); // Cada 3 segundos
+        
+        console.log('💓 Heartbeat: Conexión activa');
+        
+        // Hacer un query ligero para mantener conexión viva
+        try {
+            await supabase
+                .from('mesas_activas')
+                .select('mesa_id', { count: 'exact', head: true })
+                .eq('tenant_id', userData.tenant_id)
+                .limit(1);
+        } catch (error) {
+            console.error('💔 Heartbeat error:', error);
+        }
+    }, 3000); // Cada 30 segundos
 }
 
 // Detener polling
@@ -5316,8 +5329,53 @@ function detenerPollingMesas() {
     if (pollingInterval) {
         clearInterval(pollingInterval);
         pollingInterval = null;
-        console.log('⏹️ Polling detenido');
+        console.log('🛑 Polling detenido');
     }
+}
+
+// Iniciar polling como fallback
+function iniciarPollingMesas() {
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+    }
+    
+    console.log('🔄 Polling iniciado (cada 3s)');
+    
+    let ultimoHash = '';
+    
+    pollingInterval = setInterval(async () => {
+        const modal = document.getElementById('modalMesas');
+        
+        if (modal && modal.classList.contains('show')) {
+            const modalBody = document.getElementById('modalBodyMesas');
+            const enHistorial = modalBody && modalBody.innerHTML.includes('📋 Historial');
+            
+            if (!enHistorial) {
+                try {
+                    const { data: mesasActuales, error } = await supabase
+                        .from('mesas_activas')
+                        .select('*')
+                        .eq('tenant_id', userData.tenant_id);
+                    
+                    if (error) {
+                        console.error('❌ Error polling:', error);
+                        return;
+                    }
+                    
+                    const nuevoHash = JSON.stringify(mesasActuales);
+                    
+                    if (nuevoHash !== ultimoHash) {
+                        console.log('🔄 Cambio detectado (polling)');
+                        ultimoHash = nuevoHash;
+                        
+                        await actualizarMesasConEstado();
+                    }
+                } catch (error) {
+                    console.error('❌ Error polling:', error);
+                }
+            }
+        }
+    }, 3000);
 }
 
 // Abrir modal de mesas
@@ -5354,22 +5412,61 @@ async function abrirModalMesas() {
 function closeModalMesas() {
     document.getElementById('modalMesas').classList.remove('show');
     
-    // Desuscribirse de cambios en tiempo real
+    // Desuscribirse
     if (canalMesas) {
         try {
             canalMesas.unsubscribe();
-            console.log('❌ Desuscrito de cambios en mesas');
+            console.log('❌ Desuscrito de mesas');
         } catch (error) {
-            console.error('⚠️ Error al desuscribirse:', error);
+            console.error('⚠️ Error desuscribiendo:', error);
         }
         canalMesas = null;
     }
     
-    // Detener polling
+    // Detener polling y heartbeat
     detenerPollingMesas();
+    if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+        console.log('💔 Heartbeat detenido');
+    }
     
-    // Resetear intentos de reconexión
     intentosReconexion = 0;
+}
+
+// Actualizar indicador de estado
+function actualizarIndicadorEstado() {
+    const indicador = document.querySelector('.mesas-header > div:first-child');
+    if (!indicador) return;
+    
+    const estaConectado = canalMesas && canalMesas.state === 'joined';
+    const estaPolling = !!pollingInterval;
+    
+    let background, border, color, texto;
+    
+    if (estaConectado) {
+        background = '#10b98115';
+        border = '#10b981';
+        color = '#10b981';
+        texto = '🟢 Tiempo Real Activo';
+    } else if (estaPolling) {
+        background = '#f59e0b15';
+        border = '#f59e0b';
+        color = '#f59e0b';
+        texto = '🟡 Modo Polling (3s)';
+    } else {
+        background = '#ef444415';
+        border = '#ef4444';
+        color = '#ef4444';
+        texto = '🔴 Desconectado';
+    }
+    
+    indicador.style.background = background;
+    indicador.style.borderColor = border;
+    indicador.style.color = color;
+    indicador.textContent = texto;
+    
+    console.log('🔄 Indicador actualizado:', texto);
 }
 
 function renderizarMesas(modalBody) {
@@ -5421,17 +5518,17 @@ const mesasHTML = mesasArray.map(mesa => {
     `;
 }).join('');
     
-    modalBody.innerHTML = `
-        <div class="mesas-container" style="padding: 16px; max-width: 100%; margin: 0 auto;">
-            <div class="mesas-header" style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 16px; gap: 12px;">
-                <!-- Indicador de estado -->
-                <div style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: ${canalMesas && canalMesas.state === 'joined' ? '#10b98115' : pollingInterval ? '#f59e0b15' : '#ef444415'}; border: 1px solid ${canalMesas && canalMesas.state === 'joined' ? '#10b981' : pollingInterval ? '#f59e0b' : '#ef4444'}; border-radius: 20px; font-size: 11px; font-weight: 600; color: ${canalMesas && canalMesas.state === 'joined' ? '#10b981' : pollingInterval ? '#f59e0b' : '#ef4444'};">
-                    ${canalMesas && canalMesas.state === 'joined' ? '🟢 Tiempo Real Activo' : pollingInterval ? '🟡 Modo Polling (3s)' : '🔴 Desconectado'}
-                </div>
-                <button onclick="abrirHistorialMesas()" style="background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; white-space: nowrap; width: auto; min-width: auto;">
-            📋 Historial
-        </button>
+modalBody.innerHTML = `
+    <div class="mesas-container" style="padding: 16px; max-width: 100%; margin: 0 auto;">
+        <div class="mesas-header" style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 16px; gap: 12px;">
+            <!-- Indicador de estado -->
+            <div style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: ${canalMesas && canalMesas.state === 'joined' ? '#10b98115' : pollingInterval ? '#f59e0b15' : '#ef444415'}; border: 1px solid ${canalMesas && canalMesas.state === 'joined' ? '#10b981' : pollingInterval ? '#f59e0b' : '#ef4444'}; border-radius: 20px; font-size: 11px; font-weight: 600; color: ${canalMesas && canalMesas.state === 'joined' ? '#10b981' : pollingInterval ? '#f59e0b' : '#ef4444'};">
+                ${canalMesas && canalMesas.state === 'joined' ? '🟢 Tiempo Real Activo' : pollingInterval ? '🟡 Modo Polling (3s)' : '🔴 Desconectado'}
             </div>
+            <button onclick="abrirHistorialMesas()" style="background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; white-space: nowrap; width: auto; min-width: auto;">
+                📋 Historial
+            </button>
+        </div>
             <div class="mesa-grid">
                 ${mesasHTML}
             </div>
@@ -5443,6 +5540,11 @@ const mesasHTML = mesasArray.map(mesa => {
     console.log('✅ Mesas renderizadas. Total:', mesasArray.length);
     console.log('📡 Estado canal:', canalMesas?.state || 'null');
     console.log('🔄 Polling activo:', !!pollingInterval);
+
+    // Actualizar indicador de estado después de renderizar
+setTimeout(() => {
+    actualizarIndicadorEstado();
+}, 100);
 }
 
 function renderizarDetalleMesa(mesa) {
