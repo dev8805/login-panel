@@ -1443,13 +1443,16 @@ select:focus {
         }
         
         // Logout
-        async function logout() {
+async function logout() {
     try {
         // Desuscribirse de cambios en tiempo real
-        if (suscripcionMesas) {
-            supabase.channel(suscripcionMesas).unsubscribe();
-            suscripcionMesas = null;
+        if (canalMesas) {
+            canalMesas.unsubscribe();
+            canalMesas = null;
         }
+        
+        // Detener polling
+        detenerPollingMesas();
         
         await supabase.auth.signOut();
         userData = null;
@@ -5122,19 +5125,37 @@ async function guardarMesas() {
     }
 }
 
-// Variable global para la suscripción
+// Variables globales para la suscripción
 let suscripcionMesas = null;
+let canalMesas = null;
+let pollingInterval = null;
+let intentosReconexion = 0;
+const MAX_INTENTOS_RECONEXION = 3;
 
 // Suscribirse a cambios en tiempo real
 function suscribirseACambiosMesas() {
     // Si ya existe una suscripción, cancelarla primero
-    if (suscripcionMesas) {
-        supabase.channel(suscripcionMesas).unsubscribe();
+    if (canalMesas) {
+        try {
+            canalMesas.unsubscribe();
+            console.log('🔴 Suscripción anterior cancelada');
+        } catch (error) {
+            console.error('⚠️ Error cancelando suscripción:', error);
+        }
+        canalMesas = null;
     }
     
-    // Crear nueva suscripción
-    suscripcionMesas = supabase
-        .channel('mesas-changes')
+    console.log('📡 Iniciando suscripción Realtime...');
+    console.log('🔑 Tenant ID:', userData.tenant_id);
+    
+    // Crear nueva suscripción con configuración explícita
+    canalMesas = supabase
+        .channel(`mesas-activas-${userData.tenant_id}`, {
+            config: {
+                broadcast: { self: false },
+                presence: { key: '' }
+            }
+        })
         .on(
             'postgres_changes',
             {
@@ -5144,7 +5165,13 @@ function suscribirseACambiosMesas() {
                 filter: `tenant_id=eq.${userData.tenant_id}`
             },
             async (payload) => {
-                console.log('🔄 Cambio detectado en mesas:', payload);
+                console.log('🔔 ¡CAMBIO DETECTADO EN MESAS!');
+                console.log('📊 Tipo de evento:', payload.eventType);
+                console.log('🆔 Mesa ID:', payload.new?.mesa_id || payload.old?.mesa_id);
+                console.log('📦 Datos completos:', payload);
+                
+                // Detener polling si estaba activo (ya que Realtime funciona)
+                detenerPollingMesas();
                 
                 // Recargar datos
                 await inicializarMesas();
@@ -5158,14 +5185,113 @@ function suscribirseACambiosMesas() {
                     const enHistorial = modalBody.innerHTML.includes('📋 Historial');
                     
                     if (!enHistorial) {
+                        console.log('🔄 Actualizando vista de mesas...');
                         renderizarMesas(modalBody);
                     }
                 }
             }
         )
-        .subscribe();
+        .subscribe((status, err) => {
+            console.log('📡 Estado de suscripción Realtime:', status);
+            
+            if (status === 'SUBSCRIBED') {
+                console.log('✅ REALTIME ACTIVO - Suscrito exitosamente');
+                console.log('👂 Escuchando cambios en mesas_activas...');
+                intentosReconexion = 0;
+                
+                // Detener polling si estaba activo
+                detenerPollingMesas();
+            }
+            
+            if (status === 'CHANNEL_ERROR') {
+                console.error('❌ ERROR EN CANAL REALTIME:', err);
+                console.log('🔄 Intentando reconexión...');
+                
+                // Intentar reconexión
+                if (intentosReconexion < MAX_INTENTOS_RECONEXION) {
+                    intentosReconexion++;
+                    setTimeout(() => {
+                        console.log(`🔄 Intento de reconexión ${intentosReconexion}/${MAX_INTENTOS_RECONEXION}`);
+                        suscribirseACambiosMesas();
+                    }, 2000 * intentosReconexion);
+                } else {
+                    console.log('⚠️ Realtime no disponible después de 3 intentos');
+                    console.log('🔄 Activando polling como fallback...');
+                    iniciarPollingMesas();
+                }
+            }
+            
+            if (status === 'TIMED_OUT') {
+                console.error('⏱️ TIMEOUT en suscripción Realtime');
+                console.log('🔄 Activando polling como fallback...');
+                iniciarPollingMesas();
+            }
+            
+            if (status === 'CLOSED') {
+                console.log('🔒 Canal Realtime cerrado');
+            }
+        });
+}
+
+// Iniciar polling como fallback
+function iniciarPollingMesas() {
+    // Detener cualquier polling anterior
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+    }
     
-    console.log('✅ Suscrito a cambios en mesas');
+    console.log('🔄 Iniciando polling cada 3 segundos (fallback)...');
+    
+    // Guardar hash del último estado para detectar cambios
+    let ultimoHash = '';
+    
+    pollingInterval = setInterval(async () => {
+        const modal = document.getElementById('modalMesas');
+        
+        // Solo actualizar si el modal está abierto
+        if (modal && modal.classList.contains('show')) {
+            const modalBody = document.getElementById('modalBodyMesas');
+            const enHistorial = modalBody && modalBody.innerHTML.includes('📋 Historial');
+            
+            if (!enHistorial) {
+                try {
+                    // Obtener datos actuales
+                    const { data: mesasActuales, error } = await supabase
+                        .from('mesas_activas')
+                        .select('*')
+                        .eq('tenant_id', userData.tenant_id);
+                    
+                    if (error) {
+                        console.error('❌ Error en polling:', error);
+                        return;
+                    }
+                    
+                    // Calcular hash simple de los datos
+                    const nuevoHash = JSON.stringify(mesasActuales);
+                    
+                    // Solo actualizar si hay cambios
+                    if (nuevoHash !== ultimoHash) {
+                        console.log('🔄 Cambios detectados (polling), actualizando...');
+                        ultimoHash = nuevoHash;
+                        
+                        await inicializarMesas();
+                        renderizarMesas(modalBody);
+                    }
+                } catch (error) {
+                    console.error('❌ Error en polling:', error);
+                }
+            }
+        }
+    }, 3000); // Cada 3 segundos
+}
+
+// Detener polling
+function detenerPollingMesas() {
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
+        console.log('⏹️ Polling detenido');
+    }
 }
 
 // Abrir modal de mesas
@@ -5177,10 +5303,25 @@ async function abrirModalMesas() {
     modalBody.innerHTML = '<div style="text-align: center; padding: 40px;"><p>Cargando mesas...</p></div>';
     modal.classList.add('show');
     
+    console.log('🍽️ Abriendo modal de mesas...');
+    
     await inicializarMesas();
     renderizarMesas(modalBody);
 
+    // Intentar conectar con Realtime
+    console.log('📡 Intentando conectar con Supabase Realtime...');
     suscribirseACambiosMesas();
+    
+    // Verificar después de 5 segundos si Realtime está funcionando
+    setTimeout(() => {
+        if (!canalMesas || canalMesas.state !== 'joined') {
+            console.log('⚠️ Realtime no se conectó en 5 segundos');
+            console.log('🔄 Activando polling como fallback...');
+            iniciarPollingMesas();
+        } else {
+            console.log('✅ Realtime conectado correctamente');
+        }
+    }, 5000);
 }
 
 // Cerrar modal
@@ -5188,11 +5329,21 @@ function closeModalMesas() {
     document.getElementById('modalMesas').classList.remove('show');
     
     // Desuscribirse de cambios en tiempo real
-    if (suscripcionMesas) {
-        supabase.channel(suscripcionMesas).unsubscribe();
-        suscripcionMesas = null;
-        console.log('❌ Desuscrito de cambios en mesas');
+    if (canalMesas) {
+        try {
+            canalMesas.unsubscribe();
+            console.log('❌ Desuscrito de cambios en mesas');
+        } catch (error) {
+            console.error('⚠️ Error al desuscribirse:', error);
+        }
+        canalMesas = null;
     }
+    
+    // Detener polling
+    detenerPollingMesas();
+    
+    // Resetear intentos de reconexión
+    intentosReconexion = 0;
 }
 
 function renderizarMesas(modalBody) {
@@ -5247,7 +5398,10 @@ const mesasHTML = mesasArray.map(mesa => {
     modalBody.innerHTML = `
         <div class="mesas-container" style="padding: 16px; max-width: 100%; margin: 0 auto;">
             <div class="mesas-header" style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 16px; gap: 12px;">
-                
+                <!-- Indicador de estado -->
+                <div style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: ${canalMesas && canalMesas.state === 'joined' ? '#10b98115' : pollingInterval ? '#f59e0b15' : '#ef444415'}; border: 1px solid ${canalMesas && canalMesas.state === 'joined' ? '#10b981' : pollingInterval ? '#f59e0b' : '#ef4444'}; border-radius: 20px; font-size: 11px; font-weight: 600; color: ${canalMesas && canalMesas.state === 'joined' ? '#10b981' : pollingInterval ? '#f59e0b' : '#ef4444'};">
+                    ${canalMesas && canalMesas.state === 'joined' ? '🟢 Tiempo Real Activo' : pollingInterval ? '🟡 Modo Polling (3s)' : '🔴 Desconectado'}
+                </div>
                 <button onclick="abrirHistorialMesas()" style="background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; white-space: nowrap; width: auto; min-width: auto;">
             📋 Historial
         </button>
@@ -5261,6 +5415,8 @@ const mesasHTML = mesasArray.map(mesa => {
         </div>
     `;
     console.log('✅ Mesas renderizadas. Total:', mesasArray.length);
+    console.log('📡 Estado canal:', canalMesas?.state || 'null');
+    console.log('🔄 Polling activo:', !!pollingInterval);
 }
 
 function renderizarDetalleMesa(mesa) {
