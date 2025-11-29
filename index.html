@@ -5165,31 +5165,57 @@ function suscribirseACambiosMesas() {
                 filter: `tenant_id=eq.${userData.tenant_id}`
             },
             async (payload) => {
-                console.log('🔔 ¡CAMBIO DETECTADO EN MESAS!');
-                console.log('📊 Tipo de evento:', payload.eventType);
-                console.log('🆔 Mesa ID:', payload.new?.mesa_id || payload.old?.mesa_id);
-                console.log('📦 Datos completos:', payload);
-                
-                // Detener polling si estaba activo (ya que Realtime funciona)
-                detenerPollingMesas();
-                
-                // Recargar datos
-                await inicializarMesas();
-                
-                // Renderizar solo si el modal está abierto
-                const modal = document.getElementById('modalMesas');
-                if (modal.classList.contains('show')) {
-                    const modalBody = document.getElementById('modalBodyMesas');
-                    
-                    // Verificar si estamos en vista de historial
-                    const enHistorial = modalBody.innerHTML.includes('📋 Historial');
-                    
-                    if (!enHistorial) {
-                        console.log('🔄 Actualizando vista de mesas...');
-                        renderizarMesas(modalBody);
+    console.log('🔔 ¡CAMBIO DETECTADO EN MESAS!');
+    console.log('📊 Tipo de evento:', payload.eventType);
+    console.log('🆔 Mesa ID:', payload.new?.mesa_id || payload.old?.mesa_id);
+    console.log('📦 Datos completos:', payload);
+    
+    // Detener polling si estaba activo (ya que Realtime funciona)
+    detenerPollingMesas();
+    
+    // Recargar datos
+    await inicializarMesas();
+    
+    // Renderizar solo si el modal está abierto
+    const modal = document.getElementById('modalMesas');
+    if (modal.classList.contains('show')) {
+        const modalBody = document.getElementById('modalBodyMesas');
+        
+        // Verificar si estamos en vista de historial
+        const enHistorial = modalBody.innerHTML.includes('📋 Historial');
+        
+        if (!enHistorial) {
+            console.log('🔄 Actualizando vista de mesas...');
+            
+            // 🆕 GUARDAR ESTADO de mesas expandidas ANTES de renderizar
+            const mesasExpandidas = Array.from(document.querySelectorAll('.mesa-detalle.expanded'))
+                .map(detalle => detalle.id.replace('detalle-', ''));
+            
+            console.log('💾 Mesas expandidas antes:', mesasExpandidas);
+            
+            // Re-renderizar
+            renderizarMesas(modalBody);
+            
+            // 🆕 RESTAURAR ESTADO después de renderizar
+            setTimeout(() => {
+                mesasExpandidas.forEach(mesaId => {
+                    const detalle = document.getElementById(`detalle-${mesaId}`);
+                    if (detalle) {
+                        console.log('♻️ Restaurando mesa expandida:', mesaId);
+                        detalle.style.display = 'block';
+                        detalle.classList.add('expanded');
+                        
+                        // Ocultar preview y resumen
+                        const preview = document.querySelector(`.mesa-preview-${mesaId}`);
+                        const resumen = document.querySelector(`.mesa-resumen-${mesaId}`);
+                        if (preview) preview.style.display = 'none';
+                        if (resumen) resumen.style.display = 'none';
                     }
-                }
-            }
+                });
+            }, 50);
+        }
+    }
+}
         )
         .subscribe((status, err) => {
             console.log('📡 Estado de suscripción Realtime:', status);
