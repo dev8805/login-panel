@@ -5210,24 +5210,33 @@ console.log('🆔 mesa_id extraído:', mesaModificadaId);
         // ✅ DETENER POLLING (Realtime funciona)
         detenerPollingMesas();
 
-        // ✅ MANEJAR SEGÚN EL TIPO DE EVENTO
-        if (payload.eventType === 'INSERT') {
-            console.log('➕ Nueva mesa creada en otro dispositivo');
-            // Recargar datos desde Supabase
-            await inicializarMesas();
-            
-            // Verificar si el modal está abierto
-            const modal = document.getElementById('modalMesas');
+         // Verificar si el modal está abierto
+         const modal = document.getElementById('modalMesas');
             if (!modal || !modal.classList.contains('show')) {
                 console.log('⏸️ Modal cerrado, no actualizar UI');
                 return;
             }
-            
-            // Re-renderizar TODO (porque es una mesa nueva)
-            const modalBody = document.getElementById('modalBodyMesas');
-            renderizarMesas(modalBody);
-            
-        } else if (payload.eventType === 'DELETE') {
+
+        // ✅ MANEJAR SEGÚN EL TIPO DE EVENTO
+        if (payload.eventType === 'INSERT') {
+    console.log('➕ Nueva mesa creada');
+    
+    // Si es la mesa que acabamos de crear localmente, NO hacer nada
+    // (ya está renderizada y expandida)
+    if (window.mesaRecienCreada === mesaModificadaId) {
+        console.log('⏭️ Mesa recién creada localmente, ignorando INSERT de Realtime');
+        return;
+    }
+    
+    // Si es una mesa creada en OTRO dispositivo, recargar y renderizar
+    console.log('📱 Nueva mesa desde otro dispositivo');
+    await inicializarMesas();
+    
+    const modalBody = document.getElementById('modalBodyMesas');
+    renderizarMesas(modalBody);
+}
+
+else if (payload.eventType === 'DELETE') {
     console.log('🗑️ Mesa eliminada en otro dispositivo');
     console.log('🆔 ID a eliminar:', mesaModificadaId);
     console.log('🗂️ mesasData antes:', Object.keys(mesasData));
@@ -5235,13 +5244,7 @@ console.log('🆔 mesa_id extraído:', mesaModificadaId);
     // Eliminar directamente del objeto local
     delete mesasData[mesaModificadaId];
     console.log('🗂️ mesasData después:', Object.keys(mesasData));
-            
-    // Verificar si el modal está abierto
-    const modal = document.getElementById('modalMesas');
-    if (!modal || !modal.classList.contains('show')) {
-        console.log('⏸️ Modal cerrado, no actualizar UI');
-        return;
-    }
+
     
     // Re-renderizar TODO
     const modalBody = document.getElementById('modalBodyMesas');
@@ -5314,55 +5317,8 @@ console.log('🆔 mesa_id extraído:', mesaModificadaId);
         });
 }
 
-// 🆕 NUEVA FUNCIÓN: Actualizar mesas preservando estado
-async function actualizarMesasConEstado() {
-    console.log('🔄 Actualizando mesas...');
-    
-    // Guardar estado de mesas expandidas
-    const mesasExpandidas = Array.from(document.querySelectorAll('.mesa-detalle.expanded'))
-        .map(detalle => detalle.id.replace('detalle-', ''));
-    
-    console.log('💾 Mesas expandidas:', mesasExpandidas);
-    
-    // Recargar datos
-    await inicializarMesas();
-    
-    // Actualizar UI solo si modal abierto
-    const modal = document.getElementById('modalMesas');
-    if (!modal || !modal.classList.contains('show')) {
-        console.log('⏭️ Modal cerrado');
-        return;
-    }
-    
-    const modalBody = document.getElementById('modalBodyMesas');
-    if (modalBody.innerHTML.includes('📋 Historial')) {
-        console.log('⏭️ En historial');
-        return;
-    }
-    
-    // Re-renderizar
-    renderizarMesas(modalBody);
-    
-    // Restaurar estado expandido
-    if (mesasExpandidas.length > 0) {
-        setTimeout(() => {
-            mesasExpandidas.forEach(mesaId => {
-                const detalle = document.getElementById(`detalle-${mesaId}`);
-                if (detalle) {
-                    detalle.style.display = 'block';
-                    detalle.classList.add('expanded');
-                    
-                    const preview = document.querySelector(`.mesa-preview-${mesaId}`);
-                    const resumen = document.querySelector(`.mesa-resumen-${mesaId}`);
-                    if (preview) preview.style.display = 'none';
-                    if (resumen) resumen.style.display = 'none';
-                }
-            });
-        }, 50);
-    }
-    
-    console.log('✅ Actualización completa');
-}
+
+
 
 // 🆕 NUEVA FUNCIÓN: Heartbeat para mantener conexión viva
 let heartbeatInterval = null;
@@ -5544,6 +5500,15 @@ function actualizarIndicadorEstado() {
     console.log('🔄 Indicador actualizado:', texto);
 }
 
+function calcularTotalesMesa(mesa) {
+    mesa.totalProductos = mesa.productos ? mesa.productos.length : 0;
+    mesa.totalMonto = mesa.productos ? 
+        mesa.productos.reduce((sum, p) => {
+            const precio = p.precio_unitario || p.precio || 0;
+            return sum + (precio * p.cantidad);
+        }, 0) : 0;
+}
+
 function renderizarMesas(modalBody) {
     const mesasArray = Object.values(mesasData);
     // Ordenar mesas por número
@@ -5553,15 +5518,18 @@ mesasArray.sort((a, b) => {
     return numA - numB;
 });
     
-    // Calcular total de productos y monto por mesa
-    mesasArray.forEach(mesa => {
-    mesa.totalProductos = mesa.productos ? mesa.productos.length : 0;
-    mesa.totalMonto = mesa.productos ? 
-        mesa.productos.reduce((sum, p) => {
-            const precio = p.precio_unitario || p.precio || 0;
-            return sum + (precio * p.cantidad);
-        }, 0) : 0;
+mesasArray.forEach(mesa => {
+    calcularTotalesMesa(mesa);
 });
+
+// Tarjeta de nueva mesa
+const tarjetaNuevaMesa = `
+    <div class="mesa-card" style="background: white; border: 2px dashed #667eea; border-radius: 12px; cursor: pointer; transition: all 0.3s; margin-bottom: 12px; overflow: hidden; min-height: 95px;" onclick="crearNuevaMesa()" onmouseover="this.style.borderColor='#764ba2'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.2)';" onmouseout="this.style.borderColor='#667eea'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+        <div style="display: flex; align-items: center; justify-content: center; height: 100%; min-height: 95px;">
+            <div style="font-size: 48px; color: #667eea;">+</div>
+        </div>
+    </div>
+`;
     
 const mesasHTML = mesasArray.map(mesa => {
     console.log('🎨 Renderizando mesa:', mesa.id, 'Productos:', mesa.productos?.length || 0);
@@ -5597,7 +5565,7 @@ const mesasHTML = mesasArray.map(mesa => {
 </div>
         </div>
     `;
-}).join('');
+}).join('') + tarjetaNuevaMesa;
     
 modalBody.innerHTML = `
     <div class="mesas-container" style="padding: 16px; max-width: 100%; margin: 0 auto;">
@@ -5613,9 +5581,7 @@ modalBody.innerHTML = `
             <div class="mesa-grid">
                 ${mesasHTML}
             </div>
-            <button class="btn-nueva-mesa" onclick="crearNuevaMesa()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;">
-    ➕ Nueva Mesa
-</button>
+         
         </div>
     `;
     console.log('✅ Mesas renderizadas. Total:', mesasArray.length);
@@ -5641,27 +5607,47 @@ if (!mesa.productos || mesa.productos.length === 0) {
             </div>
             
             <div style="padding: 8px 12px; background: #f5f7ff; border-radius: 8px; margin-bottom: 12px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 20px;">➕</span>
-                    <input 
-                        type="text" 
-                        class="input-producto-buscar" 
-                        id="buscar-${mesa.id}"
-                        placeholder="Buscar producto..."
-                        onkeyup="buscarProductoMesa('${mesa.id}')"
-                        style="flex: 1; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
-                    >
-                    <button 
-    onmousedown="iniciarGrabacionMesa('${mesa.id}')" 
-    onmouseup="detenerGrabacionMesa()" 
-    onmouseleave="if(estaGrabandoMesa) detenerGrabacionMesa()"
-    ontouchstart="event.preventDefault(); iniciarGrabacionMesa('${mesa.id}')" 
-    ontouchend="event.preventDefault(); detenerGrabacionMesa()"
-    style="background: none; color: #667eea; border: 2px solid #667eea; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 18px; min-width: auto; width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
-                        🎤
-                    </button>
-                </div>
-            </div>
+    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+        <input 
+            type="text" 
+            class="input-producto-buscar" 
+            id="buscar-${mesa.id}"
+            placeholder="Buscar producto..."
+            onkeyup="buscarProductoMesa('${mesa.id}')"
+            style="flex: 1; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
+        >
+        <button 
+            onmousedown="iniciarGrabacionMesa('${mesa.id}')" 
+            onmouseup="detenerGrabacionMesa()" 
+            onmouseleave="if(estaGrabandoMesa) detenerGrabacionMesa()"
+            ontouchstart="event.preventDefault(); iniciarGrabacionMesa('${mesa.id}')" 
+            ontouchend="event.preventDefault(); detenerGrabacionMesa()"
+            style="background: none; color: #667eea; border: 2px solid #667eea; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 18px; min-width: auto; width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+            🎤
+        </button>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 13px; color: #666; font-weight: 600;">Cantidad:</span>
+        <button 
+            onclick="ajustarCantidadBusqueda('${mesa.id}', -1)" 
+            style="background: none; border: 1px solid #d1d5db; color: #667eea; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0; min-width: 32px; flex-shrink: 0;">
+            −
+        </button>
+        <input 
+            type="number" 
+            id="cantidad-buscar-${mesa.id}" 
+            value="1" 
+            min="1" 
+            style="width: 60px; text-align: center; padding: 6px; border: 2px solid #e0e0e0; border-radius: 6px; font-weight: 600; font-size: 14px;"
+            onchange="validarCantidadBusqueda('${mesa.id}')"
+        >
+        <button 
+            onclick="ajustarCantidadBusqueda('${mesa.id}', 1)" 
+            style="background: none; border: 1px solid #d1d5db; color: #667eea; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0; min-width: 32px; flex-shrink: 0;">
+            +
+        </button>
+    </div>
+</div>
             
             <div id="resultados-busqueda-${mesa.id}" style="display: none; background: white; border: 2px solid #667eea; border-radius: 8px; max-height: 200px; overflow-y: auto; margin-bottom: 12px;"></div>
         </div>
@@ -5696,27 +5682,47 @@ if (!mesa.productos || mesa.productos.length === 0) {
         </div>
         
         <div style="padding: 8px 12px; background: #f5f7ff; border-radius: 8px; margin-bottom: 12px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 20px;">➕</span>
-                <input 
-                    type="text" 
-                    class="input-producto-buscar" 
-                    id="buscar-${mesa.id}"
-                    placeholder="Buscar producto..."
-                    onkeyup="buscarProductoMesa('${mesa.id}')"
-                    style="flex: 1; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
-                >
-                <button 
-    onmousedown="iniciarGrabacionMesa('${mesa.id}')" 
-    onmouseup="detenerGrabacionMesa()" 
-    onmouseleave="if(estaGrabandoMesa) detenerGrabacionMesa()"
-    ontouchstart="event.preventDefault(); iniciarGrabacionMesa('${mesa.id}')" 
-    ontouchend="event.preventDefault(); detenerGrabacionMesa()"
-    style="background: none; color: #667eea; border: 2px solid #667eea; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 18px; min-width: auto; width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
-                    🎤
-                </button>
-            </div>
-        </div>
+    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+        <input 
+            type="text" 
+            class="input-producto-buscar" 
+            id="buscar-${mesa.id}"
+            placeholder="Buscar producto..."
+            onkeyup="buscarProductoMesa('${mesa.id}')"
+            style="flex: 1; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
+        >
+        <button 
+            onmousedown="iniciarGrabacionMesa('${mesa.id}')" 
+            onmouseup="detenerGrabacionMesa()" 
+            onmouseleave="if(estaGrabandoMesa) detenerGrabacionMesa()"
+            ontouchstart="event.preventDefault(); iniciarGrabacionMesa('${mesa.id}')" 
+            ontouchend="event.preventDefault(); detenerGrabacionMesa()"
+            style="background: none; color: #667eea; border: 2px solid #667eea; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 18px; min-width: auto; width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+            🎤
+        </button>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 13px; color: #666; font-weight: 600;">Cantidad:</span>
+        <button 
+            onclick="ajustarCantidadBusqueda('${mesa.id}', -1)" 
+            style="background: none; border: 1px solid #d1d5db; color: #667eea; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0; min-width: 32px; flex-shrink: 0;">
+            −
+        </button>
+        <input 
+            type="number" 
+            id="cantidad-buscar-${mesa.id}" 
+            value="1" 
+            min="1" 
+            style="width: 60px; text-align: center; padding: 6px; border: 2px solid #e0e0e0; border-radius: 6px; font-weight: 600; font-size: 14px;"
+            onchange="validarCantidadBusqueda('${mesa.id}')"
+        >
+        <button 
+            onclick="ajustarCantidadBusqueda('${mesa.id}', 1)" 
+            style="background: none; border: 1px solid #d1d5db; color: #667eea; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0; min-width: 32px; flex-shrink: 0;">
+            +
+        </button>
+    </div>
+</div>
         
         <div id="resultados-busqueda-${mesa.id}" style="display: none; background: white; border: 2px solid #667eea; border-radius: 8px; max-height: 200px; overflow-y: auto; margin-bottom: 12px;"></div>
         
@@ -5728,13 +5734,8 @@ if (!mesa.productos || mesa.productos.length === 0) {
 
 // Nueva función para actualizar solo el preview sin redibujar todo
 function actualizarPreviewMesa(mesaId, mesa) {
-    // Calcular totales
-    mesa.totalProductos = mesa.productos ? mesa.productos.length : 0;
-    mesa.totalMonto = mesa.productos ? 
-        mesa.productos.reduce((sum, p) => {
-            const precio = p.precio_unitario || p.precio || 0;
-            return sum + (precio * p.cantidad);
-        }, 0) : 0;
+    
+    calcularTotalesMesa(mesa);
 
        // ✅ Actualizar descripción
     const descripcionElement = document.querySelector(`.mesa-descripcion-${mesaId}`);
@@ -5820,72 +5821,59 @@ function toggleMesa(mesaId) {
     }
 }
 
-function ocultarResumenSiExpandida(mesaId) {
-    console.log('👁️ Actualizando visibilidad para:', mesaId);
-    const detalle = document.getElementById(`detalle-${mesaId}`);
-    const preview = document.querySelector(`.mesa-preview-${mesaId}`);
-    const resumen = document.querySelector(`.mesa-resumen-${mesaId}`);
-    
-    if (!detalle || !preview || !resumen) {
-        console.log('⚠️ Elementos no encontrados');
-        return;
-    }
-    
-    const estaExpandida = detalle.classList.contains('expanded');
-    console.log('👁️ ¿Expandida?:', estaExpandida);
-    
-    if (estaExpandida) {
-        preview.style.display = 'none';
-        resumen.style.display = 'none';
-        detalle.style.display = 'block';
-    } else {
-        preview.style.display = 'block';
-        resumen.style.display = 'flex';
-        detalle.style.display = 'none';
-    }
-}
 
-function crearNuevaMesa() {
+
+async function crearNuevaMesa() {
     console.log('➕ CREAR NUEVA MESA');
+    
     // Obtener todos los números de mesa existentes
-const numerosExistentes = Object.values(mesasData)
-    .map(m => {
-        const match = m.nombre.match(/Mesa (\d+)/);
-        return match ? parseInt(match[1]) : 0;
-    })
-    .sort((a, b) => a - b);
+    const numerosExistentes = Object.values(mesasData)
+        .map(m => {
+            const match = m.nombre.match(/Mesa (\d+)/);
+            return match ? parseInt(match[1]) : 0;
+        })
+        .sort((a, b) => a - b);
 
-// Encontrar el primer número disponible
-let numeroMesa = 1;
-for (let i = 0; i < numerosExistentes.length; i++) {
-    if (numerosExistentes[i] === numeroMesa) {
-        numeroMesa++;
-    } else {
-        break;
+    // Encontrar el primer número disponible
+    let numeroMesa = 1;
+    for (let i = 0; i < numerosExistentes.length; i++) {
+        if (numerosExistentes[i] === numeroMesa) {
+            numeroMesa++;
+        } else {
+            break;
+        }
     }
-}
+    
     const mesaId = `mesa-${Date.now()}`;
     
     mesasData[mesaId] = {
         id: mesaId,
         nombre: `Mesa ${numeroMesa}`,
-        descripcion: '',  // ✅ NUEVO CAMPO
+        descripcion: '',
         productos: [],
         createdAt: new Date().toISOString()
-
-        
     };
     
     console.log('➕ Nueva mesa creada:', mesasData[mesaId]);
-    guardarMesas();
+
+    // ✅ Marcar esta mesa como recién creada para preservar expansión
+    window.mesaRecienCreada = mesaId;
     
+    // Renderizar inmediatamente
     const modalBody = document.getElementById('modalBodyMesas');
     renderizarMesas(modalBody);
     
-    // Expandir la nueva mesa
+    // Expandir la mesa recién creada
     setTimeout(() => {
         toggleMesa(mesaId);
-    }, 100);
+        // Limpiar marca después de 2 segundos
+        setTimeout(() => {
+            window.mesaRecienCreada = null;
+        }, 2000);
+    }, 50);
+    
+    // Guardar en Supabase
+    await guardarMesas();
 }
 
 async function eliminarMesa(mesaId) {
@@ -5995,10 +5983,6 @@ function eliminarProductoMesa(mesaId, productoIndex) {
     
 }
 
-async function abrirMicrofonoMesa(mesaId) {
-    // Esta función ya no se usa, ahora usamos presionar/soltar
-}
-
 // Variables para grabación por presión en mesas
 let mediaRecorderMesa = null;
 let audioChunksMesa = [];
@@ -6048,23 +6032,6 @@ async function iniciarGrabacionMesa(mesaId) {
         btn.style.background = '#667eea';
         btn.innerHTML = '🎤';
     }
-}
-
-function detenerGrabacionMesa() {
-    if (!estaGrabandoMesa) return;
-    
-    const btn = event.target;
-    
-    if (mediaRecorderMesa && mediaRecorderMesa.state === 'recording') {
-        mediaRecorderMesa.stop();
-    }
-    
-    estaGrabandoMesa = false;
-    
-    // Restaurar botón
-    btn.style.transform = 'scale(1)';
-    btn.style.background = '#667eea';
-    btn.innerHTML = '🎤';
 }
 
 function detenerGrabacionMesa() {
@@ -6172,17 +6139,6 @@ function agregarProductosAMesa(mesaId, productos) {
     const modalBody = document.getElementById('modalBodyMesas');
     renderizarMesas(modalBody);
     
-    // Re-expandir esta mesa específicamente
-    const detalle = document.getElementById(`detalle-${mesaId}`);
-    if (detalle) {
-        detalle.style.display = 'block';
-        detalle.classList.add('expanded');
-        
-        const preview = document.querySelector(`.mesa-preview-${mesaId}`);
-        const resumen = document.querySelector(`.mesa-resumen-${mesaId}`);
-        if (preview) preview.style.display = 'none';
-        if (resumen) resumen.style.display = 'none';
-    }
 }
 
 async function registrarVentaMesa(mesaId) {
@@ -6265,30 +6221,31 @@ if (respuestaFinal && (respuestaFinal.mensaje || respuestaFinal.respuesta)) {
     const mensajeConfirmacion = respuestaFinal.mensaje || respuestaFinal.respuesta || 'Venta registrada correctamente';
     
     // Guardar en historial de Supabase
-    await guardarHistorialMesa(mesa, data);
+await guardarHistorialMesa(mesa, data);
 
-    // Mostrar mensaje de confirmación
-    alert(mensajeConfirmacion);
-    
-   // Eliminar mesa de Supabase
-try {
-    const { error } = await supabase
-        .from('mesas_activas')
-        .delete()
-        .eq('tenant_id', userData.tenant_id)
-        .eq('mesa_id', mesaId);
-    
-    if (error) throw error;
-} catch (error) {
-    console.error('Error eliminando mesa:', error);
+// Mostrar mensaje de confirmación
+alert(mensajeConfirmacion);
+
+// ✅ VACIAR la mesa en vez de eliminarla
+mesa.productos = [];
+mesa.descripcion = mesa.descripcion || ''; // Mantener descripción si existe
+
+console.log('✅ Mesa vaciada:', mesaId);
+
+// Guardar cambios en Supabase
+await guardarMesas();
+
+// ✅ Actualizar solo el detalle de esta mesa (sin cerrarla)
+const detalle = document.getElementById(`detalle-${mesaId}`);
+if (detalle) {
+    detalle.innerHTML = renderizarDetalleMesa(mesa);
+    detalle.style.display = 'block';
+    detalle.classList.add('expanded');
 }
 
-// Limpiar del objeto local
-delete mesasData[mesaId];
-    
-    // Actualizar vista
-    const modalBody = document.getElementById('modalBodyMesas');
-    renderizarMesas(modalBody);
+// Actualizar preview y resumen
+actualizarPreviewMesa(mesaId, mesa);
+
 } else {
     console.error('❌ No hay respuesta válida:', data);
     alert('Error: El servidor no devolvió una confirmación válida');
@@ -6370,6 +6327,29 @@ async function buscarProductoMesa(mesaId) {
     }
 }
 
+function ajustarCantidadBusqueda(mesaId, delta) {
+    const input = document.getElementById(`cantidad-buscar-${mesaId}`);
+    if (!input) return;
+    
+    let cantidad = parseInt(input.value) || 1;
+    cantidad += delta;
+    
+    if (cantidad < 1) cantidad = 1;
+    
+    input.value = cantidad;
+}
+
+function validarCantidadBusqueda(mesaId) {
+    const input = document.getElementById(`cantidad-buscar-${mesaId}`);
+    if (!input) return;
+    
+    let cantidad = parseInt(input.value) || 1;
+    
+    if (cantidad < 1) cantidad = 1;
+    
+    input.value = cantidad;
+}
+
 function seleccionarProductoMesa(mesaId, producto) {
     console.log('📦 SELECCIONAR PRODUCTO - mesaId:', mesaId);
     console.log('📦 Producto recibido:', producto);
@@ -6390,28 +6370,33 @@ function seleccionarProductoMesa(mesaId, producto) {
     }
     
     // Buscar si ya existe
-    const existente = mesa.productos.find(p => p.codigo === producto.codigo);
-    
-    if (existente) {
-        existente.cantidad += 1;
-        console.log('📦 Producto existente, incrementando cantidad');
-    } else {
-        // Validar máximo de 10 productos diferentes
-        if (mesa.productos.length >= 10) {
-            alert('Una mesa puede tener máximo 10 productos diferentes');
-            return;
-        }
-        
-        console.log('📦 Agregando nuevo producto');
-        mesa.productos.push({
-            codigo: producto.codigo,
-            nombre: producto.producto,
-            cantidad: 1,
-            precio: parseFloat(producto.precio_venta) || 0,
-            precio_unitario: parseFloat(producto.precio_venta) || 0,
-            unidad: producto.tipo_venta === 'peso' || producto.tipo_venta === 'medida' ? producto.unidad_venta : 'und'
-        });
+    // Obtener cantidad del input
+const inputCantidad = document.getElementById(`cantidad-buscar-${mesaId}`);
+const cantidadAgregar = inputCantidad ? parseInt(inputCantidad.value) || 1 : 1;
+
+// Buscar si ya existe
+const existente = mesa.productos.find(p => p.codigo === producto.codigo);
+
+if (existente) {
+    existente.cantidad += cantidadAgregar;
+    console.log('📦 Producto existente, sumando cantidad:', cantidadAgregar);
+} else {
+    // Validar máximo de 10 productos diferentes
+    if (mesa.productos.length >= 10) {
+        alert('Una mesa puede tener máximo 10 productos diferentes');
+        return;
     }
+    
+    console.log('📦 Agregando nuevo producto con cantidad:', cantidadAgregar);
+    mesa.productos.push({
+        codigo: producto.codigo,
+        nombre: producto.producto,
+        cantidad: cantidadAgregar,
+        precio: parseFloat(producto.precio_venta) || 0,
+        precio_unitario: parseFloat(producto.precio_venta) || 0,
+        unidad: producto.tipo_venta === 'peso' || producto.tipo_venta === 'medida' ? producto.unidad_venta : 'und'
+    });
+}
     
     console.log('📦 Productos después:', mesa.productos);
     
@@ -6422,6 +6407,11 @@ function seleccionarProductoMesa(mesaId, producto) {
     const resultadosDiv = document.getElementById(`resultados-busqueda-${mesaId}`);
     if (input) input.value = '';
     if (resultadosDiv) resultadosDiv.style.display = 'none';
+
+    // Resetear cantidad a 1
+if (inputCantidad) inputCantidad.value = '1';
+
+    
     
     // Actualizar solo el detalle
 const detalle = document.getElementById(`detalle-${mesaId}`);
