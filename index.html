@@ -925,12 +925,16 @@ select:focus {
     font-weight: 700;
 }
 
+/* Corrección para el Input del Chat: Elimina la sombra rectangular */
 #inputMensajeChat {
     padding: 4px 8px !important;
+    background: transparent !important; /* Asegura fondo transparente */
 }
 
 #inputMensajeChat:focus {
     outline: none !important;
+    border: none !important;
+    box-shadow: none !important; /* ESTO es lo que quita el cuadro feo */
 }
 
 .seccion-ingredientes {
@@ -1367,6 +1371,7 @@ select:focus {
 }
 
 /* Estilos para el Botón Flotante de Chat */
+/* --- 1. BOTÓN FLOTANTE (FAB) --- */
 /* --- 1. BOTÓN FLOTANTE (FAB) --- */
 .fab-chat-btn {
     position: fixed;
@@ -5240,21 +5245,13 @@ function abrirModalChat() {
 }
 
 // Cerrar modal
-function openModal(modalId) {
-    if (modalId === 'chat_asistente') {
-        const fab = document.getElementById('fabChat');
-        if(fab) fab.style.display = 'none'; // Ocultar flotante
-        abrirModalChat();
-        return;
-    }
-    
-}
-
 function closeModalChat() {
-    if (estaGrabando) detenerGrabacion();
+    if (estaGrabando) {
+        detenerGrabacion();
+    }
     document.getElementById('modalChatAsistente').classList.remove('show');
-    
-    // Volver a mostrar flotante
+
+    // Volver a mostrar el botón flotante
     const fab = document.getElementById('fabChat');
     if(fab) fab.style.display = 'flex';
 }
@@ -7362,7 +7359,30 @@ function volverAMesas() {
                     <div style="font-size: 12px; opacity: 0.9;">En línea</div>
                 </div>
             </div>
-            <button onclick="closeModalChat()" style="background: rgba(255,255,255,0.2); border: none; color: white; font-size: 28px; cursor: pointer; padding: 0; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; min-width: auto; transition: background 0.2s; flex-shrink: 0;">
+            <button onclick="closeModalChat()" style="
+                background: rgba(255,255,255,0.2);
+                border: none;
+                color: white;
+                font-size: 24px; /* Tamaño de la X */
+                cursor: pointer;
+                padding: 0;
+                margin: 0;
+                
+                /* FUERZA EL CÍRCULO PERFECTO */
+                width: 40px !important;
+                height: 40px !important;
+                min-width: 40px !important;
+                min-height: 40px !important;
+                border-radius: 50%;
+                
+                /* Centrado exacto */
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0; /* Evita que se aplaste en móviles */
+                line-height: 1;
+                transition: background 0.2s;
+            ">
                 ×
             </button>
         </div>
