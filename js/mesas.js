@@ -654,21 +654,24 @@ function ajustarCantidad(mesaId, productoIndex, delta) {
     const mesa = mesasData[mesaId];
     if (!mesa || !mesa.productos[productoIndex]) return;
     
-    // 1. Actualizar datos
+    // 1. Guardar referencia de si el usuario estaba usando el buscador
+    const inputBuscador = document.getElementById(`buscar-${mesaId}`);
+    const teniaFoco = (document.activeElement === inputBuscador);
+
+    // 2. Actualizar datos
     mesa.productos[productoIndex].cantidad += delta;
     if (mesa.productos[productoIndex].cantidad <= 0) {
         mesa.productos.splice(productoIndex, 1);
     }
     guardarMesas();
     
-    // 2. Actualizar DOM Selectivamente
+    // 3. Actualizar DOM
     const detalle = document.getElementById(`detalle-${mesaId}`);
     if (detalle) {
         const listaExistente = detalle.querySelector('.productos-list');
         const botonTotal = detalle.querySelector('.btn-registrar-venta-mesa');
         
         if (listaExistente && botonTotal && mesa.productos.length > 0) {
-            // Solo regeneramos los items de la lista
             const productosHTML = mesa.productos.map((p, index) => `
                 <div class="producto-item" style="display: flex; align-items: center; border-bottom: 1px solid #f3f4f6; padding: 0 8px; height: 32px; background: white;">
                     <div class="producto-controls" style="display: flex; align-items: center; border: 1px solid #e5e7eb; border-radius: 4px; height: 22px; margin-right: 8px; overflow: hidden; flex-shrink: 0; background: white;">
@@ -690,16 +693,23 @@ function ajustarCantidad(mesaId, productoIndex, delta) {
             
             listaExistente.innerHTML = productosHTML;
             
-            // Actualizar botón total
             const total = mesa.productos.reduce((sum, p) => sum + ((p.precio_unitario || p.precio || 0) * p.cantidad), 0);
             botonTotal.innerText = `Registrar venta • $${total.toLocaleString('es-CO')}`;
             
         } else {
-            // Fallback si se vacía la mesa o no existe la estructura
             detalle.innerHTML = renderizarDetalleMesa(mesa);
         }
     }
+    
     actualizarPreviewMesa(mesaId, mesa);
+
+    // 4. RESTAURACIÓN CRÍTICA DEL FOCO
+    if (teniaFoco && inputBuscador) {
+        // Usamos setTimeout 0 para que se ejecute al final del ciclo de renderizado
+        setTimeout(() => {
+            inputBuscador.focus();
+        }, 0);
+    }
 }
 
 function eliminarProductoMesa(mesaId, productoIndex) {
