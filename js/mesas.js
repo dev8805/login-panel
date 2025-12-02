@@ -734,27 +734,25 @@ function seleccionarProductoMesa(mesaId, producto) {
     
     guardarMesas();
     
-    // Limpiar input visualmente pero NO perder foco
+    // Limpiar UI visualmente
     const input = document.getElementById(`buscar-${mesaId}`);
     const resultadosDiv = document.getElementById(`resultados-busqueda-${mesaId}`);
     
     if (resultadosDiv) resultadosDiv.style.display = 'none';
     if (input) {
         input.value = '';
-        // Mantenemos el foco activo explícitamente
-        input.focus();
+        input.focus(); // Intentar mantener foco
     }
     if (inputCantidad) inputCantidad.value = '1';
     
-    // Actualización inteligente del DOM para no cerrar el teclado
+    // Actualización inteligente del DOM
     const detalle = document.getElementById(`detalle-${mesaId}`);
     if (detalle) {
         const listaExistente = detalle.querySelector('.productos-list');
         const botonTotal = detalle.querySelector('.btn-registrar-venta-mesa');
         
-        // CASO 1: Ya existe la estructura (lista y botón), actualizamos SOLO eso
         if (listaExistente && botonTotal) {
-            // 1. Regenerar HTML solo de los items
+            // Actualizar solo items
             const productosHTML = mesa.productos.map((p, index) => `
                 <div class="producto-item" style="display: flex; align-items: center; border-bottom: 1px solid #f3f4f6; padding: 0 8px; height: 32px; background: white;">
                     <div class="producto-controls" style="display: flex; align-items: center; border: 1px solid #e5e7eb; border-radius: 4px; height: 22px; margin-right: 8px; overflow: hidden; flex-shrink: 0; background: white;">
@@ -774,35 +772,29 @@ function seleccionarProductoMesa(mesaId, producto) {
                 </div>
             `).join('');
             
-            // Inyectamos solo los items, el input buscador (que es hermano de .productos-list) no se toca
             listaExistente.innerHTML = productosHTML;
-            
-            // Hacemos scroll al final para ver el nuevo item
             listaExistente.scrollTop = listaExistente.scrollHeight;
             
-            // 2. Actualizar el botón del total
             const total = mesa.productos.reduce((sum, p) => sum + ((p.precio_unitario || p.precio || 0) * p.cantidad), 0);
             botonTotal.innerText = `Registrar venta • $${total.toLocaleString('es-CO')}`;
             
         } else {
-            // CASO 2: La mesa estaba vacía (aquí sí cambia la estructura radicalmente, el parpadeo es inevitable solo la primera vez)
+            // Si la mesa estaba vacía, renderizamos todo
             detalle.innerHTML = renderizarDetalleMesa(mesa);
-            // Re-capturamos el input porque el anterior fue destruido
-            setTimeout(() => {
-                const nuevoInput = document.getElementById(`buscar-${mesaId}`);
-                if(nuevoInput) {
-                    nuevoInput.focus();
-                    nuevoInput.value = ''; // Asegurar que esté limpio
-                }
-            }, 50);
         }
         
         detalle.style.display = 'block';
         detalle.classList.add('expanded');
     }
     
-    // Actualizamos la tarjeta pequeña (resumen)
+    // Actualizamos resumen
     actualizarPreviewMesa(mesaId, mesa);
+
+    // FIX FINAL: Asegurar foco con un pequeño delay para móviles rebeldes
+    setTimeout(() => {
+        const inputRefocus = document.getElementById(`buscar-${mesaId}`);
+        if(inputRefocus) inputRefocus.focus();
+    }, 10);
 }
 
 async function registrarVentaMesa(mesaId) {
@@ -898,10 +890,12 @@ async function buscarProductoMesa(mesaId) {
             return;
         }
         
+        // AGREGADO: onmousedown="event.preventDefault()" evita que el input pierda el foco al hacer click
         resultadosDiv.innerHTML = productos.map(p => `
             <div style="padding: 12px; border-bottom: 1px solid #e5e7eb; cursor: pointer; background: white; transition: background 0.2s;" 
                  onmouseover="this.style.background='#f3f4f6'" 
                  onmouseout="this.style.background='white'"
+                 onmousedown="event.preventDefault()"
                  onclick="seleccionarProductoMesa('${mesaId}', ${JSON.stringify(p).replace(/"/g, '&quot;')})">
                 <div style="font-weight: 600; font-size: 13px; color: #1f2937;">[${p.codigo}] ${p.producto}</div>
                 <div style="font-size: 12px; color: #10b981; font-weight: 600; margin-top: 2px;">${parseFloat(p.precio_venta).toLocaleString('es-CO')}</div>
