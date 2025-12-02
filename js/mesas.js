@@ -1,6 +1,6 @@
 /**
  * ===========================================
- * SISTEMA DE MESAS
+ * SISTEMA DE MESAS (CORREGIDO COMPLETO)
  * ===========================================
  */
 
@@ -45,7 +45,7 @@ async function inicializarMesas() {
             });
         }
         
-        console.log('📋 Mesas inicializadas desde Supabase:', mesasData);
+        console.log('📋 Mesas inicializadas:', Object.keys(mesasData).length);
     } catch (error) {
         console.error('❌ Error cargando mesas:', error);
         mesasData = {};
@@ -55,7 +55,6 @@ async function inicializarMesas() {
 // Guardar mesas en Supabase
 async function guardarMesas() {
     try {
-        // Preparar datos para upsert
         const mesasArray = Object.values(mesasData).map(mesa => ({
             tenant_id: userData.tenant_id,
             mesa_id: mesa.id,
@@ -64,7 +63,7 @@ async function guardarMesas() {
             productos: mesa.productos || [],
             updated_at: new Date().toISOString()
         }));
-        // Upsert (insert o update)
+        
         const { error } = await supabase
             .from('mesas_activas')
             .upsert(mesasArray, {
@@ -72,58 +71,41 @@ async function guardarMesas() {
             });
         if (error) throw error;
         
-        console.log('✅ Mesas guardadas en Supabase');
+        // Actualizar mapeo local
+        const { data: mesasActualizadas } = await supabase
+            .from('mesas_activas')
+            .select('id, mesa_id')
+            .eq('tenant_id', userData.tenant_id);
+            
+        if (mesasActualizadas) {
+            window.mesaIdMap = {};
+            mesasActualizadas.forEach(m => {
+                window.mesaIdMap[m.id] = m.mesa_id;
+            });
+        }
     } catch (error) {
         console.error('❌ Error guardando mesas:', error);
     }
-
-    // Actualizar mapeo después de guardar
-    const { data: mesasActualizadas } = await supabase
-        .from('mesas_activas')
-        .select('id, mesa_id')
-        .eq('tenant_id', userData.tenant_id);
-    if (mesasActualizadas) {
-        window.mesaIdMap = {};
-        mesasActualizadas.forEach(m => {
-            window.mesaIdMap[m.id] = m.mesa_id;
-        });
-    }
 }
 
-// Suscribirse a cambios en tiempo real
+// Suscribirse a cambios en tiempo real (CON ACTUALIZACIÓN INTELIGENTE)
 function suscribirseACambiosMesas() {
-    // Si ya existe una suscripción, cancelarla primero
     if (canalMesas) {
         try {
             canalMesas.unsubscribe();
-            console.log('🔴 Suscripción anterior cancelada');
-        } catch (error) {
-            console.error('⚠️ Error cancelando suscripción:', error);
-        }
+        } catch (error) { console.error(error); }
         canalMesas = null;
     }
     
     console.log('📡 Iniciando suscripción Realtime...');
     
-    // Crear nueva suscripción
     canalMesas = supabase
         .channel(`mesas-activas-${userData.tenant_id}`, {
-            config: {
-                broadcast: { self: false },
-                presence: { key: '' }
-            }
+            config: { broadcast: { self: false }, presence: { key: '' } }
         })
-        .on(
-            'postgres_changes',
-            {
-                event: '*',
-                schema: 'public',
-                table: 'mesas_activas',
-                filter: `tenant_id=eq.${userData.tenant_id}`
-            },
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'mesas_activas', filter: `tenant_id=eq.${userData.tenant_id}` },
             async (payload) => {
-                console.log('🔔 ¡CAMBIO DETECTADO EN MESAS!', payload.eventType);
-                // IMPORTANTE: Usar mesa_id (no id de PostgreSQL)
+                // ID de la mesa afectada
                 let mesaModificadaId;
                 if (payload.eventType === 'DELETE') {
                     mesaModificadaId = window.mesaIdMap[payload.old?.id];
@@ -131,15 +113,10 @@ function suscribirseACambiosMesas() {
                     mesaModificadaId = payload.new?.mesa_id;
                 }
 
-                // ✅ DETENER POLLING (Realtime funciona)
                 detenerPollingMesas();
-                // Verificar si el modal está abierto
                 const modal = document.getElementById('modalMesas');
-                if (!modal || !modal.classList.contains('show')) {
-                    return;
-                }
+                if (!modal || !modal.classList.contains('show')) return;
 
-                // ✅ MANEJAR SEGÚN EL TIPO DE EVENTO
                 if (payload.eventType === 'INSERT') {
                     if (window.mesaRecienCreada === mesaModificadaId) return;
                     await inicializarMesas();
@@ -151,66 +128,36 @@ function suscribirseACambiosMesas() {
                     const modalBody = document.getElementById('modalBodyMesas');
                     renderizarMesas(modalBody);
                 } else if (payload.eventType === 'UPDATE') {
-                    // Recargar datos desde Supabase
                     await inicializarMesas();
                     
-                    // Verificar qué mesa está expandida
                     const detalleExpandido = document.getElementById(`detalle-${mesaModificadaId}`);
                     const estaExpandida = detalleExpandido?.classList.contains('expanded');
 
                     if (estaExpandida) {
                         const mesa = mesasData[mesaModificadaId];
                         if (mesa) {
-                            // === INICIO LOGICA INTELIGENTE REALTIME ===
+                            // --- LÓGICA INTELIGENTE PARA NO CERRAR TECLADO ---
                             const listaExistente = detalleExpandido.querySelector('.productos-list');
                             const botonTotal = detalleExpandido.querySelector('.btn-registrar-venta-mesa');
                             const inputBuscador = document.getElementById(`buscar-${mesaModificadaId}`);
-                            
-                            // Verificar si tenemos foco actualmente para intentar preservarlo a toda costa
                             const teniaFoco = (document.activeElement === inputBuscador);
 
                             if (listaExistente && botonTotal && inputBuscador) {
-                                console.log('🔄 [REALTIME] Actualizando solo lista y total (Protegiendo teclado)');
-                                
-                                // 1. Actualizar solo la lista de items
-                                const productosHTML = mesa.productos.map((p, index) => `
-                                    <div class="producto-item" style="display: flex; align-items: center; border-bottom: 1px solid #f3f4f6; padding: 0 8px; height: 32px; background: white;">
-                                        <div class="producto-controls" style="display: flex; align-items: center; border: 1px solid #e5e7eb; border-radius: 4px; height: 22px; margin-right: 8px; overflow: hidden; flex-shrink: 0; background: white;">
-                                            <button onclick="event.stopPropagation(); ajustarCantidad('${mesa.id}', ${index}, -1)" class="qty-btn" style="width: 20px; height: 100%; border: none; background: #f9fafb; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; padding: 0; border-right: 1px solid #f3f4f6;">−</button>
-                                            <div class="qty-display" style="min-width: 20px; padding: 0 4px; height: 100%; text-align: center; font-weight: 600; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #374151;">${p.cantidad}</div>
-                                            <button onclick="event.stopPropagation(); ajustarCantidad('${mesa.id}', ${index}, 1)" class="qty-btn" style="width: 20px; height: 100%; border: none; background: #f9fafb; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; padding: 0; border-left: 1px solid #f3f4f6;">+</button>
-                                        </div>
-                                        <div class="producto-info" style="flex: 1; display: flex; align-items: center; min-width: 0; padding-right: 8px;">
-                                            <span class="producto-nombre" style="font-size: 11px; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                            ${p.unidad && p.unidad !== 'und' ? `<span style="color:#9ca3af; margin-right:2px; font-size:10px;">${p.unidad}</span>` : ''} ${p.nombre}
-                                            </span>
-                                        </div>
-                                        <div style="font-weight: 600; font-size: 11px; color: #10b981; white-space: nowrap; margin-right: 8px;">
-                                            $${((p.precio_unitario || p.precio || 0) * p.cantidad).toLocaleString('es-CO')}
-                                        </div>
-                                        <button onclick="event.stopPropagation(); eliminarProductoMesa('${mesa.id}', ${index})" class="delete-btn" style="width: 20px; height: 20px; flex-shrink: 0; background: transparent; border: none; color: #9ca3af; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; padding: 0;">🗑️</button>
-                                    </div>
-                                `).join('');
-                                
+                                // Regenerar solo items
+                                const productosHTML = generarHTMLProductos(mesa);
                                 listaExistente.innerHTML = productosHTML;
                                 
-                                // 2. Actualizar botón de total
+                                // Actualizar total
                                 const total = mesa.productos.reduce((sum, p) => sum + ((p.precio_unitario || p.precio || 0) * p.cantidad), 0);
                                 botonTotal.innerText = `Registrar venta • $${total.toLocaleString('es-CO')}`;
                                 
-                                // NO tocamos el inputBuscador, por lo que el foco se mantiene naturalmente.
-                                // Pero por seguridad extrema:
+                                // Restaurar foco si es necesario
                                 if(teniaFoco) {
-                                    console.log('🛡️ [REALTIME] Restaurando foco por seguridad');
-                                    inputBuscador.focus();
+                                    setTimeout(() => inputBuscador.focus(), 0);
                                 }
-
                             } else {
-                                // Fallback si la estructura no existe (ej: mesa vacía pasa a tener productos por otro usuario)
-                                console.log('⚠️ [REALTIME] Re-renderizado completo (Estructura cambió)');
+                                // Fallback: Renderizado completo
                                 detalleExpandido.innerHTML = renderizarDetalleMesa(mesa);
-                                
-                                // Intentar recuperar foco si se perdió
                                 if(teniaFoco) {
                                     setTimeout(() => {
                                         const nuevoInput = document.getElementById(`buscar-${mesaModificadaId}`);
@@ -218,33 +165,24 @@ function suscribirseACambiosMesas() {
                                     }, 10);
                                 }
                             }
-                            // === FIN LOGICA INTELIGENTE ===
-
+                            
                             actualizarPreviewMesa(mesaModificadaId, mesa);
                         }
                     } else {
-                        // Mesa comprimida: solo actualizar preview
                         const mesa = mesasData[mesaModificadaId];
-                        if (mesa) {
-                            actualizarPreviewMesa(mesaModificadaId, mesa);
-                        }
+                        if (mesa) actualizarPreviewMesa(mesaModificadaId, mesa);
                     }
                 }
             }
         )
-        .subscribe((status, err) => {
-            console.log('📡 Estado Realtime:', status);
-            
+        .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
-                console.log('✅ REALTIME ACTIVO');
                 intentosReconexion = 0;
                 detenerPollingMesas();
                 iniciarHeartbeat();
                 actualizarIndicadorEstado();
             }
-            
             if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-                console.log('🔄 Activando polling...');
                 iniciarPollingMesas();
             }
         });
@@ -259,14 +197,8 @@ function iniciarHeartbeat() {
             return;
         }
         try {
-            await supabase
-                .from('mesas_activas')
-                .select('mesa_id', { count: 'exact', head: true })
-                .eq('tenant_id', userData.tenant_id)
-                .limit(1);
-        } catch (error) {
-            console.error('💔 Heartbeat error:', error);
-        }
+            await supabase.from('mesas_activas').select('mesa_id', { count: 'exact', head: true }).eq('tenant_id', userData.tenant_id).limit(1);
+        } catch (error) {}
     }, 30000);
 }
 
@@ -285,16 +217,10 @@ function iniciarPollingMesas() {
         if (modal && modal.classList.contains('show')) {
             const modalBody = document.getElementById('modalBodyMesas');
             const enHistorial = modalBody && modalBody.innerHTML.includes('📋 Historial');
-            
             if (!enHistorial) {
                 try {
-                    const { data: mesasActuales, error } = await supabase
-                        .from('mesas_activas')
-                        .select('*')
-                        .eq('tenant_id', userData.tenant_id);
-                    
+                    const { data: mesasActuales, error } = await supabase.from('mesas_activas').select('*').eq('tenant_id', userData.tenant_id);
                     if (error) return;
-                    
                     const nuevoHash = JSON.stringify(mesasActuales);
                     if (nuevoHash !== ultimoHash) {
                         ultimoHash = nuevoHash;
@@ -438,6 +364,31 @@ function renderizarMesas(modalBody) {
     setTimeout(() => { actualizarIndicadorEstado(); }, 100);
 }
 
+// Helper para generar solo los items (Usado en actualizaciones inteligentes)
+function generarHTMLProductos(mesa) {
+    if (!mesa.productos || mesa.productos.length === 0) return '';
+    
+    return mesa.productos.map((p, index) => `
+        <div class="producto-item" style="display: flex; align-items: center; border-bottom: 1px solid #f3f4f6; padding: 0 8px; height: 32px; background: white;">
+            <div class="producto-controls" style="display: flex; align-items: center; border: 1px solid #e5e7eb; border-radius: 4px; height: 22px; margin-right: 8px; overflow: hidden; flex-shrink: 0; background: white;">
+                <div onmousedown="event.preventDefault()" onclick="event.stopPropagation(); ajustarCantidad('${mesa.id}', ${index}, -1)" class="qty-btn" style="width: 20px; height: 100%; border-right: 1px solid #f3f4f6; background: #f9fafb; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; user-select: none;">−</div>
+                <div class="qty-display" style="min-width: 20px; padding: 0 4px; height: 100%; text-align: center; font-weight: 600; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #374151;">${p.cantidad}</div>
+                <div onmousedown="event.preventDefault()" onclick="event.stopPropagation(); ajustarCantidad('${mesa.id}', ${index}, 1)" class="qty-btn" style="width: 20px; height: 100%; border-left: 1px solid #f3f4f6; background: #f9fafb; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; user-select: none;">+</div>
+            </div>
+            <div class="producto-info" style="flex: 1; display: flex; align-items: center; min-width: 0; padding-right: 8px;">
+                <span class="producto-nombre" style="font-size: 11px; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                   ${p.unidad && p.unidad !== 'und' ? `<span style="color:#9ca3af; margin-right:2px; font-size:10px;">${p.unidad}</span>` : ''} ${p.nombre}
+                </span>
+            </div>
+            <div style="font-weight: 600; font-size: 11px; color: #10b981; white-space: nowrap; margin-right: 8px;">
+                $${((p.precio_unitario || p.precio || 0) * p.cantidad).toLocaleString('es-CO')}
+            </div>
+            <button onmousedown="event.preventDefault()" onclick="event.stopPropagation(); eliminarProductoMesa('${mesa.id}', ${index})" class="delete-btn" style="width: 20px; height: 20px; flex-shrink: 0; background: transparent; border: none; color: #9ca3af; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; padding: 0; box-shadow: none;">🗑️</button>
+        </div>
+    `).join('');
+}
+
+// Renderizar el detalle de la mesa completo
 function renderizarDetalleMesa(mesa) {
     if (!mesa.productos || mesa.productos.length === 0) {
         return `
@@ -448,38 +399,7 @@ function renderizarDetalleMesa(mesa) {
         `;
     }
     
-    const productosHTML = mesa.productos.map((p, index) => `
-        <div class="producto-item" style="display: flex; align-items: center; border-bottom: 1px solid #f3f4f6; padding: 0 8px; height: 32px; background: white;">
-            <div class="producto-controls" style="display: flex; align-items: center; border: 1px solid #e5e7eb; border-radius: 4px; height: 22px; margin-right: 8px; overflow: hidden; flex-shrink: 0; background: white;">
-                
-                <button 
-                    onmousedown="console.log('🖱️ [LISTA] Mousedown en MENOS (Item ${index})')"
-                    onclick="event.stopPropagation(); ajustarCantidad('${mesa.id}', ${index}, -1)" 
-                    class="qty-btn" style="width: 20px; height: 100%; border: none; background: #f9fafb; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; padding: 0; border-right: 1px solid #f3f4f6;">−</button>
-                
-                <div class="qty-display" style="min-width: 20px; padding: 0 4px; height: 100%; text-align: center; font-weight: 600; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #374151;">${p.cantidad}</div>
-                
-                <button 
-                    onmousedown="console.log('🖱️ [LISTA] Mousedown en MAS (Item ${index})')"
-                    onclick="event.stopPropagation(); ajustarCantidad('${mesa.id}', ${index}, 1)" 
-                    class="qty-btn" style="width: 20px; height: 100%; border: none; background: #f9fafb; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; padding: 0; border-left: 1px solid #f3f4f6;">+</button>
-            </div>
-            
-            <div class="producto-info" style="flex: 1; display: flex; align-items: center; min-width: 0; padding-right: 8px;">
-                <span class="producto-nombre" style="font-size: 11px; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                   ${p.unidad && p.unidad !== 'und' ? `<span style="color:#9ca3af; margin-right:2px; font-size:10px;">${p.unidad}</span>` : ''} ${p.nombre}
-                </span>
-            </div>
-            <div style="font-weight: 600; font-size: 11px; color: #10b981; white-space: nowrap; margin-right: 8px;">
-                $${((p.precio_unitario || p.precio || 0) * p.cantidad).toLocaleString('es-CO')}
-            </div>
-            
-            <button 
-                onmousedown="console.log('🖱️ [LISTA] Mousedown en ELIMINAR (Item ${index})')"
-                onclick="event.stopPropagation(); eliminarProductoMesa('${mesa.id}', ${index})" 
-                class="delete-btn" style="width: 20px; height: 20px; flex-shrink: 0; background: transparent; border: none; color: #9ca3af; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; padding: 0;">🗑️</button>
-        </div>
-    `).join('');
+    const productosHTML = generarHTMLProductos(mesa);
     
     const contenedorStyle = 'max-height: 40vh; overflow-y: auto; margin-top: 4px; margin-bottom: 10px; border: 1px solid #e5e7eb; border-radius: 8px; background: white;';
     
@@ -497,7 +417,7 @@ function renderizarDetalleMesa(mesa) {
 }
 
 function renderizarBuscadorMesa(mesa) {
-    // CAMBIO: Se agregó onmousedown="event.preventDefault()" a los botones +/- para evitar perder el foco del input
+    // IMPORTANTE: onmousedown="event.preventDefault()" en los botones evita que el input pierda el foco
     return `
         <div class="buscador-mesa-wrapper" style="position: relative; margin-bottom: 8px;">
             <div id="resultados-busqueda-${mesa.id}" class="resultados-busqueda-flotante" style="display: none;"></div>
@@ -505,15 +425,11 @@ function renderizarBuscadorMesa(mesa) {
             <div style="display: flex; gap: 8px; align-items: center;">
                 <div class="buscar-producto" style="flex: 1; display: flex; gap: 4px; align-items: center; background: #f9fafb; padding: 4px 8px; border: 1px solid #e5e7eb; border-radius: 8px; height: 36px;">
                     <div class="producto-controls" style="display: flex; align-items: center; border: 1px solid #e5e7eb; border-radius: 4px; height: 22px; background: white; flex-shrink: 0;">
-                        <div onmousedown="event.preventDefault()" onclick="ajustarCantidadBusqueda('${mesa.id}', -1)" class="qty-btn" style="width: 20px; height: 100%; border-right: 1px solid #f3f4f6; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; user-select: none;">
-                            −
-                        </div>
+                        <div onmousedown="event.preventDefault()" onclick="ajustarCantidadBusqueda('${mesa.id}', -1)" class="qty-btn" style="width: 20px; height: 100%; border-right: 1px solid #f3f4f6; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; user-select: none;">−</div>
                         
                         <input type="number" class="cantidad-input" id="cantidad-buscar-${mesa.id}" value="1" min="1" style="width: 24px; height: 100%; text-align: center; padding: 0; border: none; font-size: 11px; font-weight: 600; outline: none; -moz-appearance: textfield; background: transparent;" onchange="validarCantidadBusqueda('${mesa.id}')">
                         
-                        <div onmousedown="event.preventDefault()" onclick="ajustarCantidadBusqueda('${mesa.id}', 1)" class="qty-btn" style="width: 20px; height: 100%; border-left: 1px solid #f3f4f6; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; user-select: none;">
-                            +
-                        </div>
+                        <div onmousedown="event.preventDefault()" onclick="ajustarCantidadBusqueda('${mesa.id}', 1)" class="qty-btn" style="width: 20px; height: 100%; border-left: 1px solid #f3f4f6; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; user-select: none;">+</div>
                     </div>
                     
                     <input type="text" class="buscar-input input-producto-buscar" id="buscar-${mesa.id}" placeholder="Buscar producto..." 
@@ -654,42 +570,96 @@ function ajustarCantidad(mesaId, productoIndex, delta) {
     const mesa = mesasData[mesaId];
     if (!mesa || !mesa.productos[productoIndex]) return;
     
+    // Referencia para el foco
+    const inputBuscador = document.getElementById(`buscar-${mesaId}`);
+    const teniaFoco = (document.activeElement === inputBuscador);
+
+    // 1. Actualizar datos
     mesa.productos[productoIndex].cantidad += delta;
     if (mesa.productos[productoIndex].cantidad <= 0) {
         mesa.productos.splice(productoIndex, 1);
     }
-    
     guardarMesas();
+    
+    // 2. Actualizar DOM de forma inteligente
     const detalle = document.getElementById(`detalle-${mesaId}`);
-    if (detalle) detalle.innerHTML = renderizarDetalleMesa(mesa);
+    if (detalle) {
+        const listaExistente = detalle.querySelector('.productos-list');
+        const botonTotal = detalle.querySelector('.btn-registrar-venta-mesa');
+        
+        if (listaExistente && botonTotal && mesa.productos.length > 0) {
+            const productosHTML = generarHTMLProductos(mesa);
+            listaExistente.innerHTML = productosHTML;
+            
+            const total = mesa.productos.reduce((sum, p) => sum + ((p.precio_unitario || p.precio || 0) * p.cantidad), 0);
+            botonTotal.innerText = `Registrar venta • $${total.toLocaleString('es-CO')}`;
+        } else {
+            // Fallback si se vacía la mesa
+            detalle.innerHTML = renderizarDetalleMesa(mesa);
+        }
+    }
+    
     actualizarPreviewMesa(mesaId, mesa);
+    
+    // 3. Restaurar foco si es necesario
+    if (teniaFoco && inputBuscador) {
+        setTimeout(() => inputBuscador.focus(), 0);
+    }
+}
+
+function ajustarCantidadBusqueda(mesaId, delta) {
+    const inputQty = document.getElementById(`cantidad-buscar-${mesaId}`);
+    const inputSearch = document.getElementById(`buscar-${mesaId}`);
+    
+    if (!inputQty) return;
+    
+    let cantidad = parseInt(inputQty.value) || 1;
+    cantidad += delta;
+    if (cantidad < 1) cantidad = 1;
+    
+    inputQty.value = cantidad;
+
+    // Importante: Devolver el foco al buscador para no cerrar teclado
+    if (inputSearch) {
+        inputSearch.focus();
+    }
 }
 
 function eliminarProductoMesa(mesaId, productoIndex) {
-    console.log('🗑️ [ELIMINAR] Iniciando eliminación de producto...');
-    const inputFocoAntes = document.activeElement;
-    console.log('🎯 [FOCUS CHECK] Elemento con foco ANTES:', inputFocoAntes?.tagName, inputFocoAntes?.id);
-
     const mesa = mesasData[mesaId];
     if (!mesa || !mesa.productos[productoIndex]) return;
     
+    // Referencia para el foco
+    const inputBuscador = document.getElementById(`buscar-${mesaId}`);
+    const teniaFoco = (document.activeElement === inputBuscador);
+
+    // 1. Eliminar
     mesa.productos.splice(productoIndex, 1);
     guardarMesas();
     
-    // ESTA ES LA PARTE SOSPECHOSA QUE REINICIA EL DOM
+    // 2. Actualizar DOM
     const detalle = document.getElementById(`detalle-${mesaId}`);
     if (detalle) {
-        console.log('🔄 [RENDER] Reemplazando innerHTML completo del detalle (Aquí se suele perder el foco)');
-        detalle.innerHTML = renderizarDetalleMesa(mesa);
+        const listaExistente = detalle.querySelector('.productos-list');
+        const botonTotal = detalle.querySelector('.btn-registrar-venta-mesa');
+        
+        if (listaExistente && botonTotal && mesa.productos.length > 0) {
+            const productosHTML = generarHTMLProductos(mesa);
+            listaExistente.innerHTML = productosHTML;
+            
+            const total = mesa.productos.reduce((sum, p) => sum + ((p.precio_unitario || p.precio || 0) * p.cantidad), 0);
+            botonTotal.innerText = `Registrar venta • $${total.toLocaleString('es-CO')}`;
+        } else {
+            // Fallback: si la lista queda vacía
+            detalle.innerHTML = renderizarDetalleMesa(mesa);
+            // Intentar restaurar foco (con timeout por si el DOM cambia mucho)
+            if(teniaFoco) setTimeout(() => { 
+                const input = document.getElementById(`buscar-${mesaId}`);
+                if(input) input.focus();
+            }, 10);
+        }
     }
     actualizarPreviewMesa(mesaId, mesa);
-
-    const inputFocoDespues = document.activeElement;
-    console.log('🎯 [FOCUS CHECK] Elemento con foco DESPUES:', inputFocoDespues?.tagName, inputFocoDespues?.id);
-
-    if (inputFocoAntes !== inputFocoDespues) {
-        console.warn('⚠️ [ALERTA] ¡El foco cambió! Esto causa que el teclado se cierre.');
-    }
 }
 
 // Variables para grabación por presión en mesas
@@ -797,8 +767,6 @@ async function enviarAudioMesa(mesaId, audioBlob) {
 }
 
 function seleccionarProductoMesa(mesaId, producto) {
-    console.log('⚡ [LOGIC] Iniciando seleccionarProductoMesa para:', producto.producto);
-    
     const mesa = mesasData[mesaId];
     if (!mesa) return;
     if (!mesa.productos) mesa.productos = [];
@@ -808,10 +776,8 @@ function seleccionarProductoMesa(mesaId, producto) {
     const existente = mesa.productos.find(p => p.codigo === producto.codigo);
     
     if (existente) {
-        console.log('⚡ [LOGIC] Producto existente, sumando cantidad');
         existente.cantidad += cantidadAgregar;
     } else {
-        console.log('⚡ [LOGIC] Producto nuevo, agregando al array');
         if (mesa.productos.length >= 10) {
             alert('Una mesa puede tener máximo 10 productos diferentes');
             return;
@@ -828,46 +794,27 @@ function seleccionarProductoMesa(mesaId, producto) {
     
     guardarMesas();
     
-    // Limpiar UI visualmente
+    // Limpiar input visualmente pero NO perder foco
     const input = document.getElementById(`buscar-${mesaId}`);
     const resultadosDiv = document.getElementById(`resultados-busqueda-${mesaId}`);
     
     if (resultadosDiv) resultadosDiv.style.display = 'none';
     if (input) {
-        console.log('🧹 [DOM] Limpiando valor del input y forzando foco inmediato');
         input.value = '';
-        input.focus(); 
+        // Mantenemos el foco activo explícitamente
+        input.focus();
     }
     if (inputCantidad) inputCantidad.value = '1';
     
-    // Actualización inteligente del DOM
+    // Actualización inteligente del DOM para no cerrar el teclado
     const detalle = document.getElementById(`detalle-${mesaId}`);
     if (detalle) {
         const listaExistente = detalle.querySelector('.productos-list');
         const botonTotal = detalle.querySelector('.btn-registrar-venta-mesa');
         
+        // CASO 1: Ya existe la estructura (lista y botón), actualizamos SOLO eso
         if (listaExistente && botonTotal) {
-            console.log('🔄 [RENDER] Lista ya existe. Actualizando SOLO items (Modo preservación de foco)');
-            // Actualizar solo items
-            const productosHTML = mesa.productos.map((p, index) => `
-                <div class="producto-item" style="display: flex; align-items: center; border-bottom: 1px solid #f3f4f6; padding: 0 8px; height: 32px; background: white;">
-                    <div class="producto-controls" style="display: flex; align-items: center; border: 1px solid #e5e7eb; border-radius: 4px; height: 22px; margin-right: 8px; overflow: hidden; flex-shrink: 0; background: white;">
-                        <button onclick="event.stopPropagation(); ajustarCantidad('${mesa.id}', ${index}, -1)" class="qty-btn" style="width: 20px; height: 100%; border: none; background: #f9fafb; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; padding: 0; border-right: 1px solid #f3f4f6;">−</button>
-                        <div class="qty-display" style="min-width: 20px; padding: 0 4px; height: 100%; text-align: center; font-weight: 600; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #374151;">${p.cantidad}</div>
-                        <button onclick="event.stopPropagation(); ajustarCantidad('${mesa.id}', ${index}, 1)" class="qty-btn" style="width: 20px; height: 100%; border: none; background: #f9fafb; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; padding: 0; border-left: 1px solid #f3f4f6;">+</button>
-                    </div>
-                    <div class="producto-info" style="flex: 1; display: flex; align-items: center; min-width: 0; padding-right: 8px;">
-                        <span class="producto-nombre" style="font-size: 11px; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                           ${p.unidad && p.unidad !== 'und' ? `<span style="color:#9ca3af; margin-right:2px; font-size:10px;">${p.unidad}</span>` : ''} ${p.nombre}
-                        </span>
-                    </div>
-                    <div style="font-weight: 600; font-size: 11px; color: #10b981; white-space: nowrap; margin-right: 8px;">
-                        $${((p.precio_unitario || p.precio || 0) * p.cantidad).toLocaleString('es-CO')}
-                    </div>
-                    <button onclick="event.stopPropagation(); eliminarProductoMesa('${mesa.id}', ${index})" class="delete-btn" style="width: 20px; height: 20px; flex-shrink: 0; background: transparent; border: none; color: #9ca3af; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; padding: 0;">🗑️</button>
-                </div>
-            `).join('');
-            
+            const productosHTML = generarHTMLProductos(mesa);
             listaExistente.innerHTML = productosHTML;
             listaExistente.scrollTop = listaExistente.scrollHeight;
             
@@ -875,26 +822,24 @@ function seleccionarProductoMesa(mesaId, producto) {
             botonTotal.innerText = `Registrar venta • $${total.toLocaleString('es-CO')}`;
             
         } else {
-            console.log('🔄 [RENDER] Lista no existe. Renderizando TODO el detalle (Posible pérdida de foco temporal)');
+            // CASO 2: La mesa estaba vacía (aquí sí cambia la estructura radicalmente, el parpadeo es inevitable solo la primera vez)
             detalle.innerHTML = renderizarDetalleMesa(mesa);
+            // Re-capturamos el input porque el anterior fue destruido
+            setTimeout(() => {
+                const nuevoInput = document.getElementById(`buscar-${mesaId}`);
+                if(nuevoInput) {
+                    nuevoInput.focus();
+                    nuevoInput.value = ''; 
+                }
+            }, 50);
         }
         
         detalle.style.display = 'block';
         detalle.classList.add('expanded');
     }
     
+    // Actualizamos la tarjeta pequeña (resumen)
     actualizarPreviewMesa(mesaId, mesa);
-
-    // FIX FINAL: Asegurar foco con un pequeño delay
-    setTimeout(() => {
-        const inputRefocus = document.getElementById(`buscar-${mesaId}`);
-        if(inputRefocus) {
-            console.log('🎯 [TIMEOUT] Intentando recuperar foco via setTimeout (10ms)');
-            inputRefocus.focus();
-        } else {
-            console.error('❌ [TIMEOUT] No se encontró el input para recuperar el foco');
-        }
-    }, 10);
 }
 
 async function registrarVentaMesa(mesaId) {
@@ -970,9 +915,6 @@ async function buscarProductoMesa(mesaId) {
     const resultadosDiv = document.getElementById(`resultados-busqueda-${mesaId}`);
     const termino = input.value.trim().toLowerCase();
     
-    // Log al escribir
-    console.log(`🔍 [BUSQUEDA] Escribiendo: "${termino}"`);
-
     if (termino.length < 2) {
         resultadosDiv.style.display = 'none';
         return;
@@ -988,59 +930,24 @@ async function buscarProductoMesa(mesaId) {
             .limit(5);
         
         if (error) throw error;
-        
-        console.log(`🔍 [BUSQUEDA] Resultados encontrados: ${productos?.length || 0}`);
-
         if (!productos || productos.length === 0) {
             resultadosDiv.style.display = 'none';
             return;
         }
         
-        // AGREGADO: Logs en mouseover, mousedown y onclick
+        // IMPORTANTE: onmousedown="event.preventDefault()" evita que el input pierda el foco al hacer click
         resultadosDiv.innerHTML = productos.map(p => `
             <div style="padding: 12px; border-bottom: 1px solid #e5e7eb; cursor: pointer; background: white; transition: background 0.2s;" 
                  onmouseover="this.style.background='#f3f4f6'" 
                  onmouseout="this.style.background='white'"
-                 onmousedown="console.log('🖱️ [MOUSE] Mousedown en item (PreventDefault ejecutado)'); event.preventDefault()"
-                 onclick="console.log('🖱️ [MOUSE] Click en item confirmado'); seleccionarProductoMesa('${mesaId}', ${JSON.stringify(p).replace(/"/g, '&quot;')})">
+                 onmousedown="event.preventDefault()"
+                 onclick="seleccionarProductoMesa('${mesaId}', ${JSON.stringify(p).replace(/"/g, '&quot;')})">
                 <div style="font-weight: 600; font-size: 13px; color: #1f2937;">[${p.codigo}] ${p.producto}</div>
                 <div style="font-size: 12px; color: #10b981; font-weight: 600; margin-top: 2px;">${parseFloat(p.precio_venta).toLocaleString('es-CO')}</div>
             </div>
         `).join('');
         resultadosDiv.style.display = 'block';
     } catch (error) { console.error(error); }
-}
-
-function ajustarCantidad(mesaId, productoIndex, delta) {
-    console.log('⚡ [AJUSTAR] Iniciando ajuste de cantidad...');
-    const inputFocoAntes = document.activeElement;
-    console.log('🎯 [FOCUS CHECK] Elemento con foco ANTES:', inputFocoAntes?.tagName, inputFocoAntes?.id);
-
-    const mesa = mesasData[mesaId];
-    if (!mesa || !mesa.productos[productoIndex]) return;
-    
-    mesa.productos[productoIndex].cantidad += delta;
-    if (mesa.productos[productoIndex].cantidad <= 0) {
-        console.log('🗑️ [AJUSTAR] Cantidad llegó a 0, eliminando item...');
-        mesa.productos.splice(productoIndex, 1);
-    }
-    
-    guardarMesas();
-    
-    // ESTA ES LA PARTE SOSPECHOSA QUE REINICIA EL DOM
-    const detalle = document.getElementById(`detalle-${mesaId}`);
-    if (detalle) {
-        console.log('🔄 [RENDER] Reemplazando innerHTML completo del detalle (Aquí se suele perder el foco)');
-        detalle.innerHTML = renderizarDetalleMesa(mesa);
-    }
-    actualizarPreviewMesa(mesaId, mesa);
-
-    const inputFocoDespues = document.activeElement;
-    console.log('🎯 [FOCUS CHECK] Elemento con foco DESPUES:', inputFocoDespues?.tagName, inputFocoDespues?.id);
-    
-    if (inputFocoAntes !== inputFocoDespues) {
-        console.warn('⚠️ [ALERTA] ¡El foco cambió! Esto causa que el teclado se cierre.');
-    }
 }
 
 function validarCantidadBusqueda(mesaId) {
