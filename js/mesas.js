@@ -390,56 +390,105 @@ function generarHTMLProductos(mesa) {
 
 // Renderizar el detalle de la mesa completo
 function renderizarDetalleMesa(mesa) {
+    // Estructura vacía inicial
+    let contenidoLista = '';
+    
     if (!mesa.productos || mesa.productos.length === 0) {
-        return `
-            <div style="padding: 8px;">
-                <div style="padding: 20px; text-align: center; color: #999; margin-bottom: 12px;">Mesa vacía - Agrega productos</div>
-                ${renderizarBuscadorMesa(mesa)}
+        contenidoLista = `
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #9ca3af; font-size: 13px; padding: 20px;">
+                <span style="font-size: 32px; margin-bottom: 8px; opacity: 0.5;">🍽️</span>
+                Mesa vacía<br>Busca productos abajo 👇
             </div>
         `;
+    } else {
+        contenidoLista = mesa.productos.map((p, index) => `
+            <div class="producto-item" style="display: flex; align-items: center; border-bottom: 1px solid #f3f4f6; padding: 6px 4px; background: white; margin-bottom: 4px; border-radius: 8px; border: 1px solid #f1f5f9;">
+                <div class="producto-controls" style="display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 6px; height: 26px; margin-right: 8px; overflow: hidden; flex-shrink: 0; background: #f8fafc;">
+                    <div onmousedown="event.preventDefault()" onclick="event.stopPropagation(); ajustarCantidad('${mesa.id}', ${index}, -1)" class="qty-btn" style="width: 24px; height: 100%; border-right: 1px solid #e2e8f0; cursor: pointer; font-size: 12px; color: #64748b; display: flex; align-items: center; justify-content: center; user-select: none;">−</div>
+                    
+                    <div class="qty-display" style="min-width: 24px; padding: 0 4px; height: 100%; text-align: center; font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; color: #334155; background: white;">${p.cantidad}</div>
+                    
+                    <div onmousedown="event.preventDefault()" onclick="event.stopPropagation(); ajustarCantidad('${mesa.id}', ${index}, 1)" class="qty-btn" style="width: 24px; height: 100%; border-left: 1px solid #e2e8f0; cursor: pointer; font-size: 12px; color: #64748b; display: flex; align-items: center; justify-content: center; user-select: none;">+</div>
+                </div>
+                
+                <div class="producto-info" style="flex: 1; min-width: 0; padding-right: 8px;">
+                    <div class="producto-nombre" style="font-size: 12px; font-weight: 600; color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                       ${p.nombre}
+                    </div>
+                    <div style="font-size: 10px; color: #94a3b8;">
+                        ${p.unidad && p.unidad !== 'und' ? p.unidad + ' • ' : ''} $${((p.precio_unitario || p.precio || 0)).toLocaleString('es-CO')} c/u
+                    </div>
+                </div>
+                
+                <div style="text-align: right; margin-right: 8px;">
+                    <div style="font-weight: 700; font-size: 12px; color: #10b981;">
+                        $${((p.precio_unitario || p.precio || 0) * p.cantidad).toLocaleString('es-CO')}
+                    </div>
+                </div>
+                
+                <button onmousedown="event.preventDefault()" onclick="event.stopPropagation(); eliminarProductoMesa('${mesa.id}', ${index})" class="delete-btn" style="width: 24px; height: 24px; flex-shrink: 0; background: #fee2e2; border: none; color: #ef4444; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; padding: 0; border-radius: 6px; box-shadow: none;">✕</button>
+            </div>
+        `).join('');
     }
     
-    const productosHTML = generarHTMLProductos(mesa);
-    
-    const contenedorStyle = 'max-height: 40vh; overflow-y: auto; margin-top: 4px; margin-bottom: 10px; border: 1px solid #e5e7eb; border-radius: 8px; background: white;';
-    
+    const total = mesa.productos ? mesa.productos.reduce((sum, p) => sum + ((p.precio_unitario || p.precio || 0) * p.cantidad), 0) : 0;
+
+    // ESTRUCTURA FLEX: Lista Scrollable Arriba | Controles Fijos Abajo
     return `
-        <div class="productos-list" style="${contenedorStyle}">
-            ${productosHTML}
-        </div>
-        ${renderizarBuscadorMesa(mesa)}
-        <div style="text-align: center; margin-top: 10px; padding-bottom: 5px;">
-            <button class="btn-registrar-venta-mesa" onclick="registrarVentaMesa('${mesa.id}')" style="background: #10b981; color: white; border: none; padding: 10px 24px; border-radius: 20px; font-weight: 600; width: auto; min-width: 60%; cursor: pointer; font-size: 14px; box-shadow: 0 2px 5px rgba(16, 185, 129, 0.3);">
-                Registrar venta • $${(mesa.productos?.reduce((sum, p) => sum + ((p.precio_unitario || p.precio || 0) * p.cantidad), 0) || 0).toLocaleString('es-CO')}
-            </button>
+        <div class="mesa-detalle-flex">
+            <div class="mesa-productos-scroll productos-list">
+                ${contenidoLista}
+            </div>
+            
+            <div class="mesa-footer-controls">
+                ${renderizarBuscadorMesa(mesa)}
+                
+                <div style="text-align: center; margin-top: 8px;">
+                    <button class="btn-registrar-venta-mesa" 
+                        onclick="registrarVentaMesa('${mesa.id}')" 
+                        style="background: #10b981; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; width: 100%; cursor: pointer; font-size: 14px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2); display: flex; justify-content: space-between; align-items: center;">
+                        <span>✅ Registrar venta</span>
+                        <span style="background: rgba(0,0,0,0.1); padding: 2px 8px; border-radius: 6px;">$${total.toLocaleString('es-CO')}</span>
+                    </button>
+                </div>
+            </div>
         </div>
     `;
 }
 
 function renderizarBuscadorMesa(mesa) {
-    // IMPORTANTE: onmousedown="event.preventDefault()" en los botones evita que el input pierda el foco
     return `
-        <div class="buscador-mesa-wrapper" style="position: relative; margin-bottom: 8px;">
-            <div id="resultados-busqueda-${mesa.id}" class="resultados-busqueda-flotante" style="display: none;"></div>
+        <div class="buscador-mesa-wrapper" style="position: relative; margin-bottom: 0;">
+            <div id="resultados-busqueda-${mesa.id}" class="resultados-busqueda-flotante" style="display: none; bottom: 100%; margin-bottom: 5px; border-bottom: 2px solid #e2e8f0; border-radius: 12px; box-shadow: 0 -4px 20px rgba(0,0,0,0.1);"></div>
             
             <div style="display: flex; gap: 8px; align-items: center;">
-                <div class="buscar-producto" style="flex: 1; display: flex; gap: 4px; align-items: center; background: #f9fafb; padding: 4px 8px; border: 1px solid #e5e7eb; border-radius: 8px; height: 36px;">
-                    <div class="producto-controls" style="display: flex; align-items: center; border: 1px solid #e5e7eb; border-radius: 4px; height: 22px; background: white; flex-shrink: 0;">
-                        <div onmousedown="event.preventDefault()" onclick="ajustarCantidadBusqueda('${mesa.id}', -1)" class="qty-btn" style="width: 20px; height: 100%; border-right: 1px solid #f3f4f6; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; user-select: none;">−</div>
+                <div class="buscar-producto" style="flex: 1; display: flex; gap: 0; align-items: center; background: #f1f5f9; padding: 0; border: 1px solid #cbd5e1; border-radius: 25px; height: 42px; overflow: hidden;">
+                    
+                    <div class="producto-controls" style="display: flex; align-items: center; height: 100%; background: #e2e8f0; padding: 0 2px;">
+                        <div onmousedown="event.preventDefault()" onclick="ajustarCantidadBusqueda('${mesa.id}', -1)" class="qty-btn" style="width: 28px; height: 100%; cursor: pointer; font-size: 14px; color: #475569; display: flex; align-items: center; justify-content: center; user-select: none; font-weight: bold;">−</div>
                         
-                        <input type="number" class="cantidad-input" id="cantidad-buscar-${mesa.id}" value="1" min="1" style="width: 24px; height: 100%; text-align: center; padding: 0; border: none; font-size: 11px; font-weight: 600; outline: none; -moz-appearance: textfield; background: transparent;" onchange="validarCantidadBusqueda('${mesa.id}')">
+                        <input type="number" class="cantidad-input" id="cantidad-buscar-${mesa.id}" value="1" min="1" style="width: 24px; height: 100%; text-align: center; padding: 0; border: none; font-size: 13px; font-weight: 700; outline: none; -moz-appearance: textfield; background: transparent; color: #334155;" onchange="validarCantidadBusqueda('${mesa.id}')">
                         
-                        <div onmousedown="event.preventDefault()" onclick="ajustarCantidadBusqueda('${mesa.id}', 1)" class="qty-btn" style="width: 20px; height: 100%; border-left: 1px solid #f3f4f6; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; user-select: none;">+</div>
+                        <div onmousedown="event.preventDefault()" onclick="ajustarCantidadBusqueda('${mesa.id}', 1)" class="qty-btn" style="width: 28px; height: 100%; cursor: pointer; font-size: 14px; color: #475569; display: flex; align-items: center; justify-content: center; user-select: none; font-weight: bold;">+</div>
                     </div>
                     
                     <input type="text" class="buscar-input input-producto-buscar" id="buscar-${mesa.id}" placeholder="Buscar producto..." 
                         onkeyup="buscarProductoMesa('${mesa.id}')" 
-                        style="flex: 1; padding: 0 8px; height: 24px; border: none; background: transparent; font-size: 11px; font-weight: 500; outline: none;">
+                        style="flex: 1; padding: 0 12px; height: 100%; border: none; background: transparent; font-size: 14px; font-weight: 500; outline: none;">
                 </div>
                 
-                <button onmousedown="iniciarGrabacionMesa('${mesa.id}')" onmouseup="detenerGrabacionMesa()" onmouseleave="if(estaGrabandoMesa) detenerGrabacionMesa()" ontouchstart="event.preventDefault(); iniciarGrabacionMesa('${mesa.id}')" ontouchend="event.preventDefault(); detenerGrabacionMesa()" class="btn btn-icon" style="background: transparent; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; color: #667eea; width: 36px; height: 36px; border-radius: 8px;">
-                    <span style="font-size: 20px;">🎤</span>
-                </button>
+                <div class="mic-container">
+                    <button 
+                        id="btn-mic-${mesa.id}"
+                        onmousedown="iniciarGrabacionMesa('${mesa.id}')" 
+                        onmouseup="detenerGrabacionMesa()" 
+                        onmouseleave="if(estaGrabandoMesa) detenerGrabacionMesa()" 
+                        ontouchstart="event.preventDefault(); iniciarGrabacionMesa('${mesa.id}')" 
+                        ontouchend="event.preventDefault(); detenerGrabacionMesa()" 
+                        class="mic-btn">
+                        <span style="font-size: 20px; pointer-events: none;">🎤</span>
+                    </button>
+                </div>
             </div>
         </div>
     `;
@@ -665,10 +714,16 @@ function eliminarProductoMesa(mesaId, productoIndex) {
 // Variables para grabación por presión en mesas
 async function iniciarGrabacionMesa(mesaId) {
     if (estaGrabandoMesa) return;
-    const btn = event.target;
-    btn.style.transform = 'scale(0.9)';
-    btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-    btn.innerHTML = '⏹️';
+    
+    const btn = document.getElementById(`btn-mic-${mesaId}`);
+    
+    // Activar animación visual
+    if(btn) {
+        btn.classList.add('recording');
+        // Cambiar icono opcionalmente
+        // btn.querySelector('span').textContent = '🎙️'; 
+    }
+    
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorderMesa = new MediaRecorder(stream);
@@ -692,77 +747,25 @@ async function iniciarGrabacionMesa(mesaId) {
     } catch (error) {
         console.error('Error con micrófono:', error);
         alert('No se pudo acceder al micrófono');
-        btn.style.transform = 'scale(1)';
-        btn.style.background = '#667eea';
-        btn.innerHTML = '🎤';
+        // Restaurar botón si falla
+        if(btn) btn.classList.remove('recording');
     }
 }
 
 function detenerGrabacionMesa() {
     if (!estaGrabandoMesa) return;
-    const btn = event.target;
+    
+    // Detener lógica de grabación
     if (mediaRecorderMesa && mediaRecorderMesa.state === 'recording') {
         mediaRecorderMesa.stop();
     }
     estaGrabandoMesa = false;
-    btn.style.transform = 'scale(1)';
-    btn.style.background = '#667eea';
-    btn.innerHTML = '🎤';
-}
 
-async function enviarAudioMesa(mesaId, audioBlob) {
-    try {
-        const reader = new FileReader();
-        reader.readAsDataURL(audioBlob);
-        reader.onloadend = async () => {
-            const base64Audio = reader.result.split(',')[1];
-            const response = await fetch('https://n8n-n8n.aa7tej.easypanel.host/webhook/productos-mesas', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    audio: base64Audio,
-                    tipo: 'audio',
-                    mesa_id: mesaId,
-                    tenant_id: userData.tenant_id,
-                    user_id: userData.user_id
-                })
-            });
-            const data = await response.json();
-            if (data.productos && data.productos.length > 0) {
-                // Agregar productos de voz a la mesa
-                const mesa = mesasData[mesaId];
-                if (mesa) {
-                    data.productos.forEach(prod => {
-                        const existente = mesa.productos.find(p => p.codigo === prod.codigo);
-                        if (existente) {
-                            existente.cantidad += prod.cantidad;
-                        } else {
-                            mesa.productos.push({
-                                codigo: prod.codigo,
-                                nombre: prod.nombre,
-                                cantidad: prod.cantidad,
-                                precio: prod.precio || 0,
-                                precio_unitario: prod.precio || 0,
-                                unidad: prod.unidad || 'und'
-                            });
-                        }
-                    });
-                    await guardarMesas();
-                    const detalle = document.getElementById(`detalle-${mesaId}`);
-                    if (detalle) {
-                        detalle.innerHTML = renderizarDetalleMesa(mesa);
-                        detalle.style.display = 'block';
-                        detalle.classList.add('expanded');
-                    }
-                    actualizarPreviewMesa(mesaId, mesa);
-                }
-            } else {
-                alert('No se pudieron procesar los productos del audio');
-            }
-        };
-    } catch (error) {
-        console.error('Error enviando audio:', error);
-        alert('Error al procesar el audio');
+    // Desactivar animación visual (buscamos el botón activo con la clase recording)
+    const btn = document.querySelector('.mic-btn.recording');
+    if(btn) {
+        btn.classList.remove('recording');
+        btn.style.transform = 'scale(1)'; // Reset forzado por si acaso
     }
 }
 
