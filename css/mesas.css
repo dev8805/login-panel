@@ -1,0 +1,430 @@
+/* ==========================================
+   CONTENEDOR DE MESAS
+   ========================================== */
+
+.mesas-container {
+    padding: 8px;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+@media (min-width: 640px) {
+    .mesas-container {
+        padding: 12px;
+    }
+}
+
+/* ==========================================
+   HEADER DE MESAS
+   ========================================== */
+
+.mesas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0 4px;
+}
+
+/* ==========================================
+   TARJETAS DE MESA
+   ========================================== */
+
+.mesa-card {
+    background: hsl(0 0% 100%);
+    border-radius: 12px;
+    padding: 10px;
+    border: 2px solid hsl(220 13% 88%);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    transition: all 0.2s;
+    margin-bottom: 8px;
+}
+
+.mesa-card:hover {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07);
+}
+
+.mesa-card.ocupada {
+    border-color: hsl(158 64% 52%);
+    box-shadow: 0 4px 12px -2px hsl(158 64% 52% / 0.15);
+}
+
+.mesa-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8px;
+    margin-bottom: 0px;
+    border-bottom: 1px solid hsl(220 13% 88% / 0.6);
+    cursor: pointer;
+}
+
+.mesa-info {
+    flex: 1;
+}
+
+.mesa-nombre {
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+}
+
+.mesa-productos-preview {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.mesa-resumen {
+    display: flex;
+    gap: 12px;
+    font-size: 13px;
+    color: #888;
+}
+
+.mesa-estado {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.mesa-estado.ocupada {
+    color: #10b981;
+}
+
+.mesa-estado.libre {
+    color: #9ca3af;
+}
+
+.mesa-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-delete-mesa {
+    background: #ef4444;
+    color: white;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ==========================================
+   DETALLE DE MESA
+   ========================================== */
+
+.mesa-detalle {
+    padding: 8px 0;
+    margin-top: 8px;
+    display: none !important;
+    overflow: hidden;
+    transition: none;
+}
+
+.mesa-detalle.expanded {
+    display: block !important;
+}
+
+/* ==========================================
+   PRODUCTOS EN MESA
+   ========================================== */
+
+.producto-mesa-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px;
+    background: hsl(220 13% 95%);
+    border-radius: 8px;
+    margin-bottom: 4px;
+    border: 1px solid hsl(220 13% 88% / 0.5);
+    transition: all 0.2s;
+}
+
+.producto-mesa-item:hover {
+    border-color: hsl(220 13% 88%);
+}
+
+.producto-cantidad-controls {
+    display: flex;
+    gap: 0;
+    align-items: center;
+    background: hsl(0 0% 100%);
+    border-radius: 6px;
+    border: 1px solid hsl(220 13% 88% / 0.3);
+    flex-shrink: 0;
+}
+
+.productos-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.productos-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.productos-list::-webkit-scrollbar-thumb {
+    background: hsl(220 13% 88%);
+    border-radius: 4px;
+}
+
+.btn-cantidad {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    color: hsl(220 15% 12%);
+    transition: all 0.2s;
+    padding: 0;
+}
+
+.btn-cantidad:first-child {
+    border-radius: 6px 0 0 6px;
+}
+
+.btn-cantidad:last-child {
+    border-radius: 0 6px 6px 0;
+}
+
+.btn-cantidad:hover {
+    background: hsl(158 64% 95%);
+    color: hsl(158 64% 25%);
+}
+
+.cantidad-display {
+    width: 28px;
+    height: 24px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-left: 1px solid hsl(220 13% 88% / 0.3);
+    border-right: 1px solid hsl(220 13% 88% / 0.3);
+    background: hsl(158 64% 95% / 0.3);
+}
+
+.producto-info-mesa {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.producto-nombre-mesa {
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.producto-precio-mesa {
+    font-weight: 700;
+    font-size: 12px;
+    color: hsl(158 64% 52%);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.delete-btn-producto {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    color: hsl(0 72% 51%);
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-btn-producto:hover {
+    background: hsl(0 72% 51% / 0.1);
+}
+
+/* ==========================================
+   BÚSQUEDA Y AGREGAR PRODUCTOS
+   ========================================== */
+
+.agregar-producto-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 8px;
+    align-items: center;
+    padding: 12px;
+    background: #f0f9ff;
+    border-radius: 8px;
+    margin-top: 16px;
+}
+
+.buscar-producto-mesa {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    margin-bottom: 8px;
+    background: hsl(220 13% 95%);
+    padding: 4px;
+    border-radius: 8px;
+    border: 1px solid hsl(220 13% 88% / 0.5);
+}
+
+.input-producto-buscar {
+    flex: 1;
+    padding: 6px 8px;
+    border: none;
+    background: hsl(0 0% 100%);
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    outline: none;
+    transition: box-shadow 0.2s;
+}
+
+.input-producto-buscar:focus {
+    box-shadow: 0 0 0 1px hsl(158 64% 52% / 0.5);
+}
+
+/* Eliminar flechas de inputs numéricos en área de búsqueda */
+.cantidad-input::-webkit-outer-spin-button,
+.cantidad-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.cantidad-input {
+    -moz-appearance: textfield;
+}
+
+/* ==========================================
+   BOTONES
+   ========================================== */
+
+.btn-nueva-mesa {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 16px;
+}
+
+.btn-registrar-venta-mesa {
+    width: 100%;
+    padding: 10px;
+    background: hsl(158 64% 52%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    margin-top: 8px;
+}
+
+.btn-registrar-venta-mesa:hover {
+    background: hsl(158 64% 45%);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07);
+}
+
+.btn-registrar-venta-mesa:active {
+    transform: scale(0.98);
+}
+
+/* ==========================================
+   GRID DE MESAS
+   ========================================== */
+
+.mesa-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
+
+@media (min-width: 640px) {
+    .mesa-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .mesa-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1280px) {
+    .mesa-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* ==========================================
+   RESPONSIVIDAD MÓVIL
+   ========================================== */
+
+@media (max-width: 767px) {
+    .mesas-container {
+        padding: 12px !important;
+    }
+    
+    .mesa-nombre {
+        font-size: 15px !important;
+    }
+    
+    .mesa-productos-preview {
+        font-size: 11px !important;
+    }
+    
+    .producto-mesa-item {
+        flex-wrap: nowrap !important;
+        font-size: 13px !important;
+    }
+    
+    .btn-nueva-mesa {
+        padding: 12px !important;
+        font-size: 14px !important;
+    }
+}
+
+/* ==========================================
+   DESKTOP
+   ========================================== */
+
+@media (min-width: 768px) {
+    .mesas-container {
+        max-width: 900px;
+    }
+    
+    .mesa-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 20px;
+        align-items: start;
+    }
+}
