@@ -669,7 +669,33 @@ async function enviarAudioMesa(mesaId, audioBlob) {
             });
             const data = await response.json();
             if (data.productos && data.productos.length > 0) {
-                agregarProductosAMesa(mesaId, data.productos);
+                // Agregar productos de voz a la mesa
+                const mesa = mesasData[mesaId];
+                if (mesa) {
+                    data.productos.forEach(prod => {
+                        const existente = mesa.productos.find(p => p.codigo === prod.codigo);
+                        if (existente) {
+                            existente.cantidad += prod.cantidad;
+                        } else {
+                            mesa.productos.push({
+                                codigo: prod.codigo,
+                                nombre: prod.nombre,
+                                cantidad: prod.cantidad,
+                                precio: prod.precio || 0,
+                                precio_unitario: prod.precio || 0,
+                                unidad: prod.unidad || 'und'
+                            });
+                        }
+                    });
+                    await guardarMesas();
+                    const detalle = document.getElementById(`detalle-${mesaId}`);
+                    if (detalle) {
+                        detalle.innerHTML = renderizarDetalleMesa(mesa);
+                        detalle.style.display = 'block';
+                        detalle.classList.add('expanded');
+                    }
+                    actualizarPreviewMesa(mesaId, mesa);
+                }
             } else {
                 alert('No se pudieron procesar los productos del audio');
             }
