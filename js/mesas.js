@@ -483,7 +483,7 @@ function renderizarDetalleMesa(mesa) {
 }
 
 function renderizarBuscadorMesa(mesa) {
-    // CAMBIO: Agregados logs en onfocus y onblur para rastrear el teclado
+    // CAMBIO: Se reemplazaron los <button> de +/- por <div> para evitar estilos globales (sombras/movimiento)
     return `
         <div class="buscador-mesa-wrapper" style="position: relative; margin-bottom: 8px;">
             <div id="resultados-busqueda-${mesa.id}" class="resultados-busqueda-flotante" style="display: none;"></div>
@@ -491,16 +491,22 @@ function renderizarBuscadorMesa(mesa) {
             <div style="display: flex; gap: 8px; align-items: center;">
                 <div class="buscar-producto" style="flex: 1; display: flex; gap: 4px; align-items: center; background: #f9fafb; padding: 4px 8px; border: 1px solid #e5e7eb; border-radius: 8px; height: 36px;">
                     <div class="producto-controls" style="display: flex; align-items: center; border: 1px solid #e5e7eb; border-radius: 4px; height: 22px; background: white; flex-shrink: 0;">
-                        <button onclick="ajustarCantidadBusqueda('${mesa.id}', -1)" class="qty-btn" style="width: 20px; height: 100%; border: none; background: transparent; cursor: pointer; font-size: 10px; color: #666; padding: 0; border-right: 1px solid #f3f4f6;">−</button>
+                        <div onclick="ajustarCantidadBusqueda('${mesa.id}', -1)" class="qty-btn" style="width: 20px; height: 100%; border-right: 1px solid #f3f4f6; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; user-select: none;">
+                            −
+                        </div>
+                        
                         <input type="number" class="cantidad-input" id="cantidad-buscar-${mesa.id}" value="1" min="1" style="width: 24px; height: 100%; text-align: center; padding: 0; border: none; font-size: 11px; font-weight: 600; outline: none; -moz-appearance: textfield; background: transparent;" onchange="validarCantidadBusqueda('${mesa.id}')">
-                        <button onclick="ajustarCantidadBusqueda('${mesa.id}', 1)" class="qty-btn" style="width: 20px; height: 100%; border: none; background: transparent; cursor: pointer; font-size: 10px; color: #666; padding: 0; border-left: 1px solid #f3f4f6;">+</button>
+                        
+                        <div onclick="ajustarCantidadBusqueda('${mesa.id}', 1)" class="qty-btn" style="width: 20px; height: 100%; border-left: 1px solid #f3f4f6; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; user-select: none;">
+                            +
+                        </div>
                     </div>
+                    
                     <input type="text" class="buscar-input input-producto-buscar" id="buscar-${mesa.id}" placeholder="Buscar producto..." 
                         onkeyup="buscarProductoMesa('${mesa.id}')" 
-                        onfocus="console.log('🎯 [EVENTO] Input obtuvo foco (Teclado debería abrir)')"
-                        onblur="console.log('🌫️ [EVENTO] Input perdió foco (Teclado podría cerrar)')"
                         style="flex: 1; padding: 0 8px; height: 24px; border: none; background: transparent; font-size: 11px; font-weight: 500; outline: none;">
                 </div>
+                
                 <button onmousedown="iniciarGrabacionMesa('${mesa.id}')" onmouseup="detenerGrabacionMesa()" onmouseleave="if(estaGrabandoMesa) detenerGrabacionMesa()" ontouchstart="event.preventDefault(); iniciarGrabacionMesa('${mesa.id}')" ontouchend="event.preventDefault(); detenerGrabacionMesa()" class="btn btn-icon" style="background: transparent; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; color: #667eea; width: 36px; height: 36px; border-radius: 8px;">
                     <span style="font-size: 20px;">🎤</span>
                 </button>
