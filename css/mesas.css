@@ -265,7 +265,8 @@
    BÚSQUEDA Y AGREGAR PRODUCTOS
    ========================================== */
 
-.agregar-producto-row {
+/* CLASE ANTIGUA - NO SE USA MÁS */
+/* .agregar-producto-row {
     display: grid;
     grid-template-columns: auto 1fr auto auto;
     gap: 8px;
@@ -274,17 +275,18 @@
     background: #f0f9ff;
     border-radius: 8px;
     margin-top: 16px;
+} */
+
+/* Contenedor del buscador de productos en mesas */
+/* Contenedor inline en renderizarBuscadorMesa() */
+.buscar-producto {
+    /* Estilos definidos inline en mesas.js */
 }
 
-.buscar-producto-mesa {
-    display: flex;
-    gap: 4px;
-    align-items: center;
+/* Wrapper del buscador con position relative */
+.buscador-mesa-wrapper {
+    position: relative;
     margin-bottom: 8px;
-    background: hsl(220 13% 97%);
-    padding: 4px;
-    border-radius: 8px;
-    border: 1px solid hsl(220 13% 88%);
 }
 
 .input-producto-buscar {
