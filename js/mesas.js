@@ -734,38 +734,75 @@ function seleccionarProductoMesa(mesaId, producto) {
     
     guardarMesas();
     
-    // Limpiar input y ocultar resultados
+    // Limpiar input visualmente pero NO perder foco
     const input = document.getElementById(`buscar-${mesaId}`);
     const resultadosDiv = document.getElementById(`resultados-busqueda-${mesaId}`);
+    
     if (resultadosDiv) resultadosDiv.style.display = 'none';
+    if (input) {
+        input.value = '';
+        // Mantenemos el foco activo explícitamente
+        input.focus();
+    }
     if (inputCantidad) inputCantidad.value = '1';
     
-    // Actualizar detalle de la mesa
+    // Actualización inteligente del DOM para no cerrar el teclado
     const detalle = document.getElementById(`detalle-${mesaId}`);
     if (detalle) {
-        detalle.innerHTML = renderizarDetalleMesa(mesa);
+        const listaExistente = detalle.querySelector('.productos-list');
+        const botonTotal = detalle.querySelector('.btn-registrar-venta-mesa');
+        
+        // CASO 1: Ya existe la estructura (lista y botón), actualizamos SOLO eso
+        if (listaExistente && botonTotal) {
+            // 1. Regenerar HTML solo de los items
+            const productosHTML = mesa.productos.map((p, index) => `
+                <div class="producto-item" style="display: flex; align-items: center; border-bottom: 1px solid #f3f4f6; padding: 0 8px; height: 32px; background: white;">
+                    <div class="producto-controls" style="display: flex; align-items: center; border: 1px solid #e5e7eb; border-radius: 4px; height: 22px; margin-right: 8px; overflow: hidden; flex-shrink: 0; background: white;">
+                        <button onclick="event.stopPropagation(); ajustarCantidad('${mesa.id}', ${index}, -1)" class="qty-btn" style="width: 20px; height: 100%; border: none; background: #f9fafb; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; padding: 0; border-right: 1px solid #f3f4f6;">−</button>
+                        <div class="qty-display" style="min-width: 20px; padding: 0 4px; height: 100%; text-align: center; font-weight: 600; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #374151;">${p.cantidad}</div>
+                        <button onclick="event.stopPropagation(); ajustarCantidad('${mesa.id}', ${index}, 1)" class="qty-btn" style="width: 20px; height: 100%; border: none; background: #f9fafb; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; padding: 0; border-left: 1px solid #f3f4f6;">+</button>
+                    </div>
+                    <div class="producto-info" style="flex: 1; display: flex; align-items: center; min-width: 0; padding-right: 8px;">
+                        <span class="producto-nombre" style="font-size: 11px; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                           ${p.unidad && p.unidad !== 'und' ? `<span style="color:#9ca3af; margin-right:2px; font-size:10px;">${p.unidad}</span>` : ''} ${p.nombre}
+                        </span>
+                    </div>
+                    <div style="font-weight: 600; font-size: 11px; color: #10b981; white-space: nowrap; margin-right: 8px;">
+                        $${((p.precio_unitario || p.precio || 0) * p.cantidad).toLocaleString('es-CO')}
+                    </div>
+                    <button onclick="event.stopPropagation(); eliminarProductoMesa('${mesa.id}', ${index})" class="delete-btn" style="width: 20px; height: 20px; flex-shrink: 0; background: transparent; border: none; color: #9ca3af; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; padding: 0;">🗑️</button>
+                </div>
+            `).join('');
+            
+            // Inyectamos solo los items, el input buscador (que es hermano de .productos-list) no se toca
+            listaExistente.innerHTML = productosHTML;
+            
+            // Hacemos scroll al final para ver el nuevo item
+            listaExistente.scrollTop = listaExistente.scrollHeight;
+            
+            // 2. Actualizar el botón del total
+            const total = mesa.productos.reduce((sum, p) => sum + ((p.precio_unitario || p.precio || 0) * p.cantidad), 0);
+            botonTotal.innerText = `Registrar venta • $${total.toLocaleString('es-CO')}`;
+            
+        } else {
+            // CASO 2: La mesa estaba vacía (aquí sí cambia la estructura radicalmente, el parpadeo es inevitable solo la primera vez)
+            detalle.innerHTML = renderizarDetalleMesa(mesa);
+            // Re-capturamos el input porque el anterior fue destruido
+            setTimeout(() => {
+                const nuevoInput = document.getElementById(`buscar-${mesaId}`);
+                if(nuevoInput) {
+                    nuevoInput.focus();
+                    nuevoInput.value = ''; // Asegurar que esté limpio
+                }
+            }, 50);
+        }
+        
         detalle.style.display = 'block';
         detalle.classList.add('expanded');
     }
-    actualizarPreviewMesa(mesaId, mesa);
     
-    // Mantener foco y limpiar después del renderizado
-    setTimeout(() => {
-        const inputNuevo = document.getElementById(`buscar-${mesaId}`);
-        const inputCantidadNuevo = document.getElementById(`cantidad-buscar-${mesaId}`);
-        
-        if (inputNuevo) {
-            inputNuevo.value = '';
-            inputNuevo.focus();
-        }
-        if (inputCantidadNuevo) inputCantidadNuevo.value = '1';
-        
-        // Asegurar que preview y resumen estén ocultos
-        const preview = document.querySelector(`.mesa-preview-${mesaId}`);
-        const resumen = document.querySelector(`.mesa-resumen-${mesaId}`);
-        if (preview) preview.style.display = 'none';
-        if (resumen) resumen.style.display = 'none';
-    }, 50);
+    // Actualizamos la tarjeta pequeña (resumen)
+    actualizarPreviewMesa(mesaId, mesa);
 }
 
 async function registrarVentaMesa(mesaId) {
