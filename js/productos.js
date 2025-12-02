@@ -4,6 +4,155 @@
  * ===========================================
  */
 
+/**
+ * ===========================================
+ * AGREGAR ESTO EN js/productos.js
+ * ===========================================
+ */
+
+// Inicializar variable global para los apodos
+window.apodosCrearProducto = [];
+
+function cargarFormularioProducto() {
+    const modal = document.getElementById('modalCrearProducto');
+    const modalBody = document.getElementById('modalBody');
+
+    // 1. Inyectar el HTML original que tenías en panel.txt
+    modalBody.innerHTML = `
+    <div id="successMsg" class="success-message"></div>
+    <form id="formCrearProducto" onsubmit="submitProducto(event)">
+        <div id="errorMsgModal" class="error"></div>
+        
+        <div class="form-group">
+            <label class="required">Tipo de producto</label>
+            <div class="tipo-producto-group">
+                <div class="tipo-producto-option selected" onclick="seleccionarTipoProducto('simple', this)">
+                    <input type="radio" name="tipoProducto" id="tipoSimple" value="simple" checked>
+                    <label for="tipoSimple">📦 Producto Simple</label>
+                    <p style="font-size: 12px; color: #666; margin-top: 8px;">Se vende directamente</p>
+                </div>
+                
+                <div class="tipo-producto-option" onclick="seleccionarTipoProducto('procesado', this)">
+                    <input type="radio" name="tipoProducto" id="tipoProcesado" value="procesado">
+                    <label for="tipoProcesado">🍴 Producto Procesado</label>
+                    <p style="font-size: 12px; color: #666; margin-top: 8px;">Tiene receta con ingredientes</p>
+                </div>
+            </div>
+        </div>
+                
+        <div class="form-group">
+            <label for="productoNombre">Nombre del producto *</label>
+            <input type="text" id="productoNombre" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="tipoVenta">Tipo de venta *</label>
+            <select id="tipoVenta" required onchange="updateFormByType()">
+                <option value="">Seleccionar...</option>
+                <option value="unidad">Unidad</option>
+                <option value="peso">Peso</option>
+                <option value="medida">Medida</option>
+            </select>
+        </div>
+        
+        <div id="camposDinamicos"></div>
+        
+        <div id="seccionReceta" class="receta-section">
+            <h3 style="margin-bottom: 15px; color: #333;">📝 Receta del Producto</h3>
+            
+            <div class="alert alert-info" style="margin-bottom: 15px;">
+                <strong>ℹ️ Información:</strong> Define los ingredientes necesarios para producir 1 unidad de este producto.
+            </div>
+            
+            <div id="listaIngredientes">
+                <div class="empty-receta">
+                    No hay ingredientes agregados aún
+                </div>
+            </div>
+            
+            <div class="ingrediente-form">
+                <h4 style="margin-bottom: 10px; color: #667eea;">Agregar Ingrediente</h4>
+                <div class="form-row-ingrediente">
+                    <div>
+                        <label style="font-size: 13px; font-weight: 600; margin-bottom: 8px; display: block;">📦 Ingrediente</label>
+                        <select id="selectIngrediente">
+                            <option value="">Cargando...</option>
+                        </select>
+                    </div>
+            
+                    <div>
+                        <label style="font-size: 13px; font-weight: 600; margin-bottom: 8px; display: block;">🔢 Cantidad</label>
+                        <input type="number" id="cantidadIngrediente" step="0.01" min="0.01" placeholder="50">
+                    </div>
+                    <div>
+                        <label style="font-size: 13px; font-weight: 600; margin-bottom: 8px; display: block;">⚖️ Unidad</label>
+                        <select id="unidadIngrediente">
+                            <option value="">Selecciona ingrediente primero</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 13px; font-weight: 600; margin-bottom: 8px; display: block;">Acción</label>
+                        <button type="button" onclick="agregarIngredienteReceta()" style="background: #10b981; width: 100%; height: 48px; font-size: 16px; font-weight: 600;">
+                            ➕
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label style="font-weight: 600;">Apodos del producto</label>
+            
+            <div id="listaApodosCrear" style="background: #fff; border: 2px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 15px; min-height: 60px;">
+                <div id="apodosItemsCrear"></div>
+            </div>
+            
+            <div style="background: #f5f7ff; padding: 15px; border-radius: 8px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 13px;">Agregar apodo</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input 
+                        type="text" 
+                        id="nuevoApodoCrear" 
+                        placeholder="Escribe un apodo..."
+                        style="flex: 1; padding: 10px 12px; max-width: 70%;"
+                        onkeypress="if(event.key === 'Enter') { event.preventDefault(); agregarApodoCrear(); }"
+                    >
+                    <button 
+                        type="button"
+                        onclick="agregarApodoCrear()"
+                        style="padding: 10px 12px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; min-width: auto; width: auto; flex-shrink: 0;"
+                    >
+                        ➕
+                    </button>
+                </div>
+                <small style="color: #666; font-size: 11px; display: block; margin-top: 8px;">El nombre del producto se agregará automáticamente como apodo</small>
+            </div>
+        </div>
+        
+        <input type="hidden" id="apodos" value="">
+        <input type="hidden" id="ingredientesReceta" value="">
+        
+        <button type="submit" id="btnSubmit">Crear Producto</button>
+    </form>
+    `;
+
+    // 2. Restaurar la lógica de inicialización que tenías inline [cite: 322]
+    window.apodosCrearProducto = [];
+    ingredientesReceta = []; // Resetear recetas también
+
+    // Listener para cuando cambia el nombre del producto (Auto-apodo) [cite: 323]
+    document.getElementById('productoNombre').addEventListener('blur', function() {
+        const nombreProducto = this.value.trim().toLowerCase();
+        if (nombreProducto && !window.apodosCrearProducto.includes(nombreProducto)) {
+            window.apodosCrearProducto.push(nombreProducto);
+            renderizarApodosCrear();
+        }
+    });
+
+    // 3. Abrir el modal
+    modal.classList.add('show');
+}
+
 // Variables globales
 let ingredientesReceta = [];
 
