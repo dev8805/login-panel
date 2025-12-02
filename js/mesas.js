@@ -452,17 +452,17 @@ function renderizarDetalleMesa(mesa) {
         <div class="producto-item" style="display: flex; align-items: center; border-bottom: 1px solid #f3f4f6; padding: 0 8px; height: 32px; background: white;">
             <div class="producto-controls" style="display: flex; align-items: center; border: 1px solid #e5e7eb; border-radius: 4px; height: 22px; margin-right: 8px; overflow: hidden; flex-shrink: 0; background: white;">
                 
-                <button 
-                    onmousedown="console.log('🖱️ [LISTA] Mousedown en MENOS (Item ${index})')"
+                <div 
+                    onmousedown="event.preventDefault()"
                     onclick="event.stopPropagation(); ajustarCantidad('${mesa.id}', ${index}, -1)" 
-                    class="qty-btn" style="width: 20px; height: 100%; border: none; background: #f9fafb; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; padding: 0; border-right: 1px solid #f3f4f6;">−</button>
+                    class="qty-btn" style="width: 20px; height: 100%; border-right: 1px solid #f3f4f6; background: #f9fafb; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; user-select: none;">−</div>
                 
                 <div class="qty-display" style="min-width: 20px; padding: 0 4px; height: 100%; text-align: center; font-weight: 600; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #374151;">${p.cantidad}</div>
                 
-                <button 
-                    onmousedown="console.log('🖱️ [LISTA] Mousedown en MAS (Item ${index})')"
+                <div 
+                    onmousedown="event.preventDefault()"
                     onclick="event.stopPropagation(); ajustarCantidad('${mesa.id}', ${index}, 1)" 
-                    class="qty-btn" style="width: 20px; height: 100%; border: none; background: #f9fafb; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; padding: 0; border-left: 1px solid #f3f4f6;">+</button>
+                    class="qty-btn" style="width: 20px; height: 100%; border-left: 1px solid #f3f4f6; background: #f9fafb; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; user-select: none;">+</div>
             </div>
             
             <div class="producto-info" style="flex: 1; display: flex; align-items: center; min-width: 0; padding-right: 8px;">
@@ -475,9 +475,9 @@ function renderizarDetalleMesa(mesa) {
             </div>
             
             <button 
-                onmousedown="console.log('🖱️ [LISTA] Mousedown en ELIMINAR (Item ${index})')"
+                onmousedown="event.preventDefault()"
                 onclick="event.stopPropagation(); eliminarProductoMesa('${mesa.id}', ${index})" 
-                class="delete-btn" style="width: 20px; height: 20px; flex-shrink: 0; background: transparent; border: none; color: #9ca3af; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; padding: 0;">🗑️</button>
+                class="delete-btn" style="width: 20px; height: 20px; flex-shrink: 0; background: transparent; border: none; color: #9ca3af; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; padding: 0; box-shadow: none;">🗑️</button>
         </div>
     `).join('');
     
@@ -654,42 +654,107 @@ function ajustarCantidad(mesaId, productoIndex, delta) {
     const mesa = mesasData[mesaId];
     if (!mesa || !mesa.productos[productoIndex]) return;
     
+    // 1. Actualizar datos
     mesa.productos[productoIndex].cantidad += delta;
     if (mesa.productos[productoIndex].cantidad <= 0) {
         mesa.productos.splice(productoIndex, 1);
     }
-    
     guardarMesas();
+    
+    // 2. Actualizar DOM Selectivamente
     const detalle = document.getElementById(`detalle-${mesaId}`);
-    if (detalle) detalle.innerHTML = renderizarDetalleMesa(mesa);
+    if (detalle) {
+        const listaExistente = detalle.querySelector('.productos-list');
+        const botonTotal = detalle.querySelector('.btn-registrar-venta-mesa');
+        
+        if (listaExistente && botonTotal && mesa.productos.length > 0) {
+            // Solo regeneramos los items de la lista
+            const productosHTML = mesa.productos.map((p, index) => `
+                <div class="producto-item" style="display: flex; align-items: center; border-bottom: 1px solid #f3f4f6; padding: 0 8px; height: 32px; background: white;">
+                    <div class="producto-controls" style="display: flex; align-items: center; border: 1px solid #e5e7eb; border-radius: 4px; height: 22px; margin-right: 8px; overflow: hidden; flex-shrink: 0; background: white;">
+                        <div onmousedown="event.preventDefault()" onclick="event.stopPropagation(); ajustarCantidad('${mesa.id}', ${index}, -1)" class="qty-btn" style="width: 20px; height: 100%; border-right: 1px solid #f3f4f6; background: #f9fafb; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; user-select: none;">−</div>
+                        <div class="qty-display" style="min-width: 20px; padding: 0 4px; height: 100%; text-align: center; font-weight: 600; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #374151;">${p.cantidad}</div>
+                        <div onmousedown="event.preventDefault()" onclick="event.stopPropagation(); ajustarCantidad('${mesa.id}', ${index}, 1)" class="qty-btn" style="width: 20px; height: 100%; border-left: 1px solid #f3f4f6; background: #f9fafb; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; user-select: none;">+</div>
+                    </div>
+                    <div class="producto-info" style="flex: 1; display: flex; align-items: center; min-width: 0; padding-right: 8px;">
+                        <span class="producto-nombre" style="font-size: 11px; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                           ${p.unidad && p.unidad !== 'und' ? `<span style="color:#9ca3af; margin-right:2px; font-size:10px;">${p.unidad}</span>` : ''} ${p.nombre}
+                        </span>
+                    </div>
+                    <div style="font-weight: 600; font-size: 11px; color: #10b981; white-space: nowrap; margin-right: 8px;">
+                        $${((p.precio_unitario || p.precio || 0) * p.cantidad).toLocaleString('es-CO')}
+                    </div>
+                    <button onmousedown="event.preventDefault()" onclick="event.stopPropagation(); eliminarProductoMesa('${mesa.id}', ${index})" class="delete-btn" style="width: 20px; height: 20px; flex-shrink: 0; background: transparent; border: none; color: #9ca3af; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; padding: 0; box-shadow: none;">🗑️</button>
+                </div>
+            `).join('');
+            
+            listaExistente.innerHTML = productosHTML;
+            
+            // Actualizar botón total
+            const total = mesa.productos.reduce((sum, p) => sum + ((p.precio_unitario || p.precio || 0) * p.cantidad), 0);
+            botonTotal.innerText = `Registrar venta • $${total.toLocaleString('es-CO')}`;
+            
+        } else {
+            // Fallback si se vacía la mesa o no existe la estructura
+            detalle.innerHTML = renderizarDetalleMesa(mesa);
+        }
+    }
     actualizarPreviewMesa(mesaId, mesa);
 }
 
 function eliminarProductoMesa(mesaId, productoIndex) {
-    console.log('🗑️ [ELIMINAR] Iniciando eliminación de producto...');
-    const inputFocoAntes = document.activeElement;
-    console.log('🎯 [FOCUS CHECK] Elemento con foco ANTES:', inputFocoAntes?.tagName, inputFocoAntes?.id);
-
     const mesa = mesasData[mesaId];
     if (!mesa || !mesa.productos[productoIndex]) return;
     
+    // 1. Eliminar
     mesa.productos.splice(productoIndex, 1);
     guardarMesas();
     
-    // ESTA ES LA PARTE SOSPECHOSA QUE REINICIA EL DOM
+    // 2. Actualizar DOM Selectivamente
     const detalle = document.getElementById(`detalle-${mesaId}`);
     if (detalle) {
-        console.log('🔄 [RENDER] Reemplazando innerHTML completo del detalle (Aquí se suele perder el foco)');
-        detalle.innerHTML = renderizarDetalleMesa(mesa);
+        const listaExistente = detalle.querySelector('.productos-list');
+        const botonTotal = detalle.querySelector('.btn-registrar-venta-mesa');
+        
+        if (listaExistente && botonTotal && mesa.productos.length > 0) {
+            // Regenerar lista
+            const productosHTML = mesa.productos.map((p, index) => `
+                <div class="producto-item" style="display: flex; align-items: center; border-bottom: 1px solid #f3f4f6; padding: 0 8px; height: 32px; background: white;">
+                    <div class="producto-controls" style="display: flex; align-items: center; border: 1px solid #e5e7eb; border-radius: 4px; height: 22px; margin-right: 8px; overflow: hidden; flex-shrink: 0; background: white;">
+                        <div onmousedown="event.preventDefault()" onclick="event.stopPropagation(); ajustarCantidad('${mesa.id}', ${index}, -1)" class="qty-btn" style="width: 20px; height: 100%; border-right: 1px solid #f3f4f6; background: #f9fafb; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; user-select: none;">−</div>
+                        <div class="qty-display" style="min-width: 20px; padding: 0 4px; height: 100%; text-align: center; font-weight: 600; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #374151;">${p.cantidad}</div>
+                        <div onmousedown="event.preventDefault()" onclick="event.stopPropagation(); ajustarCantidad('${mesa.id}', ${index}, 1)" class="qty-btn" style="width: 20px; height: 100%; border-left: 1px solid #f3f4f6; background: #f9fafb; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; user-select: none;">+</div>
+                    </div>
+                    <div class="producto-info" style="flex: 1; display: flex; align-items: center; min-width: 0; padding-right: 8px;">
+                        <span class="producto-nombre" style="font-size: 11px; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                           ${p.unidad && p.unidad !== 'und' ? `<span style="color:#9ca3af; margin-right:2px; font-size:10px;">${p.unidad}</span>` : ''} ${p.nombre}
+                        </span>
+                    </div>
+                    <div style="font-weight: 600; font-size: 11px; color: #10b981; white-space: nowrap; margin-right: 8px;">
+                        $${((p.precio_unitario || p.precio || 0) * p.cantidad).toLocaleString('es-CO')}
+                    </div>
+                    <button onmousedown="event.preventDefault()" onclick="event.stopPropagation(); eliminarProductoMesa('${mesa.id}', ${index})" class="delete-btn" style="width: 20px; height: 20px; flex-shrink: 0; background: transparent; border: none; color: #9ca3af; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; padding: 0; box-shadow: none;">🗑️</button>
+                </div>
+            `).join('');
+            
+            listaExistente.innerHTML = productosHTML;
+            
+            // Actualizar total
+            const total = mesa.productos.reduce((sum, p) => sum + ((p.precio_unitario || p.precio || 0) * p.cantidad), 0);
+            botonTotal.innerText = `Registrar venta • $${total.toLocaleString('es-CO')}`;
+            
+        } else {
+            // Fallback: si la lista queda vacía, renderizamos la vista vacía completa
+            detalle.innerHTML = renderizarDetalleMesa(mesa);
+            // Si estamos escribiendo y eliminamos el último producto, intentamos devolver el foco
+            const input = document.getElementById(`buscar-${mesaId}`);
+            if (input) {
+                // Pequeño delay para asegurar que el DOM está listo
+                setTimeout(() => input.focus(), 10); 
+            }
+        }
     }
     actualizarPreviewMesa(mesaId, mesa);
-
-    const inputFocoDespues = document.activeElement;
-    console.log('🎯 [FOCUS CHECK] Elemento con foco DESPUES:', inputFocoDespues?.tagName, inputFocoDespues?.id);
-
-    if (inputFocoAntes !== inputFocoDespues) {
-        console.warn('⚠️ [ALERTA] ¡El foco cambió! Esto causa que el teclado se cierre.');
-    }
 }
 
 // Variables para grabación por presión en mesas
