@@ -159,7 +159,7 @@
     align-items: center;
     background: hsl(0 0% 100%);
     border-radius: 6px;
-    border: 1px solid hsl(220 13% 88% / 0.3);
+    border: 1px solid hsl(220 13% 88%);
     flex-shrink: 0;
 }
 
@@ -198,8 +198,8 @@
 }
 
 .btn-cantidad:hover {
-    background: hsl(158 64% 95%);
-    color: hsl(158 64% 25%);
+    background: hsl(220 13% 95%);
+    color: hsl(220 15% 12%);
 }
 
 .cantidad-display {
@@ -281,10 +281,10 @@
     gap: 4px;
     align-items: center;
     margin-bottom: 8px;
-    background: hsl(220 13% 95%);
+    background: hsl(220 13% 97%);
     padding: 4px;
     border-radius: 8px;
-    border: 1px solid hsl(220 13% 88% / 0.5);
+    border: 1px solid hsl(220 13% 88%);
 }
 
 .input-producto-buscar {
@@ -296,11 +296,12 @@
     font-size: 12px;
     font-weight: 500;
     outline: none;
-    transition: box-shadow 0.2s;
+    transition: none;
 }
 
 .input-producto-buscar:focus {
-    box-shadow: 0 0 0 1px hsl(158 64% 52% / 0.5);
+    outline: none;
+    box-shadow: none;
 }
 
 /* Eliminar flechas de inputs numéricos en área de búsqueda */
@@ -435,29 +436,34 @@
 
 .resultados-busqueda-flotante {
     position: absolute;
-    bottom: 100%; /* Esto hace que aparezca ARRIBA del input */
+    bottom: 100%;
     left: 0;
     right: 0;
     background: white;
-    border: 2px solid #667eea;
+    border: 2px solid hsl(220 13% 88%);
     border-bottom: none;
     border-radius: 12px 12px 0 0;
     max-height: 250px;
     overflow-y: auto;
     z-index: 100;
-    box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
-    margin-bottom: -2px; /* Unir visualmente con el input */
+    box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.08);
+    margin-bottom: 0;
 }
 
 /* Estilo para cada item del resultado */
 .resultados-busqueda-flotante > div {
     padding: 12px;
-    border-bottom: 1px solid #f0f0f0;
-    transition: background 0.2s;
+    border-bottom: 1px solid hsl(220 13% 92%);
+    transition: background 0.15s ease;
+    cursor: pointer;
 }
 
 .resultados-busqueda-flotante > div:hover {
-    background: #f5f7ff;
+    background: hsl(220 13% 97%);
+}
+
+.resultados-busqueda-flotante > div:first-child {
+    border-radius: 10px 10px 0 0;
 }
 
 .resultados-busqueda-flotante > div:last-child {
