@@ -141,19 +141,13 @@ function suscribirseACambiosMesas() {
 
                 // ✅ MANEJAR SEGÚN EL TIPO DE EVENTO
                 if (payload.eventType === 'INSERT') {
-                    // Si es la mesa que acabamos de crear localmente, NO hacer nada
-                    if (window.mesaRecienCreada === mesaModificadaId) {
-                        return;
-                    }
-                    // Si es una mesa creada en OTRO dispositivo, recargar y renderizar
+                    if (window.mesaRecienCreada === mesaModificadaId) return;
                     await inicializarMesas();
                     const modalBody = document.getElementById('modalBodyMesas');
                     renderizarMesas(modalBody);
                 }
                 else if (payload.eventType === 'DELETE') {
-                    // Eliminar directamente del objeto local
                     delete mesasData[mesaModificadaId];
-                    // Re-renderizar TODO
                     const modalBody = document.getElementById('modalBodyMesas');
                     renderizarMesas(modalBody);
                 } else if (payload.eventType === 'UPDATE') {
@@ -165,14 +159,71 @@ function suscribirseACambiosMesas() {
                     const estaExpandida = detalleExpandido?.classList.contains('expanded');
 
                     if (estaExpandida) {
-                        // ✅ SOLO actualizar el detalle de esta mesa específica
                         const mesa = mesasData[mesaModificadaId];
                         if (mesa) {
-                            detalleExpandido.innerHTML = renderizarDetalleMesa(mesa);
+                            // === INICIO LOGICA INTELIGENTE REALTIME ===
+                            const listaExistente = detalleExpandido.querySelector('.productos-list');
+                            const botonTotal = detalleExpandido.querySelector('.btn-registrar-venta-mesa');
+                            const inputBuscador = document.getElementById(`buscar-${mesaModificadaId}`);
+                            
+                            // Verificar si tenemos foco actualmente para intentar preservarlo a toda costa
+                            const teniaFoco = (document.activeElement === inputBuscador);
+
+                            if (listaExistente && botonTotal && inputBuscador) {
+                                console.log('🔄 [REALTIME] Actualizando solo lista y total (Protegiendo teclado)');
+                                
+                                // 1. Actualizar solo la lista de items
+                                const productosHTML = mesa.productos.map((p, index) => `
+                                    <div class="producto-item" style="display: flex; align-items: center; border-bottom: 1px solid #f3f4f6; padding: 0 8px; height: 32px; background: white;">
+                                        <div class="producto-controls" style="display: flex; align-items: center; border: 1px solid #e5e7eb; border-radius: 4px; height: 22px; margin-right: 8px; overflow: hidden; flex-shrink: 0; background: white;">
+                                            <button onclick="event.stopPropagation(); ajustarCantidad('${mesa.id}', ${index}, -1)" class="qty-btn" style="width: 20px; height: 100%; border: none; background: #f9fafb; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; padding: 0; border-right: 1px solid #f3f4f6;">−</button>
+                                            <div class="qty-display" style="min-width: 20px; padding: 0 4px; height: 100%; text-align: center; font-weight: 600; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #374151;">${p.cantidad}</div>
+                                            <button onclick="event.stopPropagation(); ajustarCantidad('${mesa.id}', ${index}, 1)" class="qty-btn" style="width: 20px; height: 100%; border: none; background: #f9fafb; cursor: pointer; font-size: 10px; color: #666; display: flex; align-items: center; justify-content: center; padding: 0; border-left: 1px solid #f3f4f6;">+</button>
+                                        </div>
+                                        <div class="producto-info" style="flex: 1; display: flex; align-items: center; min-width: 0; padding-right: 8px;">
+                                            <span class="producto-nombre" style="font-size: 11px; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                            ${p.unidad && p.unidad !== 'und' ? `<span style="color:#9ca3af; margin-right:2px; font-size:10px;">${p.unidad}</span>` : ''} ${p.nombre}
+                                            </span>
+                                        </div>
+                                        <div style="font-weight: 600; font-size: 11px; color: #10b981; white-space: nowrap; margin-right: 8px;">
+                                            $${((p.precio_unitario || p.precio || 0) * p.cantidad).toLocaleString('es-CO')}
+                                        </div>
+                                        <button onclick="event.stopPropagation(); eliminarProductoMesa('${mesa.id}', ${index})" class="delete-btn" style="width: 20px; height: 20px; flex-shrink: 0; background: transparent; border: none; color: #9ca3af; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; padding: 0;">🗑️</button>
+                                    </div>
+                                `).join('');
+                                
+                                listaExistente.innerHTML = productosHTML;
+                                
+                                // 2. Actualizar botón de total
+                                const total = mesa.productos.reduce((sum, p) => sum + ((p.precio_unitario || p.precio || 0) * p.cantidad), 0);
+                                botonTotal.innerText = `Registrar venta • $${total.toLocaleString('es-CO')}`;
+                                
+                                // NO tocamos el inputBuscador, por lo que el foco se mantiene naturalmente.
+                                // Pero por seguridad extrema:
+                                if(teniaFoco) {
+                                    console.log('🛡️ [REALTIME] Restaurando foco por seguridad');
+                                    inputBuscador.focus();
+                                }
+
+                            } else {
+                                // Fallback si la estructura no existe (ej: mesa vacía pasa a tener productos por otro usuario)
+                                console.log('⚠️ [REALTIME] Re-renderizado completo (Estructura cambió)');
+                                detalleExpandido.innerHTML = renderizarDetalleMesa(mesa);
+                                
+                                // Intentar recuperar foco si se perdió
+                                if(teniaFoco) {
+                                    setTimeout(() => {
+                                        const nuevoInput = document.getElementById(`buscar-${mesaModificadaId}`);
+                                        if(nuevoInput) nuevoInput.focus();
+                                    }, 10);
+                                }
+                            }
+                            // === FIN LOGICA INTELIGENTE ===
+
                             actualizarPreviewMesa(mesaModificadaId, mesa);
                         }
                     } else {
-                        // Mesa comprimida: solo actualizar preview y resumen
+                        // Mesa comprimida: solo actualizar preview
                         const mesa = mesasData[mesaModificadaId];
                         if (mesa) {
                             actualizarPreviewMesa(mesaModificadaId, mesa);
