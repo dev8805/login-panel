@@ -708,7 +708,13 @@ function seleccionarProductoMesa(mesaId, producto) {
     
     guardarMesas();
     
-    // Al actualizar el detalle, el DOM se destruye y se recrea.
+    // Limpiar input y ocultar resultados
+    const input = document.getElementById(`buscar-${mesaId}`);
+    const resultadosDiv = document.getElementById(`resultados-busqueda-${mesaId}`);
+    if (resultadosDiv) resultadosDiv.style.display = 'none';
+    if (inputCantidad) inputCantidad.value = '1';
+    
+    // Actualizar detalle de la mesa
     const detalle = document.getElementById(`detalle-${mesaId}`);
     if (detalle) {
         detalle.innerHTML = renderizarDetalleMesa(mesa);
@@ -717,16 +723,22 @@ function seleccionarProductoMesa(mesaId, producto) {
     }
     actualizarPreviewMesa(mesaId, mesa);
     
-    // CAMBIO: Recuperar el foco del input para que el teclado NO se cierre
+    // Mantener foco y limpiar después del renderizado
     setTimeout(() => {
         const inputNuevo = document.getElementById(`buscar-${mesaId}`);
         const inputCantidadNuevo = document.getElementById(`cantidad-buscar-${mesaId}`);
         
         if (inputNuevo) {
-            inputNuevo.value = ''; // Limpiar texto
-            inputNuevo.focus();    // Mantener teclado abierto
+            inputNuevo.value = '';
+            inputNuevo.focus();
         }
         if (inputCantidadNuevo) inputCantidadNuevo.value = '1';
+        
+        // Asegurar que preview y resumen estén ocultos
+        const preview = document.querySelector(`.mesa-preview-${mesaId}`);
+        const resumen = document.querySelector(`.mesa-resumen-${mesaId}`);
+        if (preview) preview.style.display = 'none';
+        if (resumen) resumen.style.display = 'none';
     }, 50);
 }
 
@@ -815,7 +827,7 @@ async function buscarProductoMesa(mesaId) {
             .eq('tenant_id', userData.tenant_id)
             .eq('activo', true)
             .or(`producto.ilike.%${termino}%,apodos_input.ilike.%${termino}%,codigo.ilike.%${termino}%`)
-            .limit(2);
+            .limit(5);
         
         if (error) throw error;
         if (!productos || productos.length === 0) {
@@ -824,10 +836,12 @@ async function buscarProductoMesa(mesaId) {
         }
         
         resultadosDiv.innerHTML = productos.map(p => `
-            <div style="padding: 10px; border-bottom: 1px solid #e5e7eb; cursor: pointer; background: white;" 
+            <div style="padding: 12px; border-bottom: 1px solid #e5e7eb; cursor: pointer; background: white; transition: background 0.2s;" 
+                 onmouseover="this.style.background='#f3f4f6'" 
+                 onmouseout="this.style.background='white'"
                  onclick="seleccionarProductoMesa('${mesaId}', ${JSON.stringify(p).replace(/"/g, '&quot;')})">
-                <div style="font-weight: 600;">[${p.codigo}] ${p.producto}</div>
-                <div style="font-size: 12px; color: #666;">$${parseFloat(p.precio_venta).toLocaleString('es-CO')}</div>
+                <div style="font-weight: 600; font-size: 13px; color: #1f2937;">[${p.codigo}] ${p.producto}</div>
+                <div style="font-size: 12px; color: #10b981; font-weight: 600; margin-top: 2px;">${parseFloat(p.precio_venta).toLocaleString('es-CO')}</div>
             </div>
         `).join('');
         resultadosDiv.style.display = 'block';
@@ -851,57 +865,7 @@ function validarCantidadBusqueda(mesaId) {
     input.value = cantidad;
 }
 
-function seleccionarProductoMesa(mesaId, producto) {
-    const mesa = mesasData[mesaId];
-    if (!mesa) return;
-    if (!mesa.productos) mesa.productos = [];
-    
-    const inputCantidad = document.getElementById(`cantidad-buscar-${mesaId}`);
-    const cantidadAgregar = inputCantidad ? parseInt(inputCantidad.value) || 1 : 1;
-    const existente = mesa.productos.find(p => p.codigo === producto.codigo);
-    
-    if (existente) {
-        existente.cantidad += cantidadAgregar;
-    } else {
-        if (mesa.productos.length >= 10) {
-            alert('Una mesa puede tener máximo 10 productos diferentes');
-            return;
-        }
-        mesa.productos.push({
-            codigo: producto.codigo,
-            nombre: producto.producto,
-            cantidad: cantidadAgregar,
-            precio: parseFloat(producto.precio_venta) || 0,
-            precio_unitario: parseFloat(producto.precio_venta) || 0,
-            unidad: producto.tipo_venta === 'peso' || producto.tipo_venta === 'medida' ? producto.unidad_venta : 'und'
-        });
-    }
-    
-    guardarMesas();
-    const input = document.getElementById(`buscar-${mesaId}`);
-    const resultadosDiv = document.getElementById(`resultados-busqueda-${mesaId}`);
-    if (input) input.value = '';
-    if (resultadosDiv) resultadosDiv.style.display = 'none';
-    if (inputCantidad) inputCantidad.value = '1';
-    
-    const detalle = document.getElementById(`detalle-${mesaId}`);
-    if (detalle) {
-        detalle.innerHTML = renderizarDetalleMesa(mesa);
-        detalle.style.display = 'block';
-        detalle.classList.add('expanded');
-    }
-    actualizarPreviewMesa(mesaId, mesa);
-    
-    const detalleNuevo = document.getElementById(`detalle-${mesaId}`);
-    if (detalleNuevo) {
-        detalleNuevo.style.display = 'block';
-        detalleNuevo.classList.add('expanded');
-        const preview = document.querySelector(`.mesa-preview-${mesaId}`);
-        const resumen = document.querySelector(`.mesa-resumen-${mesaId}`);
-        if (preview) preview.style.display = 'none';
-        if (resumen) resumen.style.display = 'none';
-    }
-}
+// FUNCIÓN ELIMINADA - Está duplicada arriba
 
 async function abrirHistorialMesas() {
     const modalBody = document.getElementById('modalBodyMesas');
