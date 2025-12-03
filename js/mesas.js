@@ -320,11 +320,11 @@ function renderizarMesas(modalBody) {
             <div class="mesa-card ${estaOcupada ? 'ocupada' : ''}" style="background: white; border: 2px solid ${estaOcupada ? '#10b981' : '#e0e0e0'}; border-radius: 12px; margin-bottom: 12px; overflow: hidden;">
                 <div class="mesa-header-row" onclick="toggleMesa('${mesa.id}')" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; cursor: pointer; background: #f9fafb;">
                     <div class="mesa-info" style="flex: 1; min-width: 0;">
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                        <div class="mesa-nombre-row">
                             <div class="mesa-nombre" style="font-size: 16px; font-weight: 700; color: #333;">${mesa.nombre}</div>
-                            <button onclick="event.stopPropagation(); editarDescripcionMesa('${mesa.id}')" style="background: none; border: none; color: #667eea; cursor: pointer; font-size: 14px; padding: 0; min-width: auto; width: auto;" title="Editar descripción">✏️</button>
+                            <div class="mesa-descripcion-chip mesa-descripcion-${mesa.id} ${mesa.descripcion ? '' : 'is-empty'}">${mesa.descripcion || ''}</div>
+                            <button onclick="event.stopPropagation(); editarDescripcionMesa('${mesa.id}')" class="mesa-edit-btn" title="Editar descripción" aria-label="Editar descripción de ${mesa.nombre}">✏️</button>
                         </div>
-                        ${mesa.descripcion ? `<div class="mesa-descripcion-${mesa.id}" style="font-size: 11px; color: #888; margin-bottom: 4px; font-style: italic;">${mesa.descripcion}</div>` : `<div class="mesa-descripcion-${mesa.id}" style="display: none;"></div>`}
                         <div class="mesa-productos-preview mesa-preview-${mesa.id}" style="font-size: 12px; color: #666; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${productosPreview}</div>
                         <div class="mesa-resumen mesa-resumen-${mesa.id}" style="display: flex; gap: 10px; font-size: 12px; color: #888;">
                             <span>${mesa.totalProductos} items</span>
@@ -451,11 +451,12 @@ function actualizarPreviewMesa(mesaId, mesa) {
     if (descripcionElement) {
         if (mesa.descripcion && mesa.descripcion.trim() !== '') {
             descripcionElement.textContent = mesa.descripcion;
-            descripcionElement.style.display = 'block';
+            descripcionElement.classList.remove('is-empty');
         } else {
-            descripcionElement.style.display = 'none';
+            descripcionElement.textContent = '';
+            descripcionElement.classList.add('is-empty');
         }
-    } 
+    }
     const previewElement = document.querySelector(`.mesa-preview-${mesaId}`);
     if (previewElement) {
         const productosPreview = mesa.productos && mesa.productos.length > 0 ?
