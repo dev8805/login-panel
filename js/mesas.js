@@ -316,14 +316,16 @@ function renderizarMesas(modalBody) {
         const productosPreview = mesa.productos && mesa.productos.length > 0 ? 
             mesa.productos.map(p => `${p.cantidad} ${p.nombre}`).slice(0, 2).join(', ') + (mesa.productos.length > 2 ? '...' : '') : 'Vacía';
         
+        const mostrarBotonDescripcion = !mesa.descripcion;
+
         return `
             <div class="mesa-card ${estaOcupada ? 'ocupada' : ''}" style="background: white; border: 2px solid ${estaOcupada ? '#10b981' : '#e0e0e0'}; border-radius: 12px; margin-bottom: 12px; overflow: hidden;">
                 <div class="mesa-header-row" onclick="toggleMesa('${mesa.id}')" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; cursor: pointer; background: #f9fafb;">
                     <div class="mesa-info" style="flex: 1; min-width: 0;">
                         <div class="mesa-nombre-row">
                             <div class="mesa-nombre" style="font-size: 16px; font-weight: 700; color: #333;">${mesa.nombre}</div>
-                            <div class="mesa-descripcion-chip mesa-descripcion-${mesa.id} ${mesa.descripcion ? '' : 'is-empty'}">${mesa.descripcion || ''}</div>
-                            <button onclick="event.stopPropagation(); editarDescripcionMesa('${mesa.id}')" class="mesa-edit-btn" title="Editar descripción" aria-label="Editar descripción de ${mesa.nombre}">✏️</button>
+                            <div class="mesa-descripcion-chip mesa-descripcion-${mesa.id} ${mesa.descripcion ? '' : 'is-empty'}" onclick="event.stopPropagation(); editarDescripcionMesa('${mesa.id}')">${mesa.descripcion || ''}</div>
+                            ${mostrarBotonDescripcion ? `<button onclick="event.stopPropagation(); editarDescripcionMesa('${mesa.id}')" class="mesa-edit-btn" data-mesa-id="${mesa.id}" title="Editar descripción" aria-label="Editar descripción de ${mesa.nombre}">✏️</button>` : ''}
                         </div>
                         <div class="mesa-productos-preview mesa-preview-${mesa.id}" style="font-size: 12px; color: #666; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${productosPreview}</div>
                         <div class="mesa-resumen mesa-resumen-${mesa.id}" style="display: flex; gap: 10px; font-size: 12px; color: #888;">
@@ -336,7 +338,7 @@ function renderizarMesas(modalBody) {
                             ${estaOcupada ? '🟢' : '⚪'}
                         </div>
                         ${!estaOcupada ? `<button onclick="event.stopPropagation(); eliminarMesa('${mesa.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 20px; padding: 4px; display: flex; align-items: center; justify-content: center; min-width: auto; width: auto;">×</button>` : ''}
-                        <span style="font-size: 18px; color: #999;">➜</span>
+                        <span class="mesa-arrow" style="font-size: 18px; color: #999;">➜</span>
                     </div>
                 </div>
                 <div class="mesa-detalle" id="detalle-${mesa.id}" style="padding: 4px; border-top: 1px solid #e5e7eb; display: none;">
@@ -467,6 +469,15 @@ function actualizarPreviewMesa(mesaId, mesa) {
     if (resumenElement) {
         resumenElement.innerHTML = `<span>${mesa.totalProductos} items</span><span style="color: #10b981; font-weight: 600;">$${mesa.totalMonto.toLocaleString('es-CO')}</span>`;
     }
+
+    const editButton = document.querySelector(`.mesa-edit-btn[data-mesa-id="${mesaId}"]`);
+    if (editButton) {
+        if (mesa.descripcion && mesa.descripcion.trim() !== '') {
+            editButton.style.display = 'none';
+        } else {
+            editButton.style.display = 'inline-flex';
+        }
+    }
 }
 
 function toggleMesa(mesaId) {
@@ -559,12 +570,124 @@ async function eliminarMesa(mesaId) {
 async function editarDescripcionMesa(mesaId) {
     const mesa = mesasData[mesaId];
     if (!mesa) return;
-    const descripcionActual = mesa.descripcion || '';
-    const nuevaDescripcion = prompt(`Descripción para ${mesa.nombre}:`, descripcionActual);
-    if (nuevaDescripcion === null) return;
-    
-    mesa.descripcion = nuevaDescripcion.trim();
-    await guardarMesas();
+    const chip = document.querySelector(`.mesa-descripcion-${mesaId}`);
+    if (!chip || chip.dataset.editing === 'true') return;
+
+    chip.dataset.editing = 'true';
+    const card = chip.closest('.mesa-card');
+    if (card) card.classList.add('mesa-editando-descripcion');
+    chip.classList.remove('is-empty');
+    chip.style.background = 'transparent';
+    chip.style.border = 'none';
+    chip.style.padding = '0';
+    chip.style.alignItems = 'center';
+    chip.style.gap = '8px';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = mesa.descripcion || '';
+    input.placeholder = 'Descripción de la mesa';
+    input.style.minWidth = '140px';
+    input.style.padding = '4px 6px';
+    input.style.border = '1px solid #e5e7eb';
+    input.style.borderRadius = '6px';
+    input.style.fontSize = '12px';
+    input.style.boxSizing = 'border-box';
+    input.style.background = 'transparent';
+    input.style.color = '#374151';
+
+    const acciones = document.createElement('div');
+    acciones.style.display = 'flex';
+    acciones.style.gap = '6px';
+    acciones.style.marginTop = '0';
+    acciones.style.justifyContent = 'flex-start';
+
+    const btnCancelar = document.createElement('button');
+    btnCancelar.textContent = '✕';
+    btnCancelar.title = 'Cancelar';
+    btnCancelar.style.background = '#f8fafc';
+    btnCancelar.style.border = '1px solid #e2e8f0';
+    btnCancelar.style.borderRadius = '50%';
+    btnCancelar.style.width = '28px';
+    btnCancelar.style.height = '28px';
+    btnCancelar.style.display = 'flex';
+    btnCancelar.style.alignItems = 'center';
+    btnCancelar.style.justifyContent = 'center';
+    btnCancelar.style.fontSize = '14px';
+    btnCancelar.style.fontWeight = '700';
+    btnCancelar.style.color = '#64748b';
+    btnCancelar.style.cursor = 'pointer';
+    btnCancelar.style.transition = 'all 0.15s ease';
+
+    btnCancelar.addEventListener('mouseenter', () => {
+        btnCancelar.style.background = '#e2e8f0';
+        btnCancelar.style.color = '#475569';
+    });
+
+    btnCancelar.addEventListener('mouseleave', () => {
+        btnCancelar.style.background = '#f8fafc';
+        btnCancelar.style.color = '#64748b';
+    });
+
+    const btnGuardar = document.createElement('button');
+    btnGuardar.textContent = '✓';
+    btnGuardar.title = 'Guardar';
+    btnGuardar.style.background = '#4f46e5';
+    btnGuardar.style.color = '#fff';
+    btnGuardar.style.border = 'none';
+    btnGuardar.style.borderRadius = '50%';
+    btnGuardar.style.width = '28px';
+    btnGuardar.style.height = '28px';
+    btnGuardar.style.display = 'flex';
+    btnGuardar.style.alignItems = 'center';
+    btnGuardar.style.justifyContent = 'center';
+    btnGuardar.style.fontSize = '16px';
+    btnGuardar.style.fontWeight = '800';
+    btnGuardar.style.cursor = 'pointer';
+    btnGuardar.style.boxShadow = '0 6px 16px rgba(79, 70, 229, 0.25)';
+    btnGuardar.style.transition = 'transform 0.1s ease, box-shadow 0.1s ease';
+
+    btnGuardar.addEventListener('mouseenter', () => {
+        btnGuardar.style.transform = 'translateY(-1px) scale(1.02)';
+        btnGuardar.style.boxShadow = '0 8px 20px rgba(79, 70, 229, 0.35)';
+    });
+
+    btnGuardar.addEventListener('mouseleave', () => {
+        btnGuardar.style.transform = 'none';
+        btnGuardar.style.boxShadow = '0 6px 16px rgba(79, 70, 229, 0.25)';
+    });
+
+    const restaurarChip = () => {
+        chip.dataset.editing = 'false';
+        if (card) card.classList.remove('mesa-editando-descripcion');
+        chip.style.background = '';
+        chip.style.border = '';
+        chip.style.padding = '';
+        chip.style.alignItems = '';
+        chip.style.gap = '';
+        actualizarPreviewMesa(mesaId, mesa);
+    };
+
+    btnCancelar.addEventListener('click', (event) => {
+        event.stopPropagation();
+        restaurarChip();
+    });
+
+    btnGuardar.addEventListener('click', async (event) => {
+        event.stopPropagation();
+        mesa.descripcion = input.value.trim();
+        await guardarMesas();
+        restaurarChip();
+    });
+
+    chip.innerHTML = '';
+    chip.appendChild(input);
+    acciones.appendChild(btnCancelar);
+    acciones.appendChild(btnGuardar);
+    chip.appendChild(acciones);
+
+    chip.addEventListener('click', (event) => event.stopPropagation());
+    setTimeout(() => input.focus(), 0);
 }
 
 function ajustarCantidad(mesaId, productoIndex, delta) {

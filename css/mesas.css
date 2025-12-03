@@ -80,16 +80,18 @@
 .mesa-descripcion-chip {
     display: inline-flex;
     align-items: center;
-    padding: 4px 8px;
-    background: #eef2ff;
-    color: #4338ca;
-    border: 1px solid #c7d2fe;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 600;
+    gap: 6px;
+    padding: 0;
+    background: transparent;
+    color: #4b5563;
+    border: none;
+    border-radius: 0;
+    font-size: 12px;
+    font-weight: 500;
     line-height: 1.2;
-    min-height: 22px;
+    min-height: 0;
     box-shadow: none;
+    cursor: pointer;
 }
 
 .mesa-descripcion-chip.is-empty {
@@ -159,6 +161,11 @@
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+.mesa-card.mesa-editando-descripcion .mesa-estado,
+.mesa-card.mesa-editando-descripcion .mesa-arrow {
+    display: none !important;
 }
 
 .btn-delete-mesa {
