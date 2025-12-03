@@ -336,7 +336,7 @@ function renderizarMesas(modalBody) {
                             ${estaOcupada ? '🟢' : '⚪'}
                         </div>
                         ${!estaOcupada ? `<button onclick="event.stopPropagation(); eliminarMesa('${mesa.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 20px; padding: 4px; display: flex; align-items: center; justify-content: center; min-width: auto; width: auto;">×</button>` : ''}
-                        <span style="font-size: 18px; color: #999;">➜</span>
+                        <span class="mesa-arrow" style="font-size: 18px; color: #999;">➜</span>
                     </div>
                 </div>
                 <div class="mesa-detalle" id="detalle-${mesa.id}" style="padding: 4px; border-top: 1px solid #e5e7eb; display: none;">
@@ -563,6 +563,8 @@ async function editarDescripcionMesa(mesaId) {
     if (!chip || chip.dataset.editing === 'true') return;
 
     chip.dataset.editing = 'true';
+    const card = chip.closest('.mesa-card');
+    if (card) card.classList.add('mesa-editando-descripcion');
     chip.classList.remove('is-empty');
     chip.style.background = 'transparent';
     chip.style.border = 'none';
@@ -646,6 +648,7 @@ async function editarDescripcionMesa(mesaId) {
 
     const restaurarChip = () => {
         chip.dataset.editing = 'false';
+        if (card) card.classList.remove('mesa-editando-descripcion');
         chip.style.background = '';
         chip.style.border = '';
         chip.style.padding = '';

@@ -162,6 +162,11 @@
     gap: 8px;
 }
 
+.mesa-card.mesa-editando-descripcion .mesa-estado,
+.mesa-card.mesa-editando-descripcion .mesa-arrow {
+    display: none !important;
+}
+
 .btn-delete-mesa {
     background: #ef4444;
     color: white;
