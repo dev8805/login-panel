@@ -69,6 +69,64 @@
     color: #333;
 }
 
+.mesa-nombre-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+.mesa-descripcion-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    background: #eef2ff;
+    color: #4338ca;
+    border: 1px solid #c7d2fe;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    min-height: 22px;
+    box-shadow: none;
+}
+
+.mesa-descripcion-chip.is-empty {
+    display: none;
+}
+
+.mesa-edit-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #667eea;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: auto;
+    width: auto;
+    box-shadow: none;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.2s, color 0.2s;
+}
+
+.mesa-edit-btn:focus-visible {
+    outline: 2px solid #c7d2fe;
+    outline-offset: 2px;
+}
+
+.mesa-edit-btn:active,
+.mesa-edit-btn:hover {
+    background: #eef2ff;
+    color: #4f46e5;
+    box-shadow: none;
+}
+
 .mesa-productos-preview {
     font-size: 13px;
     color: #666;
