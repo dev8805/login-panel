@@ -420,7 +420,7 @@ function renderizarBuscadorMesa(mesa) {
     // IMPORTANTE: onmousedown="event.preventDefault()" en los botones evita que el input pierda el foco
     return `
         <div class="buscador-mesa-wrapper" style="position: relative; margin-bottom: 8px;">
-            <div id="resultados-busqueda-${mesa.id}" class="resultados-busqueda-flotante" style="display: none;"></div>
+            <div id="resultados-busqueda-${mesa.id}" class="resultados-busqueda-flotante" style="display: none; max-height: 260px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.08);"></div>
             
             <div style="display: flex; gap: 8px; align-items: center;">
                 <div class="buscar-producto" style="flex: 1; display: flex; gap: 4px; align-items: center; background: #f9fafb; padding: 4px 8px; border: 1px solid #e5e7eb; border-radius: 8px; height: 36px;">
@@ -927,7 +927,7 @@ async function buscarProductoMesa(mesaId) {
             .eq('tenant_id', userData.tenant_id)
             .eq('activo', true)
             .or(`producto.ilike.%${termino}%,apodos_input.ilike.%${termino}%,codigo.ilike.%${termino}%`)
-            .limit(5);
+            .limit(15);
         
         if (error) throw error;
         if (!productos || productos.length === 0) {
