@@ -559,12 +559,79 @@ async function eliminarMesa(mesaId) {
 async function editarDescripcionMesa(mesaId) {
     const mesa = mesasData[mesaId];
     if (!mesa) return;
-    const descripcionActual = mesa.descripcion || '';
-    const nuevaDescripcion = prompt(`Descripción para ${mesa.nombre}:`, descripcionActual);
-    if (nuevaDescripcion === null) return;
-    
-    mesa.descripcion = nuevaDescripcion.trim();
-    await guardarMesas();
+    const chip = document.querySelector(`.mesa-descripcion-${mesaId}`);
+    if (!chip || chip.dataset.editing === 'true') return;
+
+    chip.dataset.editing = 'true';
+    chip.classList.remove('is-empty');
+    chip.style.background = '#eef2ff';
+    chip.style.border = '1px solid #c7d2fe';
+    chip.style.padding = '8px';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = mesa.descripcion || '';
+    input.placeholder = 'Descripción de la mesa';
+    input.style.width = '100%';
+    input.style.padding = '6px 8px';
+    input.style.border = '1px solid #cbd5e1';
+    input.style.borderRadius = '8px';
+    input.style.fontSize = '12px';
+    input.style.boxSizing = 'border-box';
+
+    const acciones = document.createElement('div');
+    acciones.style.display = 'flex';
+    acciones.style.gap = '8px';
+    acciones.style.marginTop = '8px';
+    acciones.style.justifyContent = 'flex-end';
+
+    const btnCancelar = document.createElement('button');
+    btnCancelar.textContent = 'Cancelar';
+    btnCancelar.style.background = '#f3f4f6';
+    btnCancelar.style.border = '1px solid #e5e7eb';
+    btnCancelar.style.borderRadius = '6px';
+    btnCancelar.style.padding = '6px 10px';
+    btnCancelar.style.fontSize = '12px';
+    btnCancelar.style.cursor = 'pointer';
+
+    const btnGuardar = document.createElement('button');
+    btnGuardar.textContent = 'Guardar';
+    btnGuardar.style.background = '#4f46e5';
+    btnGuardar.style.color = '#fff';
+    btnGuardar.style.border = 'none';
+    btnGuardar.style.borderRadius = '6px';
+    btnGuardar.style.padding = '6px 10px';
+    btnGuardar.style.fontSize = '12px';
+    btnGuardar.style.cursor = 'pointer';
+
+    const restaurarChip = () => {
+        chip.dataset.editing = 'false';
+        chip.style.background = '';
+        chip.style.border = '';
+        chip.style.padding = '';
+        actualizarPreviewMesa(mesaId, mesa);
+    };
+
+    btnCancelar.addEventListener('click', (event) => {
+        event.stopPropagation();
+        restaurarChip();
+    });
+
+    btnGuardar.addEventListener('click', async (event) => {
+        event.stopPropagation();
+        mesa.descripcion = input.value.trim();
+        await guardarMesas();
+        restaurarChip();
+    });
+
+    chip.innerHTML = '';
+    chip.appendChild(input);
+    acciones.appendChild(btnCancelar);
+    acciones.appendChild(btnGuardar);
+    chip.appendChild(acciones);
+
+    chip.addEventListener('click', (event) => event.stopPropagation());
+    setTimeout(() => input.focus(), 0);
 }
 
 function ajustarCantidad(mesaId, productoIndex, delta) {
