@@ -323,7 +323,7 @@ function renderizarMesas(modalBody) {
                         <div class="mesa-nombre-row">
                             <div class="mesa-nombre" style="font-size: 16px; font-weight: 700; color: #333;">${mesa.nombre}</div>
                             <div class="mesa-descripcion-chip mesa-descripcion-${mesa.id} ${mesa.descripcion ? '' : 'is-empty'}">${mesa.descripcion || ''}</div>
-                            <button onclick="event.stopPropagation(); editarDescripcionMesa('${mesa.id}')" class="mesa-edit-btn" title="Editar descripción" aria-label="Editar descripción de ${mesa.nombre}">✏️</button>
+                            <button onclick="event.stopPropagation(); editarDescripcionMesa('${mesa.id}')" class="mesa-edit-btn mesa-edit-btn-${mesa.id}" data-mesa-id="${mesa.id}" title="Editar descripción" aria-label="Editar descripción de ${mesa.nombre}">✏️</button>
                         </div>
                         <div class="mesa-productos-preview mesa-preview-${mesa.id}" style="font-size: 12px; color: #666; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${productosPreview}</div>
                         <div class="mesa-resumen mesa-resumen-${mesa.id}" style="display: flex; gap: 10px; font-size: 12px; color: #888;">
@@ -562,6 +562,11 @@ async function editarDescripcionMesa(mesaId) {
     const chip = document.querySelector(`.mesa-descripcion-${mesaId}`);
     if (!chip || chip.dataset.editing === 'true') return;
 
+    const botonLapiz = document.querySelector(`.mesa-edit-btn-${mesaId}`);
+    if (botonLapiz) {
+        botonLapiz.style.display = 'none';
+    }
+
     chip.dataset.editing = 'true';
     chip.classList.remove('is-empty');
     chip.style.background = '#eef2ff';
@@ -609,6 +614,9 @@ async function editarDescripcionMesa(mesaId) {
         chip.style.background = '';
         chip.style.border = '';
         chip.style.padding = '';
+        if (botonLapiz) {
+            botonLapiz.style.display = '';
+        }
         actualizarPreviewMesa(mesaId, mesa);
     };
 
