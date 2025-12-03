@@ -604,42 +604,20 @@ async function editarDescripcionMesa(mesaId) {
     input.type = 'text';
     input.value = mesa.descripcion || '';
     input.placeholder = 'Descripción de la mesa';
-    input.style.width = '100%';
-    input.style.padding = '6px 8px';
-    input.style.border = '1px solid #cbd5e1';
-    input.style.borderRadius = '8px';
-    input.style.fontSize = '12px';
-    input.style.boxSizing = 'border-box';
-    input.style.flex = '1';
+    input.className = 'mesa-descripcion-input';
 
     const acciones = document.createElement('div');
-    acciones.style.display = 'flex';
-    acciones.style.gap = '6px';
-    acciones.style.alignItems = 'center';
+    acciones.className = 'mesa-descripcion-acciones';
 
     const btnCancelar = document.createElement('button');
     btnCancelar.textContent = '×';
     btnCancelar.title = 'Cancelar edición';
-    btnCancelar.style.background = '#ef4444';
-    btnCancelar.style.border = '1px solid #ef4444';
-    btnCancelar.style.borderRadius = '6px';
-    btnCancelar.style.padding = '4px 8px';
-    btnCancelar.style.fontSize = '12px';
-    btnCancelar.style.fontWeight = '700';
-    btnCancelar.style.color = '#fff';
-    btnCancelar.style.cursor = 'pointer';
+    btnCancelar.className = 'mesa-descripcion-btn cancelar';
 
     const btnGuardar = document.createElement('button');
     btnGuardar.textContent = '✓';
     btnGuardar.title = 'Guardar descripción';
-    btnGuardar.style.background = '#10b981';
-    btnGuardar.style.color = '#fff';
-    btnGuardar.style.border = '1px solid #10b981';
-    btnGuardar.style.borderRadius = '6px';
-    btnGuardar.style.padding = '4px 10px';
-    btnGuardar.style.fontSize = '12px';
-    btnGuardar.style.fontWeight = '700';
-    btnGuardar.style.cursor = 'pointer';
+    btnGuardar.className = 'mesa-descripcion-btn guardar';
 
     const restaurarChip = () => {
         chip.dataset.editing = 'false';
