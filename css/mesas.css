@@ -90,9 +90,28 @@
     line-height: 1.2;
     min-height: 22px;
     box-shadow: none;
+    cursor: pointer;
 }
 
 .mesa-descripcion-chip.is-empty {
+    display: none;
+}
+
+.mesa-descripcion-chip.editing {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+    width: 100%;
+    cursor: default;
+}
+
+.mesa-card.editando-descripcion .mesa-estado,
+.mesa-card.editando-descripcion .mesa-flecha {
     display: none;
 }
 
