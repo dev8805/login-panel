@@ -652,6 +652,8 @@ async function editarDescripcionMesa(mesaId) {
         chip.style.background = '';
         chip.style.border = '';
         chip.style.padding = '';
+        chip.style.alignItems = '';
+        chip.style.gap = '';
         actualizarPreviewMesa(mesaId, mesa);
     };
 
