@@ -90,9 +90,71 @@
     line-height: 1.2;
     min-height: 22px;
     box-shadow: none;
+    cursor: pointer;
 }
 
 .mesa-descripcion-chip.is-empty {
+    display: none;
+}
+
+.mesa-descripcion-chip.editing {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+    width: 100%;
+    cursor: default;
+}
+
+.mesa-descripcion-input {
+    width: 100%;
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.4;
+    min-height: 32px;
+    box-sizing: border-box;
+}
+
+.mesa-descripcion-acciones {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.mesa-descripcion-btn {
+    border: none;
+    padding: 6px 8px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    line-height: 1;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none;
+}
+
+.mesa-descripcion-btn.cancelar {
+    background: #ef4444;
+}
+
+.mesa-descripcion-btn.guardar {
+    background: #10b981;
+}
+
+.mesa-card.editando-descripcion .mesa-estado,
+.mesa-card.editando-descripcion .mesa-flecha {
     display: none;
 }
 
@@ -453,7 +515,29 @@
     .mesas-container {
         padding: 12px !important;
     }
-    
+
+    .mesa-descripcion-chip.editing {
+        align-items: stretch;
+        gap: 6px;
+    }
+
+    .mesa-descripcion-input {
+        padding: 8px 12px;
+        min-height: 36px;
+        font-size: 13px;
+    }
+
+    .mesa-descripcion-acciones {
+        gap: 4px;
+    }
+
+    .mesa-descripcion-btn {
+        height: 36px;
+        width: 36px;
+        padding: 0;
+        border-radius: 10px;
+    }
+
     .mesa-nombre {
         font-size: 15px !important;
     }
