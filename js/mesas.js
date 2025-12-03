@@ -564,26 +564,30 @@ async function editarDescripcionMesa(mesaId) {
 
     chip.dataset.editing = 'true';
     chip.classList.remove('is-empty');
-    chip.style.background = '#eef2ff';
-    chip.style.border = '1px solid #c7d2fe';
-    chip.style.padding = '8px';
+    chip.style.background = 'transparent';
+    chip.style.border = 'none';
+    chip.style.padding = '0';
+    chip.style.alignItems = 'center';
+    chip.style.gap = '8px';
 
     const input = document.createElement('input');
     input.type = 'text';
     input.value = mesa.descripcion || '';
     input.placeholder = 'Descripción de la mesa';
-    input.style.width = '100%';
-    input.style.padding = '6px 8px';
-    input.style.border = '1px solid #cbd5e1';
-    input.style.borderRadius = '8px';
+    input.style.minWidth = '140px';
+    input.style.padding = '4px 6px';
+    input.style.border = '1px solid #e5e7eb';
+    input.style.borderRadius = '6px';
     input.style.fontSize = '12px';
     input.style.boxSizing = 'border-box';
+    input.style.background = 'transparent';
+    input.style.color = '#374151';
 
     const acciones = document.createElement('div');
     acciones.style.display = 'flex';
     acciones.style.gap = '6px';
-    acciones.style.marginTop = '8px';
-    acciones.style.justifyContent = 'flex-end';
+    acciones.style.marginTop = '0';
+    acciones.style.justifyContent = 'flex-start';
 
     const btnCancelar = document.createElement('button');
     btnCancelar.textContent = '✕';
