@@ -153,6 +153,24 @@
     background: #10b981;
 }
 
+.btn-historial {
+    background: transparent;
+    color: #667eea;
+    border: 2px solid #667eea;
+    padding: 8px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    width: auto;
+    transition: all 0.2s ease;
+}
+
+.btn-historial:hover {
+    background: #eef2ff;
+}
+
 .mesa-card.editando-descripcion .mesa-estado,
 .mesa-card.editando-descripcion .mesa-flecha {
     display: none;
@@ -517,25 +535,35 @@
     }
 
     .mesa-descripcion-chip.editing {
-        align-items: stretch;
-        gap: 6px;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: nowrap;
     }
 
     .mesa-descripcion-input {
-        padding: 8px 12px;
-        min-height: 36px;
-        font-size: 13px;
+        padding: 10px 12px;
+        min-height: 40px;
+        font-size: 14px;
+        border-radius: 10px;
     }
 
     .mesa-descripcion-acciones {
-        gap: 4px;
+        gap: 6px;
     }
 
     .mesa-descripcion-btn {
-        height: 36px;
-        width: 36px;
+        height: 40px;
+        width: 40px;
         padding: 0;
-        border-radius: 10px;
+        border-radius: 12px;
+    }
+
+    .btn-historial {
+        padding: 6px 10px;
+        border-width: 1.5px;
+        border-radius: 12px;
+        font-size: 12px;
+        line-height: 1.1;
     }
 
     .mesa-nombre {

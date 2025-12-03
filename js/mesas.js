@@ -354,7 +354,7 @@ function renderizarMesas(modalBody) {
                 <div style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: ${canalMesas && canalMesas.state === 'joined' ? '#10b98115' : pollingInterval ? '#f59e0b15' : '#ef444415'}; border: 1px solid ${canalMesas && canalMesas.state === 'joined' ? '#10b981' : pollingInterval ? '#f59e0b' : '#ef4444'}; border-radius: 20px; font-size: 11px; font-weight: 600; color: ${canalMesas && canalMesas.state === 'joined' ? '#10b981' : pollingInterval ? '#f59e0b' : '#ef4444'};">
                     ${canalMesas && canalMesas.state === 'joined' ? '🟢 Tiempo Real Activo' : pollingInterval ? '🟡 Modo Polling (3s)' : '🔴 Desconectado'}
                 </div>
-                <button onclick="abrirHistorialMesas()" style="background: transparent; color: #667eea; border: 2px solid #667eea; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 700; white-space: nowrap; width: auto; transition: all 0.2s;">
+                <button onclick="abrirHistorialMesas()" class="btn-historial">
                     📋 Historial
                 </button>
             </div>
