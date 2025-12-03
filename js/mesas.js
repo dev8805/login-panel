@@ -316,14 +316,16 @@ function renderizarMesas(modalBody) {
         const productosPreview = mesa.productos && mesa.productos.length > 0 ? 
             mesa.productos.map(p => `${p.cantidad} ${p.nombre}`).slice(0, 2).join(', ') + (mesa.productos.length > 2 ? '...' : '') : 'Vacía';
         
+        const mostrarBotonEditar = !(mesa.descripcion && mesa.descripcion.trim());
+
         return `
             <div class="mesa-card ${estaOcupada ? 'ocupada' : ''}" style="background: white; border: 2px solid ${estaOcupada ? '#10b981' : '#e0e0e0'}; border-radius: 12px; margin-bottom: 12px; overflow: hidden;">
                 <div class="mesa-header-row" onclick="toggleMesa('${mesa.id}')" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; cursor: pointer; background: #f9fafb;">
                     <div class="mesa-info" style="flex: 1; min-width: 0;">
                         <div class="mesa-nombre-row">
                             <div class="mesa-nombre" style="font-size: 16px; font-weight: 700; color: #333;">${mesa.nombre}</div>
-                            <div class="mesa-descripcion-chip mesa-descripcion-${mesa.id} ${mesa.descripcion ? '' : 'is-empty'}">${mesa.descripcion || ''}</div>
-                            <button onclick="event.stopPropagation(); editarDescripcionMesa('${mesa.id}')" class="mesa-edit-btn mesa-edit-btn-${mesa.id}" data-mesa-id="${mesa.id}" title="Editar descripción" aria-label="Editar descripción de ${mesa.nombre}">✏️</button>
+                            <div class="mesa-descripcion-chip mesa-descripcion-${mesa.id} ${mesa.descripcion ? '' : 'is-empty'}" onclick="event.stopPropagation(); editarDescripcionMesa('${mesa.id}')">${mesa.descripcion || ''}</div>
+                            ${mostrarBotonEditar ? `<button onclick="event.stopPropagation(); editarDescripcionMesa('${mesa.id}')" class="mesa-edit-btn mesa-edit-btn-${mesa.id}" data-mesa-id="${mesa.id}" title="Editar descripción" aria-label="Editar descripción de ${mesa.nombre}">✏️</button>` : ''}
                         </div>
                         <div class="mesa-productos-preview mesa-preview-${mesa.id}" style="font-size: 12px; color: #666; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${productosPreview}</div>
                         <div class="mesa-resumen mesa-resumen-${mesa.id}" style="display: flex; gap: 10px; font-size: 12px; color: #888;">
@@ -336,7 +338,7 @@ function renderizarMesas(modalBody) {
                             ${estaOcupada ? '🟢' : '⚪'}
                         </div>
                         ${!estaOcupada ? `<button onclick="event.stopPropagation(); eliminarMesa('${mesa.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 20px; padding: 4px; display: flex; align-items: center; justify-content: center; min-width: auto; width: auto;">×</button>` : ''}
-                        <span style="font-size: 18px; color: #999;">➜</span>
+                        <span class="mesa-flecha" style="font-size: 18px; color: #999;">➜</span>
                     </div>
                 </div>
                 <div class="mesa-detalle" id="detalle-${mesa.id}" style="padding: 4px; border-top: 1px solid #e5e7eb; display: none;">
@@ -457,6 +459,26 @@ function actualizarPreviewMesa(mesaId, mesa) {
             descripcionElement.classList.add('is-empty');
         }
     }
+
+    const botonLapiz = document.querySelector(`.mesa-edit-btn-${mesaId}`);
+    const debeMostrarLapiz = !(mesa.descripcion && mesa.descripcion.trim());
+
+    if (botonLapiz) {
+        botonLapiz.style.display = debeMostrarLapiz ? '' : 'none';
+    } else if (debeMostrarLapiz && descripcionElement) {
+        const nombreRow = descripcionElement.closest('.mesa-nombre-row');
+        if (nombreRow) {
+            const nuevoBoton = document.createElement('button');
+            nuevoBoton.onclick = (event) => { event.stopPropagation(); editarDescripcionMesa(mesaId); };
+            nuevoBoton.className = `mesa-edit-btn mesa-edit-btn-${mesaId}`;
+            nuevoBoton.dataset.mesaId = mesaId;
+            nuevoBoton.title = 'Editar descripción';
+            nuevoBoton.setAttribute('aria-label', `Editar descripción de ${mesa.nombre}`);
+            nuevoBoton.textContent = '✏️';
+            nombreRow.appendChild(nuevoBoton);
+        }
+    }
+
     const previewElement = document.querySelector(`.mesa-preview-${mesaId}`);
     if (previewElement) {
         const productosPreview = mesa.productos && mesa.productos.length > 0 ?
@@ -567,11 +589,16 @@ async function editarDescripcionMesa(mesaId) {
         botonLapiz.style.display = 'none';
     }
 
+    const tarjetaMesa = chip.closest('.mesa-card');
+    const indicadorEstado = tarjetaMesa?.querySelector('.mesa-estado');
+    const flechaMesa = tarjetaMesa?.querySelector('.mesa-flecha');
+    if (tarjetaMesa) tarjetaMesa.classList.add('editando-descripcion');
+    if (indicadorEstado) indicadorEstado.style.display = 'none';
+    if (flechaMesa) flechaMesa.style.display = 'none';
+
     chip.dataset.editing = 'true';
     chip.classList.remove('is-empty');
-    chip.style.background = '#eef2ff';
-    chip.style.border = '1px solid #c7d2fe';
-    chip.style.padding = '8px';
+    chip.classList.add('editing');
 
     const input = document.createElement('input');
     input.type = 'text';
@@ -586,37 +613,43 @@ async function editarDescripcionMesa(mesaId) {
 
     const acciones = document.createElement('div');
     acciones.style.display = 'flex';
-    acciones.style.gap = '8px';
+    acciones.style.gap = '6px';
     acciones.style.marginTop = '8px';
     acciones.style.justifyContent = 'flex-end';
 
     const btnCancelar = document.createElement('button');
-    btnCancelar.textContent = 'Cancelar';
-    btnCancelar.style.background = '#f3f4f6';
+    btnCancelar.textContent = '×';
+    btnCancelar.title = 'Cancelar edición';
+    btnCancelar.style.background = '#fff';
     btnCancelar.style.border = '1px solid #e5e7eb';
     btnCancelar.style.borderRadius = '6px';
-    btnCancelar.style.padding = '6px 10px';
-    btnCancelar.style.fontSize = '12px';
+    btnCancelar.style.padding = '4px 8px';
+    btnCancelar.style.fontSize = '14px';
+    btnCancelar.style.fontWeight = '700';
+    btnCancelar.style.color = '#ef4444';
     btnCancelar.style.cursor = 'pointer';
 
     const btnGuardar = document.createElement('button');
-    btnGuardar.textContent = 'Guardar';
-    btnGuardar.style.background = '#4f46e5';
+    btnGuardar.textContent = '✓';
+    btnGuardar.title = 'Guardar descripción';
+    btnGuardar.style.background = '#4338ca';
     btnGuardar.style.color = '#fff';
-    btnGuardar.style.border = 'none';
+    btnGuardar.style.border = '1px solid #4338ca';
     btnGuardar.style.borderRadius = '6px';
-    btnGuardar.style.padding = '6px 10px';
-    btnGuardar.style.fontSize = '12px';
+    btnGuardar.style.padding = '4px 10px';
+    btnGuardar.style.fontSize = '14px';
+    btnGuardar.style.fontWeight = '700';
     btnGuardar.style.cursor = 'pointer';
 
     const restaurarChip = () => {
         chip.dataset.editing = 'false';
-        chip.style.background = '';
-        chip.style.border = '';
-        chip.style.padding = '';
+        chip.classList.remove('editing');
         if (botonLapiz) {
             botonLapiz.style.display = '';
         }
+        if (tarjetaMesa) tarjetaMesa.classList.remove('editando-descripcion');
+        if (indicadorEstado) indicadorEstado.style.display = '';
+        if (flechaMesa) flechaMesa.style.display = '';
         actualizarPreviewMesa(mesaId, mesa);
     };
 
