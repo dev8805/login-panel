@@ -14,6 +14,8 @@ let mediaRecorderMesa = null;
 let audioChunksMesa = [];
 let estaGrabandoMesa = false;
 let heartbeatInterval = null;
+let productosCache = [];
+let cacheProductosCargado = false;
 
 // Inicializar mesas desde Supabase
 async function inicializarMesas() {
@@ -420,7 +422,7 @@ function renderizarBuscadorMesa(mesa) {
     // IMPORTANTE: onmousedown="event.preventDefault()" en los botones evita que el input pierda el foco
     return `
         <div class="buscador-mesa-wrapper" style="position: relative; margin-bottom: 8px;">
-            <div id="resultados-busqueda-${mesa.id}" class="resultados-busqueda-flotante" style="display: none;"></div>
+            <div id="resultados-busqueda-${mesa.id}" class="resultados-busqueda-flotante" style="display: none; max-height: 260px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.08); position: absolute; top: 40px; left: 0; right: 0; z-index: 20; background: white; border: 1px solid #e5e7eb; border-radius: 8px;"></div>
             
             <div style="display: flex; gap: 8px; align-items: center;">
                 <div class="buscar-producto" style="flex: 1; display: flex; gap: 4px; align-items: center; background: #f9fafb; padding: 4px 8px; border: 1px solid #e5e7eb; border-radius: 8px; height: 36px;">
@@ -910,6 +912,30 @@ async function guardarHistorialMesa(mesa, dataVenta) {
     } catch (error) { console.error('Error:', error); }
 }
 
+async function asegurarCatalogoProductos() {
+    if (cacheProductosCargado && productosCache.length > 0) return productosCache;
+
+    try {
+        const { data: productos, error } = await supabase
+            .from('productos')
+            .select('producto_id, codigo, producto, precio_venta, tipo_venta, unidad_venta, apodos_input')
+            .eq('tenant_id', userData.tenant_id)
+            .eq('activo', true)
+            .order('producto', { ascending: true })
+            .limit(500);
+
+        if (error) throw error;
+
+        productosCache = productos || [];
+        cacheProductosCargado = true;
+        return productosCache;
+    } catch (error) {
+        console.error('Error cargando catálogo de productos:', error);
+        cacheProductosCargado = false;
+        return [];
+    }
+}
+
 async function buscarProductoMesa(mesaId) {
     const input = document.getElementById(`buscar-${mesaId}`);
     const resultadosDiv = document.getElementById(`resultados-busqueda-${mesaId}`);
@@ -921,24 +947,25 @@ async function buscarProductoMesa(mesaId) {
     }
     
     try {
-        const { data: productos, error } = await supabase
-            .from('productos')
-            .select('producto_id, codigo, producto, precio_venta, tipo_venta, unidad_venta, apodos_input')
-            .eq('tenant_id', userData.tenant_id)
-            .eq('activo', true)
-            .or(`producto.ilike.%${termino}%,apodos_input.ilike.%${termino}%,codigo.ilike.%${termino}%`)
-            .limit(5);
-        
-        if (error) throw error;
-        if (!productos || productos.length === 0) {
+        const catalogo = await asegurarCatalogoProductos();
+
+        const filtrados = catalogo.filter((p) => {
+            const nombre = (p.producto || '').toLowerCase();
+            const codigo = (p.codigo || '').toLowerCase();
+            const apodos = (Array.isArray(p.apodos_input) ? p.apodos_input.join(' ') : p.apodos_input || '').toLowerCase();
+
+            return nombre.includes(termino) || codigo.includes(termino) || apodos.includes(termino);
+        }).slice(0, 20);
+
+        if (filtrados.length === 0) {
             resultadosDiv.style.display = 'none';
             return;
         }
-        
+
         // IMPORTANTE: onmousedown="event.preventDefault()" evita que el input pierda el foco al hacer click
-        resultadosDiv.innerHTML = productos.map(p => `
-            <div style="padding: 12px; border-bottom: 1px solid #e5e7eb; cursor: pointer; background: white; transition: background 0.2s;" 
-                 onmouseover="this.style.background='#f3f4f6'" 
+        resultadosDiv.innerHTML = filtrados.map(p => `
+            <div style="padding: 12px; border-bottom: 1px solid #e5e7eb; cursor: pointer; background: white; transition: background 0.2s;"
+                 onmouseover="this.style.background='#f3f4f6'"
                  onmouseout="this.style.background='white'"
                  onmousedown="event.preventDefault()"
                  onclick="seleccionarProductoMesa('${mesaId}', ${JSON.stringify(p).replace(/"/g, '&quot;')})">
