@@ -99,9 +99,9 @@
 
 .mesa-descripcion-chip.editing {
     display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
     background: transparent;
     border: none;
     padding: 0;

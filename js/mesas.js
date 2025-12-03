@@ -610,34 +610,34 @@ async function editarDescripcionMesa(mesaId) {
     input.style.borderRadius = '8px';
     input.style.fontSize = '12px';
     input.style.boxSizing = 'border-box';
+    input.style.flex = '1';
 
     const acciones = document.createElement('div');
     acciones.style.display = 'flex';
     acciones.style.gap = '6px';
-    acciones.style.marginTop = '8px';
-    acciones.style.justifyContent = 'flex-end';
+    acciones.style.alignItems = 'center';
 
     const btnCancelar = document.createElement('button');
     btnCancelar.textContent = '×';
     btnCancelar.title = 'Cancelar edición';
-    btnCancelar.style.background = '#fff';
-    btnCancelar.style.border = '1px solid #e5e7eb';
+    btnCancelar.style.background = '#ef4444';
+    btnCancelar.style.border = '1px solid #ef4444';
     btnCancelar.style.borderRadius = '6px';
     btnCancelar.style.padding = '4px 8px';
-    btnCancelar.style.fontSize = '14px';
+    btnCancelar.style.fontSize = '12px';
     btnCancelar.style.fontWeight = '700';
-    btnCancelar.style.color = '#ef4444';
+    btnCancelar.style.color = '#fff';
     btnCancelar.style.cursor = 'pointer';
 
     const btnGuardar = document.createElement('button');
     btnGuardar.textContent = '✓';
     btnGuardar.title = 'Guardar descripción';
-    btnGuardar.style.background = '#4338ca';
+    btnGuardar.style.background = '#10b981';
     btnGuardar.style.color = '#fff';
-    btnGuardar.style.border = '1px solid #4338ca';
+    btnGuardar.style.border = '1px solid #10b981';
     btnGuardar.style.borderRadius = '6px';
     btnGuardar.style.padding = '4px 10px';
-    btnGuardar.style.fontSize = '14px';
+    btnGuardar.style.fontSize = '12px';
     btnGuardar.style.fontWeight = '700';
     btnGuardar.style.cursor = 'pointer';
 
