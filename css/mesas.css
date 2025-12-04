@@ -581,32 +581,32 @@
     /* --- INPUT DESCRIPCIÓN (Compacto y delgado) --- */
     .mesa-descripcion-chip.editing {
         align-items: center;
-        gap: 6px; /* Menos espacio entre elementos */
+        gap: 6px;
         flex-wrap: nowrap;
     }
 
     .mesa-descripcion-input {
-        padding: 4px 8px;   /* Padding reducido */
-        min-height: 32px;   /* Altura reducida para verse compacto */
-        height: 32px;
+        padding: 6px 10px;
+        min-height: 36px;
+        height: 36px;
         font-size: 13px;
-        border-radius: 6px; /* Bordes menos redondeados para look compacto */
+        border-radius: 6px;
     }
 
-    /* --- BOTONES X y CHULO (Pequeños y cuadrados) --- */
+    /* --- BOTONES X y CHULO (Mismo tamaño que el input) --- */
     .mesa-descripcion-acciones {
         gap: 6px;
         flex-shrink: 0;
     }
 
     .mesa-descripcion-btn {
-        height: 32px;      /* Altura igual al input */
-        width: 32px;       /* Cuadrado exacto */
-        min-width: 32px;   /* Evita que se aplaste */
+        height: 36px;        /* Misma altura que el input */
+        width: 36px;         /* Cuadrado perfecto */
+        min-width: 36px;
         padding: 0;
         border-radius: 6px;
         flex-shrink: 0;
-        font-size: 13px;   /* Icono ajustado */
+        font-size: 16px;     /* Tamaño de icono visible */
         line-height: 1;
         display: flex;
         align-items: center;
@@ -615,12 +615,12 @@
 
     /* --- BOTÓN HISTORIAL (Grande/Robusto) --- */
     .btn-historial {
-        padding: 10px 16px; /* Estilo robusto mantenido */
+        padding: 10px 16px;
         border-width: 2px;
         border-radius: 12px;
         font-size: 13px;
         line-height: 1.2;
-        min-height: 40px;   /* Altura fácil de tocar */
+        min-height: 40px;
         display: flex;
         align-items: center;
     }
