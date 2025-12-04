@@ -156,15 +156,20 @@
 .btn-historial {
     background: transparent;
     color: #667eea;
-    border: 2px solid #667eea;
-    padding: 8px 12px;
-    border-radius: 10px;
+    border: 1.5px solid #667eea;
+    padding: 6px 10px;
+    border-radius: 12px;
     cursor: pointer;
     font-size: 12px;
     font-weight: 700;
     white-space: nowrap;
     width: auto;
     transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    gap: 6px;
 }
 
 .btn-historial:hover {
@@ -205,6 +210,32 @@
     background: #eef2ff;
     color: #4f46e5;
     box-shadow: none;
+}
+
+@media (max-width: 640px) {
+    .mesa-descripcion-input {
+        padding: 6px 8px;
+        min-height: 30px;
+        font-size: 12px;
+    }
+
+    .mesa-descripcion-acciones {
+        gap: 4px;
+    }
+
+    .mesa-descripcion-btn {
+        padding: 6px 7px;
+        height: 30px;
+        min-width: 30px;
+        font-size: 12px;
+    }
+
+    .btn-historial {
+        height: 30px;
+        padding: 5px 10px;
+        font-size: 12px;
+        border-radius: 11px;
+    }
 }
 
 .mesa-productos-preview {
