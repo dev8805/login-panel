@@ -570,7 +570,7 @@
 }
 
 /* ==========================================
-   RESPONSIVIDAD MÓVIL (AJUSTADA: COMPACTA)
+   RESPONSIVIDAD MÓVIL (AJUSTADA: ULTRA COMPACTA)
    ========================================== */
 
 @media (max-width: 767px) {
@@ -578,42 +578,42 @@
         padding: 12px !important;
     }
 
-    /* --- INPUT DESCRIPCIÓN (Compacto y delgado) --- */
+    /* --- INPUT DESCRIPCIÓN (27px de altura) --- */
     .mesa-descripcion-chip.editing {
         align-items: center;
-        gap: 6px;
+        gap: 4px; /* Gap ajustado a 4px */
         flex-wrap: nowrap;
     }
 
     .mesa-descripcion-input {
-        padding: 6px 10px;
-        min-height: 36px;
-        height: 36px;
+        padding: 0 8px;     /* Padding vertical en 0 para centrar en altura pequeña */
+        min-height: 27px;   /* Altura exacta solicitada */
+        height: 27px;
         font-size: 13px;
         border-radius: 6px;
     }
 
-    /* --- BOTONES X y CHULO (Mismo tamaño que el input) --- */
+    /* --- BOTONES X y CHULO (27px x 27px) --- */
     .mesa-descripcion-acciones {
-        gap: 6px;
+        gap: 4px; /* Gap ajustado a 4px */
         flex-shrink: 0;
     }
 
     .mesa-descripcion-btn {
-        height: 36px;        /* Misma altura que el input */
-        width: 36px;         /* Cuadrado perfecto */
-        min-width: 36px;
+        height: 27px;        /* Altura exacta */
+        width: 27px;         /* Ancho exacto */
+        min-width: 27px;     /* Evita aplastamiento */
         padding: 0;
         border-radius: 6px;
         flex-shrink: 0;
-        font-size: 16px;     /* Tamaño de icono visible */
+        font-size: 13px;     /* Tamaño icono solicitado */
         line-height: 1;
         display: flex;
         align-items: center;
         justify-content: center;
     }
 
-    /* --- BOTÓN HISTORIAL (Grande/Robusto) --- */
+    /* --- BOTÓN HISTORIAL (Se mantiene grande/cómodo) --- */
     .btn-historial {
         padding: 10px 16px;
         border-width: 2px;
