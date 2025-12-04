@@ -6,9 +6,14 @@
 
 let datosInformes = null;
 let rangoFechaInformes = 'today';
+// Nueva variable para controlar el estado visual del botón
+let filtroSeleccionado = 'diario'; 
 
 // Función principal llamada desde el menú
 async function cargarInformes(modalBody) {
+    // Resetear filtro visual al abrir
+    filtroSeleccionado = 'diario';
+    
     // Mostrar loading inicial
     modalBody.innerHTML = `
         <div style="text-align: center; padding: 40px;">
@@ -198,11 +203,16 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
 
     // 2. Aplicar Filtros (Lógica de Chips)
     window.aplicarFiltroFecha = function(tipo) {
+        // Actualizar variable global ANTES de renderizar
+        filtroSeleccionado = tipo;
+
         const hoy = new Date();
         let inicio = new Date();
         let fin = new Date();
         
-        // UI Update
+        // La actualización visual de .active ya no es necesaria aquí manualmente
+        // porque se manejará al renderizar todo el HTML de nuevo.
+        // Pero para feedback instantáneo si hay latencia, podemos dejarlo:
         document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
         const chip = document.getElementById('chip-' + tipo);
         if(chip) chip.classList.add('active');
@@ -502,11 +512,11 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
     <div style="background: #f1f5f9; min-height: 100%;">
         <div class="report-header-modern">
             <div class="filters-container">
-                <button id="chip-diario" class="filter-chip" onclick="window.aplicarFiltroFecha('diario')">Diario</button>
-                <button id="chip-semanal" class="filter-chip" onclick="window.aplicarFiltroFecha('semanal')">Semanal</button>
-                <button id="chip-mensual" class="filter-chip" onclick="window.aplicarFiltroFecha('mensual')">Mensual</button>
-                <button id="chip-anual" class="filter-chip" onclick="window.aplicarFiltroFecha('anual')">Anual</button>
-                <button id="chip-personalizado" class="filter-chip" onclick="window.aplicarFiltroFecha('personalizado')">Personalizado</button>
+                <button id="chip-diario" class="filter-chip ${filtroSeleccionado === 'diario' ? 'active' : ''}" onclick="window.aplicarFiltroFecha('diario')">Diario</button>
+                <button id="chip-semanal" class="filter-chip ${filtroSeleccionado === 'semanal' ? 'active' : ''}" onclick="window.aplicarFiltroFecha('semanal')">Semanal</button>
+                <button id="chip-mensual" class="filter-chip ${filtroSeleccionado === 'mensual' ? 'active' : ''}" onclick="window.aplicarFiltroFecha('mensual')">Mensual</button>
+                <button id="chip-anual" class="filter-chip ${filtroSeleccionado === 'anual' ? 'active' : ''}" onclick="window.aplicarFiltroFecha('anual')">Anual</button>
+                <button id="chip-personalizado" class="filter-chip ${filtroSeleccionado === 'personalizado' ? 'active' : ''}" onclick="window.aplicarFiltroFecha('personalizado')">Personalizado</button>
             </div>
 
             <div class="hidden-inputs">
@@ -694,13 +704,6 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
     // Inicializar etiqueta de fecha al cargar si hay datos
     setTimeout(() => {
         if(fechaInicio && fechaFin) {
-            // Activar el chip correcto visualmente
-            const hoyStr = new Date().toLocaleDateString('en-CA');
-            if (fechaInicio === hoyStr && fechaFin === hoyStr) {
-                const chip = document.getElementById('chip-diario');
-                if(chip) chip.classList.add('active');
-            }
-            
             const opts = { month: 'short', day: 'numeric' };
             const t1 = new Date(fechaInicio + 'T00:00:00').toLocaleDateString('es-CO', opts);
             const t2 = new Date(fechaFin + 'T00:00:00').toLocaleDateString('es-CO', opts);
