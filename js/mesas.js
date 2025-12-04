@@ -650,46 +650,40 @@ async function editarDescripcionMesa(mesaId) {
     chip.appendChild(acciones);
 
     chip.addEventListener('click', (event) => event.stopPropagation());
-    
-    // --- INICIO CÓDIGO DE DIAGNÓSTICO ---
+    setTimeout(() => input.focus(), 0);
+
+    // ==========================================
+    // 🕵️‍♂️ LOGS DE DIAGNÓSTICO
+    // ==========================================
     setTimeout(() => {
-        input.focus();
+        console.group('%c 🕵️‍♂️ INSPECTOR DE TAMAÑOS', 'background: #222; color: #bada55; font-size: 12px; padding: 4px;');
         
-        console.group('🔍 DIAGNÓSTICO TAMAÑOS MÓVIL');
-        const anchoPantalla = window.innerWidth;
-        console.log(`📱 Ancho de pantalla detectado: ${anchoPantalla}px`);
-        
-        if (anchoPantalla > 767) {
-            console.warn('⚠️ ESTÁS EN MODO ESCRITORIO (>767px). Los estilos de móvil NO se aplicarán.');
-        } else {
-            console.log('✅ Estás en rango MÓVIL (<=767px).');
-        }
-
-        const estiloInput = window.getComputedStyle(input);
         const estiloBtn = window.getComputedStyle(btnGuardar);
+        const alturaReal = btnGuardar.offsetHeight;
+        const alturaDeseada = 27;
 
-        console.log('📏 INPUT:', {
-            'Altura Real (offset)': input.offsetHeight + 'px',
-            'Altura Calculada CSS': estiloInput.height,
-            'Padding': estiloInput.padding,
-            'Min-Height': estiloInput.minHeight
+        console.log(`📱 Pantalla: ${window.innerWidth}px`);
+        console.log('🎯 Objetivo de altura:', alturaDeseada + 'px');
+        console.log('📏 Altura ACTUAL detectada:', alturaReal + 'px');
+        
+        console.log('🔍 Propiedades CSS calculadas:', {
+            'height': estiloBtn.height,
+            'min-height': estiloBtn.minHeight, // <--- AQUÍ VERÁS EL CULPABLE (52px)
+            'padding': estiloBtn.padding,
+            'line-height': estiloBtn.lineHeight
         });
 
-        console.log('📏 BOTÓN (CHULO):', {
-            'Altura Real (offset)': btnGuardar.offsetHeight + 'px',
-            'Ancho Real (offset)': btnGuardar.offsetWidth + 'px',
-            'Min-Width': estiloBtn.minWidth
-        });
-
-        if (input.offsetHeight > 30) {
-            console.error('❌ ERROR: El input sigue siendo grande. Probablemente CACHÉ o una regla CSS superior lo bloquea.');
+        if (parseFloat(estiloBtn.minHeight) > alturaDeseada) {
+            console.error(`❌ BLOQUEO DETECTADO: Hay un 'min-height' de ${estiloBtn.minHeight} que impide que el botón se encoja a ${alturaDeseada}px.`);
+            console.warn('💡 SOLUCIÓN: En el CSS, se ha agregado "min-height: 27px !important" para sobrescribir la regla global de main.css.');
+        } else if (alturaReal === alturaDeseada) {
+            console.log('%c ✅ ÉXITO: El botón tiene el tamaño perfecto.', 'color: #10b981; font-weight: bold;');
         } else {
-            console.log('✅ ÉXITO: El tamaño es correcto (compacto).');
+            console.warn('⚠️ ALERTA: El tamaño no coincide exacto, revisa paddings o bordes.');
         }
+        
         console.groupEnd();
-
-    }, 100);
-    // --- FIN CÓDIGO DE DIAGNÓSTICO ---
+    }, 500);
 }
 
 function ajustarCantidad(mesaId, productoIndex, delta) {
