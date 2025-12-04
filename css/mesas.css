@@ -641,3 +641,73 @@
 .resultados-busqueda-flotante > div:last-child {
     border-bottom: none;
 }
+
+/* ==========================================
+   RESPONSIVIDAD MÓVIL (MEJORADA)
+   ========================================== */
+
+@media (max-width: 767px) {
+    .mesas-container {
+        padding: 12px !important;
+    }
+
+    /* --- AJUSTE BOTONES EDICIÓN (X y Chulo) --- */
+    .mesa-descripcion-chip.editing {
+        align-items: center;
+        gap: 8px;
+        flex-wrap: nowrap;
+    }
+
+    .mesa-descripcion-input {
+        padding: 10px 12px;
+        min-height: 44px; /* Más alto para dedo */
+        font-size: 14px;
+        border-radius: 10px;
+    }
+
+    .mesa-descripcion-acciones {
+        gap: 8px; /* Un poco más de espacio entre botones */
+        flex-shrink: 0; /* IMPORTANTE: Evita que se aplasten */
+    }
+
+    .mesa-descripcion-btn {
+        height: 44px;     /* Tamaño táctil estándar */
+        width: 44px;      /* Cuadrado perfecto */
+        min-width: 44px;  /* Asegura que nunca se encoja */
+        padding: 0;
+        border-radius: 12px;
+        flex-shrink: 0;   /* Doble seguridad anti-aplastamiento */
+        font-size: 14px;  /* Íconos más visibles */
+    }
+
+    /* --- AJUSTE BOTÓN HISTORIAL --- */
+    .btn-historial {
+        padding: 10px 16px; /* Más aire interno (arriba/abajo izq/der) */
+        border-width: 2px;  /* Borde un poco más grueso si quieres */
+        border-radius: 12px;
+        font-size: 13px;
+        line-height: 1.2;
+        min-height: 40px;   /* Altura mínima para que no se vea flaco */
+        display: flex;
+        align-items: center;
+    }
+
+    /* Ajustes generales de texto móvil */
+    .mesa-nombre {
+        font-size: 16px !important; /* Un pelín más grande */
+    }
+    
+    .mesa-productos-preview {
+        font-size: 12px !important;
+    }
+    
+    .producto-mesa-item {
+        flex-wrap: nowrap !important;
+        font-size: 13px !important;
+    }
+    
+    .btn-nueva-mesa {
+        padding: 14px !important;
+        font-size: 15px !important;
+    }
+}
