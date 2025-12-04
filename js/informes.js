@@ -406,11 +406,40 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
     modalBody.innerHTML = `
     <style>
         .report-header-modern { background: #0f172a; padding: 16px; color: white; border-bottom: 1px solid #1e293b; }
-        .filters-container { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
-        .filters-container::-webkit-scrollbar { display: none; }
-        .filter-chip { background: transparent; border: 1px solid #334155; color: #94a3b8; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+        
+        /* --- INICIO ESTILO GRILLA (Opción 2) --- */
+        .filters-container { 
+            display: grid; 
+            grid-template-columns: repeat(6, 1fr); /* Grilla de 6 columnas */
+            gap: 8px; 
+            padding-bottom: 8px; 
+        }
+
+        .filter-chip { 
+            background: transparent; 
+            border: 1px solid #334155; 
+            color: #94a3b8; 
+            padding: 8px 4px; /* Padding ajustado */
+            border-radius: 8px; /* Más cuadrado */
+            font-size: 11px; 
+            font-weight: 500; 
+            cursor: pointer; 
+            white-space: nowrap; 
+            transition: all 0.2s;
+            text-align: center;
+            grid-column: span 2; /* Cada botón ocupa 2 columnas (3 botones por fila) */
+        }
+
+        /* Los últimos 2 botones (Anual y Personalizado) que ocupen 3 columnas para centrarse */
+        .filter-chip:nth-last-child(1), 
+        .filter-chip:nth-last-child(2) {
+            grid-column: span 3; 
+        }
+
         .filter-chip:hover { background: #1e293b; color: white; }
         .filter-chip.active { background: white; color: #0f172a; border-color: white; font-weight: 700; }
+        /* --- FIN ESTILO GRILLA --- */
+
         .action-bar { display: flex; justify-content: center; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #334155; }
         .date-range-display { font-size: 14px; font-weight: 700; color: #e2e8f0; display: flex; align-items: center; gap: 6px; }
         .custom-calendar-container { display: none; background: #1e293b; margin-top: 12px; border-radius: 8px; overflow: hidden; border: 1px solid #334155; animation: slideDown 0.3s ease; }
@@ -714,4 +743,6 @@ async function actualizarInforme() {
     
     const modalBody = document.getElementById('modalBodyInformes');
     await cargarInformes(modalBody);
+}
+
 }
