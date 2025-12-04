@@ -570,7 +570,7 @@
 }
 
 /* ==========================================
-   RESPONSIVIDAD MÓVIL (AJUSTADA: ULTRA COMPACTA)
+   RESPONSIVIDAD MÓVIL (CORREGIDA: Override min-height)
    ========================================== */
 
 @media (max-width: 767px) {
@@ -578,61 +578,64 @@
         padding: 12px !important;
     }
 
-    /* --- INPUT DESCRIPCIÓN (27px de altura) --- */
+    /* --- INPUT DESCRIPCIÓN (27px) --- */
     .mesa-descripcion-chip.editing {
         align-items: center;
-        gap: 4px; /* Gap ajustado a 4px */
+        gap: 4px !important;
         flex-wrap: nowrap;
     }
 
     .mesa-descripcion-input {
-        padding: 0 8px;     /* Padding vertical en 0 para centrar en altura pequeña */
-        min-height: 27px;   /* Altura exacta solicitada */
-        height: 27px;
-        font-size: 13px;
-        border-radius: 6px;
+        padding: 0 8px !important;
+        min-height: 27px !important;
+        height: 27px !important;
+        font-size: 13px !important;
+        border-radius: 6px !important;
+        line-height: 27px; /* Centra texto */
+        margin: 0;
     }
 
     /* --- BOTONES X y CHULO (27px x 27px) --- */
     .mesa-descripcion-acciones {
-        gap: 4px; /* Gap ajustado a 4px */
-        flex-shrink: 0;
+        gap: 4px !important;
+        flex-shrink: 0 !important;
+        display: flex !important;
+        align-items: center;
     }
 
     .mesa-descripcion-btn {
-        height: 27px;        /* Altura exacta */
-        width: 27px;         /* Ancho exacto */
-        min-width: 27px;     /* Evita aplastamiento */
-        padding: 0;
-        border-radius: 6px;
-        flex-shrink: 0;
-        font-size: 13px;     /* Tamaño icono solicitado */
-        line-height: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        /* CORRECCIÓN CLAVE: Matar el min-height de 52px global */
+        min-height: 27px !important; 
+        height: 27px !important;
+        width: 27px !important;
+        min-width: 27px !important;
+        
+        padding: 0 !important;
+        border-radius: 6px !important;
+        flex-shrink: 0 !important;
+        font-size: 13px !important;
+        line-height: 1 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
     }
 
-    /* --- BOTÓN HISTORIAL (Se mantiene grande/cómodo) --- */
+    /* --- BOTÓN HISTORIAL (Se mantiene grande) --- */
     .btn-historial {
-        padding: 10px 16px;
+        padding: 8px 14px !important;
         border-width: 2px;
         border-radius: 12px;
         font-size: 13px;
         line-height: 1.2;
-        min-height: 40px;
+        min-height: 40px !important; /* Este sí queremos que sea alto */
         display: flex;
         align-items: center;
     }
 
-    /* --- AJUSTES GENERALES TEXTO --- */
-    .mesa-nombre {
-        font-size: 16px !important;
-    }
-    
-    .mesa-productos-preview {
-        font-size: 12px !important;
-    }
+    /* --- AJUSTES TEXTO --- */
+    .mesa-nombre { font-size: 16px !important; }
+    .mesa-productos-preview { font-size: 12px !important; }
     
     .producto-mesa-item {
         flex-wrap: nowrap !important;
