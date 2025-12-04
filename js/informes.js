@@ -148,7 +148,7 @@ async function cargarDatosRealesInforme(fechaInicio, fechaFin) {
     };
 }
 
-// Función para renderizar el informe (CON DISEÑO GRID PARA MÓVIL)
+// Función para renderizar el informe (CON DISEÑO GRID DARK TECH)
 function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
     
     const formatearMoneda = (valor) => {
@@ -406,19 +406,19 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
     <style>
         .report-header-modern { background: #0f172a; padding: 16px; color: white; border-bottom: 1px solid #1e293b; }
         
-        /* --- ESTILO GRID PARA PÍLDORAS --- */
+        /* --- ESTILO OPCIÓN 2: DARK TECH (GRILLA) --- */
         .filters-container { 
             display: grid; 
-            grid-template-columns: repeat(6, 1fr); /* 6 columnas para distribuir */
-            gap: 8px; 
-            padding-bottom: 8px; 
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px; 
+            padding-bottom: 15px; 
         }
 
         .filter-chip { 
-            background: transparent; 
+            background: #1e293b; /* Fondo sólido oscuro */
             border: 1px solid #334155; 
             color: #94a3b8; 
-            padding: 8px 4px; 
+            padding: 10px 4px; 
             border-radius: 8px; 
             font-size: 11px; 
             font-weight: 500; 
@@ -426,18 +426,25 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
             white-space: nowrap; 
             transition: all 0.2s;
             text-align: center;
-            grid-column: span 2; /* Por defecto ocupa 2 columnas (3 botones arriba) */
+            box-shadow: 0 2px 0 rgba(0,0,0,0.2); /* Sombra dura */
+            grid-column: span 2; 
         }
 
-        /* Los últimos 2 botones (Anual y Personalizado) ocupan 3 columnas para centrarse abajo */
         .filter-chip:nth-last-child(1), 
         .filter-chip:nth-last-child(2) {
             grid-column: span 3; 
         }
 
-        .filter-chip:hover { background: #1e293b; color: white; }
-        .filter-chip.active { background: white; color: #0f172a; border-color: white; font-weight: 700; }
-        /* -------------------------------- */
+        .filter-chip:hover { background: #334155; color: white; }
+        
+        .filter-chip.active { 
+            background: #3b82f6; /* Azul vibrante */
+            border-color: #60a5fa; 
+            color: white; 
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); /* Resplandor */
+            font-weight: 700;
+        }
+        /* ----------------------------------------- */
 
         .action-bar { display: flex; justify-content: center; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #334155; }
         .date-range-display { font-size: 14px; font-weight: 700; color: #e2e8f0; display: flex; align-items: center; gap: 6px; }
@@ -659,9 +666,7 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
                     </div>
                 ` : ''}
 
-            </div> 
-            
-            <div class="balance-card">
+            </div> <div class="balance-card">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                     <span style="font-weight: 600; color: #64748b; font-size: 14px;">Ingresos Totales</span>
                     <span style="color: #10b981; font-weight: 700; font-size: 14px;">+ ${formatearMoneda(datos.totalVentas)}</span>
