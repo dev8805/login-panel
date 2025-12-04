@@ -403,20 +403,7 @@
    BÚSQUEDA Y AGREGAR PRODUCTOS
    ========================================== */
 
-/* CLASE ANTIGUA - NO SE USA MÁS */
-/* .agregar-producto-row {
-    display: grid;
-    grid-template-columns: auto 1fr auto auto;
-    gap: 8px;
-    align-items: center;
-    padding: 12px;
-    background: #f0f9ff;
-    border-radius: 8px;
-    margin-top: 16px;
-} */
-
 /* Contenedor del buscador de productos en mesas */
-/* Contenedor inline en renderizarBuscadorMesa() */
 .buscar-producto {
     /* Estilos definidos inline en mesas.js */
 }
@@ -526,66 +513,6 @@
 }
 
 /* ==========================================
-   RESPONSIVIDAD MÓVIL
-   ========================================== */
-
-@media (max-width: 767px) {
-    .mesas-container {
-        padding: 12px !important;
-    }
-
-    .mesa-descripcion-chip.editing {
-        align-items: center;
-        gap: 8px;
-        flex-wrap: nowrap;
-    }
-
-    .mesa-descripcion-input {
-        padding: 10px 12px;
-        min-height: 40px;
-        font-size: 14px;
-        border-radius: 10px;
-    }
-
-    .mesa-descripcion-acciones {
-        gap: 6px;
-    }
-
-    .mesa-descripcion-btn {
-        height: 40px;
-        width: 40px;
-        padding: 0;
-        border-radius: 12px;
-    }
-
-    .btn-historial {
-        padding: 6px 10px;
-        border-width: 1.5px;
-        border-radius: 12px;
-        font-size: 12px;
-        line-height: 1.1;
-    }
-
-    .mesa-nombre {
-        font-size: 15px !important;
-    }
-    
-    .mesa-productos-preview {
-        font-size: 11px !important;
-    }
-    
-    .producto-mesa-item {
-        flex-wrap: nowrap !important;
-        font-size: 13px !important;
-    }
-    
-    .btn-nueva-mesa {
-        padding: 12px !important;
-        font-size: 14px !important;
-    }
-}
-
-/* ==========================================
    DESKTOP
    ========================================== */
 
@@ -643,7 +570,7 @@
 }
 
 /* ==========================================
-   RESPONSIVIDAD MÓVIL (MEJORADA)
+   RESPONSIVIDAD MÓVIL (AJUSTADA: COMPACTA)
    ========================================== */
 
 @media (max-width: 767px) {
@@ -651,50 +578,56 @@
         padding: 12px !important;
     }
 
-    /* --- AJUSTE BOTONES EDICIÓN (X y Chulo) --- */
+    /* --- INPUT DESCRIPCIÓN (Compacto y delgado) --- */
     .mesa-descripcion-chip.editing {
         align-items: center;
-        gap: 8px;
+        gap: 6px; /* Menos espacio entre elementos */
         flex-wrap: nowrap;
     }
 
     .mesa-descripcion-input {
-        padding: 10px 12px;
-        min-height: 44px; /* Más alto para dedo */
-        font-size: 14px;
-        border-radius: 10px;
+        padding: 4px 8px;   /* Padding reducido */
+        min-height: 32px;   /* Altura reducida para verse compacto */
+        height: 32px;
+        font-size: 13px;
+        border-radius: 6px; /* Bordes menos redondeados para look compacto */
     }
 
+    /* --- BOTONES X y CHULO (Pequeños y cuadrados) --- */
     .mesa-descripcion-acciones {
-        gap: 8px; /* Un poco más de espacio entre botones */
-        flex-shrink: 0; /* IMPORTANTE: Evita que se aplasten */
+        gap: 6px;
+        flex-shrink: 0;
     }
 
     .mesa-descripcion-btn {
-        height: 44px;     /* Tamaño táctil estándar */
-        width: 44px;      /* Cuadrado perfecto */
-        min-width: 44px;  /* Asegura que nunca se encoja */
+        height: 32px;      /* Altura igual al input */
+        width: 32px;       /* Cuadrado exacto */
+        min-width: 32px;   /* Evita que se aplaste */
         padding: 0;
-        border-radius: 12px;
-        flex-shrink: 0;   /* Doble seguridad anti-aplastamiento */
-        font-size: 14px;  /* Íconos más visibles */
+        border-radius: 6px;
+        flex-shrink: 0;
+        font-size: 13px;   /* Icono ajustado */
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    /* --- AJUSTE BOTÓN HISTORIAL --- */
+    /* --- BOTÓN HISTORIAL (Grande/Robusto) --- */
     .btn-historial {
-        padding: 10px 16px; /* Más aire interno (arriba/abajo izq/der) */
-        border-width: 2px;  /* Borde un poco más grueso si quieres */
+        padding: 10px 16px; /* Estilo robusto mantenido */
+        border-width: 2px;
         border-radius: 12px;
         font-size: 13px;
         line-height: 1.2;
-        min-height: 40px;   /* Altura mínima para que no se vea flaco */
+        min-height: 40px;   /* Altura fácil de tocar */
         display: flex;
         align-items: center;
     }
 
-    /* Ajustes generales de texto móvil */
+    /* --- AJUSTES GENERALES TEXTO --- */
     .mesa-nombre {
-        font-size: 16px !important; /* Un pelín más grande */
+        font-size: 16px !important;
     }
     
     .mesa-productos-preview {
