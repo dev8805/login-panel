@@ -561,11 +561,16 @@
     }
 
     .btn-historial {
-        padding: 5px 8px;
-        border-width: 1.5px;
-        border-radius: 10px;
-        font-size: 12px;
-        line-height: 1.05;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-width: 2px;
+        border-radius: 12px;
+        font-size: 13px;
+        line-height: 1.1;
+        background: #f6f8ff;
+        color: #4f5cd1;
     }
 
     .mesa-nombre {
