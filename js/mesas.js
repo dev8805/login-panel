@@ -603,7 +603,7 @@ async function editarDescripcionMesa(mesaId) {
     const input = document.createElement('input');
     input.type = 'text';
     input.value = mesa.descripcion || '';
-    input.placeholder = 'Descripción de la mesa';
+    input.placeholder = 'Descripción';
     input.className = 'mesa-descripcion-input';
 
     const acciones = document.createElement('div');
@@ -650,7 +650,46 @@ async function editarDescripcionMesa(mesaId) {
     chip.appendChild(acciones);
 
     chip.addEventListener('click', (event) => event.stopPropagation());
-    setTimeout(() => input.focus(), 0);
+    
+    // --- INICIO CÓDIGO DE DIAGNÓSTICO ---
+    setTimeout(() => {
+        input.focus();
+        
+        console.group('🔍 DIAGNÓSTICO TAMAÑOS MÓVIL');
+        const anchoPantalla = window.innerWidth;
+        console.log(`📱 Ancho de pantalla detectado: ${anchoPantalla}px`);
+        
+        if (anchoPantalla > 767) {
+            console.warn('⚠️ ESTÁS EN MODO ESCRITORIO (>767px). Los estilos de móvil NO se aplicarán.');
+        } else {
+            console.log('✅ Estás en rango MÓVIL (<=767px).');
+        }
+
+        const estiloInput = window.getComputedStyle(input);
+        const estiloBtn = window.getComputedStyle(btnGuardar);
+
+        console.log('📏 INPUT:', {
+            'Altura Real (offset)': input.offsetHeight + 'px',
+            'Altura Calculada CSS': estiloInput.height,
+            'Padding': estiloInput.padding,
+            'Min-Height': estiloInput.minHeight
+        });
+
+        console.log('📏 BOTÓN (CHULO):', {
+            'Altura Real (offset)': btnGuardar.offsetHeight + 'px',
+            'Ancho Real (offset)': btnGuardar.offsetWidth + 'px',
+            'Min-Width': estiloBtn.minWidth
+        });
+
+        if (input.offsetHeight > 30) {
+            console.error('❌ ERROR: El input sigue siendo grande. Probablemente CACHÉ o una regla CSS superior lo bloquea.');
+        } else {
+            console.log('✅ ÉXITO: El tamaño es correcto (compacto).');
+        }
+        console.groupEnd();
+
+    }, 100);
+    // --- FIN CÓDIGO DE DIAGNÓSTICO ---
 }
 
 function ajustarCantidad(mesaId, productoIndex, delta) {
