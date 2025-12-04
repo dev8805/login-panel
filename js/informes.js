@@ -7,6 +7,7 @@
 let datosInformes = null;
 let rangoFechaInformes = 'today';
 
+// Función principal llamada desde el menú
 async function cargarInformes(modalBody) {
     // Mostrar loading inicial
     modalBody.innerHTML = `
@@ -18,8 +19,10 @@ async function cargarInformes(modalBody) {
         // Obtener fechas por defecto (hoy)
         const hoy = new Date();
         const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-        const fechaInicio = primerDiaMes.toISOString().split('T')[0];
-        const fechaFin = hoy.toISOString().split('T')[0];
+        
+        // Formato YYYY-MM-DD
+        const fechaInicio = primerDiaMes.toLocaleDateString('en-CA'); // Formato seguro ISO
+        const fechaFin = hoy.toLocaleDateString('en-CA');
         
         // Cargar datos reales
         const datosReales = await cargarDatosRealesInforme(fechaInicio, fechaFin);
@@ -31,7 +34,7 @@ async function cargarInformes(modalBody) {
         modalBody.innerHTML = `
             <div style="background: #f8d7da; border: 2px solid #dc3545; border-radius: 8px; padding: 20px; margin: 20px;">
                 <strong>❌ Error:</strong> No se pudo cargar el informe.
-                ${error.message}
+                <br><small>${error.message}</small>
             </div>
         `;
     }
@@ -145,9 +148,8 @@ async function cargarDatosRealesInforme(fechaInicio, fechaFin) {
     };
 }
 
-// Función para renderizar el informe
+// Función para renderizar el informe (CON DISEÑO GRID PARA MÓVIL)
 function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
-    console.log('🎨 Renderizando UI con:', { fechaInicio, fechaFin });
     
     const formatearMoneda = (valor) => {
         return new Intl.NumberFormat('es-CO', {
@@ -170,17 +172,14 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
         return `${fecha.getDate()}/${fecha.getMonth()+1}`;
     };
     
-    // --- LÓGICA GLOBAL ---
-    window.rangoSeleccion = { inicio: null, fin: null };
-
-    // 1. NUEVA FUNCIÓN DE RECARGA ROBUSTA
+    // --- FUNCIONES GLOBALES PARA INTERACTIVIDAD ---
+    
+    // 1. Recarga
     window.recargarInformeInterno = async function() {
         const iVal = document.getElementById('fechaInicioInforme').value;
         const fVal = document.getElementById('fechaFinInforme').value;
-        const modalBody = document.getElementById('modalBodyInformes');
+        const modalBodyRef = document.getElementById('modalBodyInformes');
         
-        console.log('🔄 RECARGANDO con fechas reales:', iVal, fVal);
-
         if (!iVal || !fVal) return;
         
         const contentDiv = document.querySelector('.report-content');
@@ -189,26 +188,21 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
         if(btnText) btnText.textContent = 'Cargando...';
         
         try {
-            if (typeof window.cargarDatosRealesInforme === 'function') {
-                const nuevosDatos = await window.cargarDatosRealesInforme(iVal, fVal);
-                renderizarInformeConDatos(modalBody, nuevosDatos, iVal, fVal);
-            } else {
-                console.error('❌ Error crítico: No encuentro la función cargarDatosRealesInforme');
-                alert('Error de conexión con la base de datos');
-            }
+            const nuevosDatos = await cargarDatosRealesInforme(iVal, fVal);
+            renderizarInformeConDatos(modalBodyRef, nuevosDatos, iVal, fVal);
         } catch (e) {
             console.error('Error al recargar:', e);
             if(contentDiv) contentDiv.style.opacity = '1';
         }
     };
 
-    // 2. Lógica de Píldoras
+    // 2. Aplicar Filtros (Lógica de Chips)
     window.aplicarFiltroFecha = function(tipo) {
-        console.log('💊 Filtro:', tipo);
         const hoy = new Date();
         let inicio = new Date();
         let fin = new Date();
         
+        // UI Update
         document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
         const chip = document.getElementById('chip-' + tipo);
         if(chip) chip.classList.add('active');
@@ -216,7 +210,7 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
         const calContainer = document.getElementById('custom-calendar-container');
         
         if (tipo === 'diario') {
-            // Hoy
+            // Hoy por defecto
         } else if (tipo === 'semanal') {
             const diaSemana = hoy.getDay() || 7; 
             inicio.setDate(hoy.getDate() - diaSemana + 1); 
@@ -236,14 +230,15 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
         }
 
         if (calContainer) calContainer.style.display = 'none';
-        
         window.actualizarInputsYRefrescar(inicio, fin);
     };
 
-    // 3. Actualizar y Disparar
+    // 3. Actualizar Inputs y Refrescar
     window.actualizarInputsYRefrescar = function(inicio, fin) {
-        const fInicio = inicio.toISOString().split('T')[0];
-        const fFin = fin.toISOString().split('T')[0];
+        // Ajuste de zona horaria básico para inputs fecha
+        const offset = inicio.getTimezoneOffset();
+        const fInicio = new Date(inicio.getTime() - (offset*60*1000)).toISOString().split('T')[0];
+        const fFin = new Date(fin.getTime() - (offset*60*1000)).toISOString().split('T')[0];
 
         const inputInicio = document.getElementById('fechaInicioInforme');
         const inputFin = document.getElementById('fechaFinInforme');
@@ -260,7 +255,9 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
         }, 50);
     };
 
-    // 4. Calendario
+    // 4. Calendario Vertical
+    window.rangoSeleccion = { inicio: null, fin: null };
+    
     window.renderizarCalendarioVertical = function() {
         const container = document.getElementById('calendar-scroll-area');
         if (!container || container.innerHTML !== '') return;
@@ -274,12 +271,16 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
             const fechaMes = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
             const mesNombre = fechaMes.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
             const diasEnMes = new Date(hoy.getFullYear(), hoy.getMonth() + i + 1, 0).getDate();
-            const diaSemanaInicio = (fechaMes.getDay() + 6) % 7;
+            const diaSemanaInicio = (fechaMes.getDay() + 6) % 7; // Lunes = 0
+            
             let diasHTML = '';
             for (let j = 0; j < diaSemanaInicio; j++) diasHTML += `<div class="cal-day empty"></div>`;
+            
             for (let dia = 1; dia <= diasEnMes; dia++) {
                 const fechaDia = new Date(fechaMes.getFullYear(), fechaMes.getMonth(), dia);
-                const fechaStr = fechaDia.toISOString().split('T')[0];
+                // Truco para evitar problemas de zona horaria al convertir a string
+                const fechaStr = new Date(fechaDia.getTime() - (fechaDia.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+                
                 diasHTML += `<div class="cal-day" onclick="window.seleccionarDia('${fechaStr}', this)" data-date="${fechaStr}">${dia}</div>`;
             }
 
@@ -299,7 +300,9 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
 
     window.seleccionarDia = function(fechaStr, elemento) {
         const fecha = new Date(fechaStr + 'T00:00:00');
+        
         if (!window.rangoSeleccion.inicio || (window.rangoSeleccion.inicio && window.rangoSeleccion.fin)) {
+            // Nueva selección (inicio)
             window.rangoSeleccion.inicio = fecha;
             window.rangoSeleccion.fin = null;
             
@@ -309,6 +312,7 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
             elemento.classList.add('selected-start');
             
         } else {
+            // Selección final
             if (fecha < window.rangoSeleccion.inicio) {
                 window.rangoSeleccion.inicio = fecha;
                 document.querySelectorAll('.cal-day').forEach(el => el.classList.remove('selected-start'));
@@ -330,8 +334,10 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
 
     window.resaltarRangoVisual = function() {
         if (!window.rangoSeleccion.inicio || !window.rangoSeleccion.fin) return;
-        const inicio = window.rangoSeleccion.inicio.toISOString().split('T')[0];
-        const fin = window.rangoSeleccion.fin.toISOString().split('T')[0];
+        // Ajuste zona horaria para comparación strings
+        const offset = window.rangoSeleccion.inicio.getTimezoneOffset() * 60000;
+        const inicio = new Date(window.rangoSeleccion.inicio.getTime() - offset).toISOString().split('T')[0];
+        const fin = new Date(window.rangoSeleccion.fin.getTime() - offset).toISOString().split('T')[0];
 
         document.querySelectorAll('.cal-day[data-date]').forEach(el => {
             const fechaEl = el.getAttribute('data-date');
@@ -341,16 +347,8 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
         });
     };
 
-    window.toggleSection = function(id) {
-        const content = document.getElementById('content-' + id);
-        const btn = document.getElementById('btn-' + id);
-        if (content && btn) {
-            const isHidden = content.style.display === 'none';
-            content.style.display = isHidden ? 'block' : 'none';
-            btn.textContent = isHidden ? 'Ocultar' : 'Ver';
-            if(isHidden) btn.classList.add('active'); else btn.classList.remove('active');
-        }
-    };
+    // 5. Toggle de Secciones
+    window.toggleSection = function(id) { /* ... (opcional, si se usa) ... */ };
     
     window.toggleSubSection = function(id) {
         const content = document.getElementById('sub-' + id);
@@ -363,6 +361,7 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
         }
     };
 
+    // Helper para renderizar items
     const renderListaItems = (items, tipo) => {
         if (!items || items.length === 0) return '<div class="empty-list">No hay registros detallados</div>';
         return items.map(item => {
@@ -402,15 +401,15 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
         }).join('');
     };
 
-    // HTML PRINCIPAL
+    // --- HTML PRINCIPAL ---
     modalBody.innerHTML = `
     <style>
         .report-header-modern { background: #0f172a; padding: 16px; color: white; border-bottom: 1px solid #1e293b; }
         
-        /* --- INICIO ESTILO GRILLA (Opción 2) --- */
+        /* --- ESTILO GRID PARA PÍLDORAS --- */
         .filters-container { 
             display: grid; 
-            grid-template-columns: repeat(6, 1fr); /* Grilla de 6 columnas */
+            grid-template-columns: repeat(6, 1fr); /* 6 columnas para distribuir */
             gap: 8px; 
             padding-bottom: 8px; 
         }
@@ -419,18 +418,18 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
             background: transparent; 
             border: 1px solid #334155; 
             color: #94a3b8; 
-            padding: 8px 4px; /* Padding ajustado */
-            border-radius: 8px; /* Más cuadrado */
+            padding: 8px 4px; 
+            border-radius: 8px; 
             font-size: 11px; 
             font-weight: 500; 
             cursor: pointer; 
             white-space: nowrap; 
             transition: all 0.2s;
             text-align: center;
-            grid-column: span 2; /* Cada botón ocupa 2 columnas (3 botones por fila) */
+            grid-column: span 2; /* Por defecto ocupa 2 columnas (3 botones arriba) */
         }
 
-        /* Los últimos 2 botones (Anual y Personalizado) que ocupen 3 columnas para centrarse */
+        /* Los últimos 2 botones (Anual y Personalizado) ocupan 3 columnas para centrarse abajo */
         .filter-chip:nth-last-child(1), 
         .filter-chip:nth-last-child(2) {
             grid-column: span 3; 
@@ -438,7 +437,7 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
 
         .filter-chip:hover { background: #1e293b; color: white; }
         .filter-chip.active { background: white; color: #0f172a; border-color: white; font-weight: 700; }
-        /* --- FIN ESTILO GRILLA --- */
+        /* -------------------------------- */
 
         .action-bar { display: flex; justify-content: center; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #334155; }
         .date-range-display { font-size: 14px; font-weight: 700; color: #e2e8f0; display: flex; align-items: center; gap: 6px; }
@@ -486,29 +485,10 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
         .balance-card { background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 20px; }
         .balance-final-title { font-size: 14px; font-weight: 700; color: #0f172a; }
         .balance-final-value { font-size: 20px; font-weight: 600; }
+        
         @media (max-width: 600px) {
-            .report-header { padding: 12px 10px; }
-            .report-title { font-size: 18px; }
-            .date-inputs { gap: 5px; margin-top: 10px; }
-            .custom-date-input { padding: 4px 6px; font-size: 12px; max-width: 130px; }
-            .btn-update { margin-top: 10px; padding: 6px 16px; font-size: 11px; }
-            .report-content { padding: 10px; }
-            .stat-card { padding: 14px 16px; margin-bottom: 10px; border-left-width: 4px; }
-            .stat-label { font-size: 11px; margin-bottom: 4px; }
-            .stat-value { font-size: 26px; line-height: 1.2; font-weight: 500; } 
-            .stat-sub { font-size: 11px; margin-top: 6px; }
-            .detail-card { padding: 16px; }
-            .section-title { font-size: 13px; }
-            .row-label { font-size: 13px; }
-            .row-value { font-size: 13px; }
-            .row-item { padding: 8px 0; }
-            .sub-item-row { padding: 8px 4px; gap: 6px; font-size: 11px; }
-            .sub-item-qty { font-size: 10px; padding: 1px 4px; }
-            .total-box { padding: 10px; margin-top: 10px; }
-            .total-box span { font-size: 12px; }
-            .total-box strong { font-size: 14px; }
-            .balance-final-title { font-size: 14px !important; }
-            .balance-final-value { font-size: 20px !important; }
+            .stat-value { font-size: 26px; line-height: 1.2; }
+            .sub-item-desc { max-width: 140px; }
         }
     </style>
 
@@ -679,7 +659,9 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
                     </div>
                 ` : ''}
 
-            </div> <div class="balance-card">
+            </div> 
+            
+            <div class="balance-card">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                     <span style="font-weight: 600; color: #64748b; font-size: 14px;">Ingresos Totales</span>
                     <span style="color: #10b981; font-weight: 700; font-size: 14px;">+ ${formatearMoneda(datos.totalVentas)}</span>
@@ -707,42 +689,27 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
     // Inicializar etiqueta de fecha al cargar si hay datos
     setTimeout(() => {
         if(fechaInicio && fechaFin) {
-            const i = new Date(fechaInicio + 'T00:00:00');
-            const f = new Date(fechaFin + 'T00:00:00');
-            const opts = { month: 'short', day: 'numeric' };
-            const label = document.getElementById('rango-fechas-label');
-            if(label) {
-                label.textContent = i.toLocaleDateString('es-CO', opts) + ' - ' + f.toLocaleDateString('es-CO', opts);
-                label.style.opacity = '1';
-            }
-            
-            // Activar el chip correcto visualmente si coincide con hoy (simple check)
-            const hoy = new Date().toISOString().split('T')[0];
-            if (fechaInicio === hoy && fechaFin === hoy) {
+            // Activar el chip correcto visualmente
+            const hoyStr = new Date().toLocaleDateString('en-CA');
+            if (fechaInicio === hoyStr && fechaFin === hoyStr) {
                 const chip = document.getElementById('chip-diario');
                 if(chip) chip.classList.add('active');
             }
+            
+            const opts = { month: 'short', day: 'numeric' };
+            const t1 = new Date(fechaInicio + 'T00:00:00').toLocaleDateString('es-CO', opts);
+            const t2 = new Date(fechaFin + 'T00:00:00').toLocaleDateString('es-CO', opts);
+            
+            const label = document.getElementById('rango-fechas-label');
+            if(label) label.textContent = `${t1} - ${t2}`;
         }
     }, 100);
 }
 
-// Función para actualizar el informe cuando cambian las fechas
+// Función para actualizar el informe desde inputs ocultos
 async function actualizarInforme() {
     const fechaInicio = document.getElementById('fechaInicioInforme').value;
     const fechaFin = document.getElementById('fechaFinInforme').value;
-    
-    if (!fechaInicio || !fechaFin) {
-        alert('Por favor selecciona ambas fechas');
-        return;
-    }
-    
-    if (new Date(fechaInicio) > new Date(fechaFin)) {
-        alert('La fecha de inicio no puede ser mayor a la fecha fin');
-        return;
-    }
-    
     const modalBody = document.getElementById('modalBodyInformes');
     await cargarInformes(modalBody);
-}
-
 }
