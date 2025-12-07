@@ -1,0 +1,291 @@
+/* ==========================================
+   MODALES - ESTILOS GENERALES
+   ========================================== */
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #5B7FFF 0%, #4A63CC 100%);
+    padding: 20px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 16px 16px 0 0;
+}
+
+.modal-header h3 {
+    font-size: 20px;
+    margin: 0;
+}
+
+.modal-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 !important;
+    margin: 0;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+@media (max-width: 767px) {
+    .modal-close {
+        width: 44px !important;
+        height: 44px !important;
+        font-size: 26px;
+        margin-left: 8px;
+    }
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.modal-body {
+    padding: 30px;
+}
+
+/* Grid responsivo para formularios dentro de modales */
+.modal-body form {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px 14px;
+    align-items: start;
+}
+
+.modal-body .form-group {
+    width: 100%;
+}
+
+.modal-body textarea,
+.modal-body input,
+.modal-body select {
+    width: 100%;
+}
+
+/* Campos que deben ocupar todo el ancho (textarea, listas largas) */
+.modal-body .form-group textarea,
+.modal-body .form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+/* Desktop: Layout de 2 columnas para formularios */
+@media (min-width: 768px) {
+    .modal-body form {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px 16px;
+    }
+
+    /* Elementos que ocupan todo el ancho en desktop */
+    .modal-body .tipo-producto-group,
+    .modal-body .receta-section,
+    .modal-body .form-group:has(#productoNombre),
+    .modal-body .form-group:has(#apodos),
+    .modal-body .form-group:has(#listaApodosCrear),
+    .modal-body form>button[type="submit"] {
+        grid-column: 1 / -1;
+    }
+}
+
+/* ==========================================
+   MODAL DE INFORMES
+   ========================================== */
+
+.modal-informes {
+    max-width: 100%;
+    width: 100%;
+    max-height: 100vh;
+    height: 100vh;
+    margin: 0;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (min-width: 768px) {
+    .modal-informes {
+        max-width: 600px;
+        max-height: 90vh;
+        height: auto;
+        margin: 20px;
+        border-radius: 16px;
+    }
+}
+
+#modalBodyInformes {
+    padding: 0;
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ==========================================
+   TABS
+   ========================================== */
+
+.tabs-container {
+    display: flex;
+    border-bottom: 2px solid #E5E7EB;
+    margin-bottom: 20px;
+    overflow-x: auto;
+}
+
+.tab-button {
+    padding: 12px 24px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-weight: 600;
+    color: #6B7280;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+
+.tab-button:hover {
+    color: #5B7FFF;
+    background: #F8F9FB;
+}
+
+.tab-button.active {
+    color: #5B7FFF;
+    border-bottom-color: #5B7FFF;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* ==========================================
+   STATS
+   ========================================== */
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid #5B7FFF;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #6B7280;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #1A1D2E;
+}
+
+/* ==========================================
+   ALERTS
+   ========================================== */
+
+.alert-box {
+    background: #FEF3C7;
+    border: 2px solid #FF9F43;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.alert-box.success {
+    background: #D1FAE5;
+    border-color: #25C067;
+}
+
+.alert-box.error {
+    background: #FEE2E2;
+    border-color: #EF4444;
+}
+
+/* ==========================================
+   DATE SELECTOR
+   ========================================== */
+
+.date-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.date-selector button {
+    padding: 10px 20px;
+    border: 2px solid #E5E7EB;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+    width: auto;
+}
+
+.date-selector button:hover {
+    border-color: #5B7FFF;
+    color: #5B7FFF;
+}
+
+.date-selector button.active {
+    background: #5B7FFF;
+    color: white;
+    border-color: #5B7FFF;
+}
+
+.loading-spinner {
+    text-align: center;
+    padding: 40px;
+    color: #6B7280;
+}

@@ -1,0 +1,277 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel POS WhatsApp</title>
+
+    <link rel="icon" href="icono-192x192.png">
+    <link rel="apple-touch-icon" href="icono-180x180.png">
+    <link rel="manifest" href="manifest.json">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/modals.css">
+    <link rel="stylesheet" href="css/mesas.css">
+    <link rel="stylesheet" href="css/chat.css">
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header principal - solo visible en login -->
+        <div class="header" id="mainHeader">
+            <h1>POS WhatsApp</h1>
+            <p>Panel de Administración</p>
+        </div>
+
+        <div class="content">
+            <!-- Loading -->
+            <div id="loading" class="loading">
+                Verificando sesión...
+            </div>
+
+            <!-- Login Form -->
+            <div id="loginForm" class="login-form" style="display: none;">
+                <div id="errorMsg" class="error"></div>
+
+                <div class="form-group">
+                    <label for="email">Correo electrónico</label>
+                    <input type="email" id="email" placeholder="tu@email.com" autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" placeholder="********" autocomplete="current-password">
+                </div>
+
+                <button id="loginBtn" onclick="login()">Iniciar sesión</button>
+            </div>
+
+            <!-- Dashboard -->
+            <div id="dashboard" class="dashboard">
+                <div class="dashboard-shell">
+                    <!-- Info usuario móvil -->
+                    <div class="mobile-user-bar">
+                        <div class="user-details">
+                            <span class="user-name" id="mobileUserName">Nombre del Usuario</span>
+                            <span class="user-meta" id="mobileUserMeta">Negocio · Rol</span>
+                        </div>
+                        <button class="btn-salir" onclick="logout()">Salir</button>
+                    </div>
+
+                    <!-- Resumen rápido móvil -->
+                    <div class="quick-summary">
+                        <h4>Resumen rápido</h4>
+                        <p id="quickSummaryText">Ventas hoy: $0 · Pedidos pendientes: 0</p>
+                    </div>
+
+                    <div class="dashboard-layout">
+                        <aside class="sidebar-panel">
+                            <!-- Header del sidebar (solo desktop) -->
+                            <div class="sidebar-header">
+                                <h1 id="sidebarBusinessName">Nombre del Negocio</h1>
+                                <p>Panel de administración</p>
+                            </div>
+
+                            <section class="user-info">
+                                <h2 id="userName">Cargando...</h2>
+                                <p id="userRole"></p>
+                                <p id="businessName"></p>
+                            </section>
+
+                            <div class="menu-grid" id="menuGrid">
+                                <!-- Se llenan dinámicamente -->
+                            </div>
+
+                            <button class="logout-btn desktop-only" onclick="logout()">Cerrar sesión</button>
+                        </aside>
+
+                        <section class="content-area">
+                            <h3>Resumen del día</h3>
+                            <p>Ventas de hoy, notificaciones rápidas, etc.</p>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón flotante chat -->
+    <button id="fabChat" class="fab-chat-btn" onclick="openModal('chat_asistente')">
+        <span aria-label="Abrir chat">💬</span>
+    </button>
+
+    <!-- Modales -->
+    <div id="modalCrearProducto" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📦 Crear Producto</h3>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <div id="modalRegistrarCompra" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🛒 Registrar Compra</h3>
+                <button class="modal-close" onclick="closeModalCompra()">×</button>
+            </div>
+            <div class="modal-body" id="modalBodyCompra"></div>
+        </div>
+    </div>
+
+    <div id="modalCrearUsuario" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>👤 Crear Usuario</h3>
+                <button class="modal-close" onclick="closeModalUsuario()">×</button>
+            </div>
+            <div class="modal-body" id="modalBodyUsuario"></div>
+        </div>
+    </div>
+
+    <div id="modalInformes" class="modal">
+        <div class="modal-content modal-informes">
+            <div class="modal-header">
+                <h3>📊 Informes y Estadísticas</h3>
+                <button class="modal-close" onclick="closeModalInformes()">×</button>
+            </div>
+            <div class="modal-body" id="modalBodyInformes"></div>
+        </div>
+    </div>
+
+    <div id="modalEditarProducto" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ Editar Producto</h3>
+                <button class="modal-close" onclick="closeModalEditarProducto()">×</button>
+            </div>
+            <div class="modal-body" id="modalBodyEditarProducto"></div>
+        </div>
+    </div>
+
+    <div id="modalEditarApodos" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🏷️ Apodos/Referencias</h3>
+                <button class="modal-close" onclick="closeModalEditarApodos()">×</button>
+            </div>
+            <div class="modal-body" id="modalBodyEditarApodos"></div>
+        </div>
+    </div>
+
+    <div id="modalEditorApodos" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="tituloModalEditorApodos">🏷️ Editar Apodos</h3>
+                <button class="modal-close" onclick="cerrarModalEditorApodos()">×</button>
+            </div>
+            <div class="modal-body" id="modalBodyEditorApodos"></div>
+        </div>
+    </div>
+
+    <div id="modalChatAsistente" class="modal">
+        <div class="modal-content"
+            style="max-width: 100%; width: 100%; height: 100%; max-height: 100vh; margin: 0; border-radius: 0; display: flex; flex-direction: column;">
+            <div
+                style="background: linear-gradient(135deg, #5B7FFF 0%, #4A63CC 100%); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex-shrink: 0;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div
+                        style="width: 40px; height: 40px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                        💬</div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 16px;">Asistente</div>
+                        <div style="font-size: 12px; opacity: 0.9;">En línea</div>
+                    </div>
+                </div>
+                <button onclick="closeModalChat()"
+                    style="background: rgba(255,255,255,0.2); border: none; color: white; font-size: 24px; cursor: pointer; padding: 0; margin: 0; width: 40px !important; height: 40px !important; min-width: 40px !important; min-height: 40px !important; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; line-height: 1; transition: background 0.2s;">×</button>
+            </div>
+
+            <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0;">
+                <div id="chatMessages"
+                    style="flex: 1; overflow-y: auto; padding: 12px; background: #e5ddd5; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
+                </div>
+
+                <div
+                    style="padding: 8px 12px; background: #f0f0f0; border-top: 1px solid #d1d1d1; flex-shrink: 0; position: sticky; bottom: 0; z-index: 100;">
+                    <div class="chat-action-bar">
+                        <div class="chat-tag" onclick="console.log('Click Actualizar Precio')">
+                            <span style="background: #dcfce7; color: #166534; border: 1px solid #86efac;">Act.
+                                Precio</span>
+                        </div>
+                        <div class="chat-tag" onclick="console.log('Click Actualizar Costo')">
+                            <span style="background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd;">Act.
+                                Costo</span>
+                        </div>
+                        <div class="chat-tag" onclick="console.log('Click Actualizar Apodo')">
+                            <span style="background: #ffedd5; color: #9a3412; border: 1px solid #fdba74;">Act.
+                                Apodo</span>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
+                        <div
+                            style="flex: 1; display: flex; align-items: center; background: white; border-radius: 22px; padding: 0 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); height: 44px; min-width: 0;">
+                            <input type="text" id="inputMensajeChat" placeholder="Mensaje"
+                                style="flex: 1; border: none; font-size: 15px; background: transparent; outline: none; padding: 0; margin: 0; min-width: 0;"
+                                onkeypress="if(event.key === 'Enter') { event.preventDefault(); enviarMensajeChat(); }"
+                                oninput="toggleInputButtons()">
+                            <input type="file" id="inputImagenChat" accept="image/*" style="display: none;"
+                                onchange="handleImageUpload(event)">
+                            <button onclick="document.getElementById('inputImagenChat').click()"
+                                style="padding: 0; margin: 0 0 0 8px; background: none; border: none; cursor: pointer; color: #999; font-size: 18px; display: flex; align-items: center; justify-content: center; width: 24px; height: 100%; flex-shrink: 0;">📎</button>
+                        </div>
+
+                        <button id="btnGrabarVoz"
+                            style="width: 44px; height: 44px; padding: 0; background: linear-gradient(135deg, #5B7FFF 0%, #4A63CC 100%); color: white; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; box-shadow: 0 2px 5px rgba(91, 127, 255, 0.3);">🎤</button>
+
+                        <button id="btnEnviarMensaje" onclick="enviarMensajeChat()"
+                            style="width: 44px; height: 44px; padding: 0; background: linear-gradient(135deg, #5B7FFF 0%, #4A63CC 100%); color: white; border: none; border-radius: 50%; cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; box-shadow: 0 2px 5px rgba(91, 127, 255, 0.3);">➤</button>
+                    </div>
+
+                    <div id="estadoGrabacion"
+                        style="display: none; margin-top: 8px; padding: 8px; background: linear-gradient(135deg, #5B7FFF 0%, #4A63CC 100%); border-radius: 8px; text-align: center; color: white; font-size: 12px; font-weight: 600;">
+                        🎤 Mantén presionado para grabar...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalMesas" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🍽️ Mesas</h3>
+                <button class="modal-close" onclick="closeModalMesas()">×</button>
+            </div>
+            <div class="modal-body" id="modalBodyMesas"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>
+        eruda.init();
+        console.log('📱 Consola móvil iniciada');
+    </script>
+
+    <!-- JavaScript Modules -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/productos.js"></script>
+    <script src="js/compras.js"></script>
+    <script src="js/usuarios.js"></script>
+    <script src="js/informes.js"></script>
+    <script src="js/apodos.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/mesas.js"></script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>

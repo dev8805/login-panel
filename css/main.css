@@ -1,0 +1,1111 @@
+/* ==========================================
+   ESTILOS GENERALES Y BASE
+   ========================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+    background: linear-gradient(135deg, #5B7FFF 0%, #4A63CC 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+}
+
+.container {
+    background: white;
+    border-radius: 0;
+    box-shadow: none;
+    max-width: 100%;
+    width: 100%;
+    min-height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (min-width: 768px) {
+    .container {
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-width: 900px;
+        margin: 20px auto;
+        min-height: auto;
+    }
+}
+
+/* ==========================================
+   HEADER
+   ========================================== */
+
+.header {
+    background: linear-gradient(135deg, #5B7FFF 0%, #4A63CC 100%);
+    padding: 24px 20px;
+    text-align: center;
+    color: white;
+}
+
+/* Ocultar header cuando dashboard está visible */
+.header.hidden {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .header {
+        padding: 30px 40px;
+    }
+}
+
+.header h1 {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+.header p {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+/* ==========================================
+   CONTENT
+   ========================================== */
+
+.content {
+    padding: 20px;
+    flex: 1;
+}
+
+@media (min-width: 768px) {
+    .content {
+        padding: 40px;
+    }
+}
+
+/* ==========================================
+   FORMULARIOS
+   ========================================== */
+
+.login-form {
+    display: block;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1A1D2E;
+    margin-bottom: 8px;
+}
+
+.required::after {
+    content: " *";
+    color: #e74c3c;
+}
+
+input,
+select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #E5E7EB;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s;
+    color: #1A1D2E;
+}
+
+@media (max-width: 767px) {
+
+    input,
+    select {
+        min-height: 48px;
+        font-size: 16px;
+    }
+}
+
+input:focus,
+select:focus {
+    outline: none;
+    border-color: #5B7FFF;
+    box-shadow: 0 0 0 3px rgba(91, 127, 255, 0.1);
+}
+
+/* Eliminar flechas de inputs numéricos */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+/* ==========================================
+   BOTONES
+   ========================================== */
+
+button {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #5B7FFF 0%, #4A63CC 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+@media (max-width: 767px) {
+    button {
+        min-height: 52px;
+    }
+}
+
+button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(91, 127, 255, 0.4);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.logout-btn {
+    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    margin-top: 20px;
+}
+
+.logout-btn:hover {
+    box-shadow: 0 5px 20px rgba(239, 68, 68, 0.4);
+}
+
+/* ==========================================
+   MENSAJES
+   ========================================== */
+
+.error {
+    background-color: #fee;
+    border: 2px solid #f99;
+    color: #c33;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    display: none;
+}
+
+.error.show {
+    display: block;
+}
+
+.success-message {
+    background: #d4edda;
+    border: 2px solid #c3e6cb;
+    color: #155724;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    white-space: pre-line;
+    font-family: monospace;
+    display: none;
+}
+
+.success-message.show {
+    display: block !important;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ==========================================
+   DASHBOARD
+   ========================================== */
+
+.dashboard {
+    display: none;
+}
+
+.user-info {
+    background: #F8F9FB;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+@media (min-width: 768px) {
+    .user-info {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 24px;
+        margin-bottom: 30px;
+    }
+}
+
+.user-info h2 {
+    font-size: 18px;
+    color: #1A1D2E;
+    margin-bottom: 4px;
+}
+
+@media (min-width: 768px) {
+    .user-info h2 {
+        font-size: 20px;
+        margin-bottom: 0;
+    }
+}
+
+.user-info p {
+    font-size: 13px;
+    color: #6B7280;
+}
+
+@media (min-width: 768px) {
+    .user-info p {
+        font-size: 14px;
+    }
+}
+
+/* ==========================================
+   MENÚ GRID
+   ========================================== */
+
+.menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+@media (min-width: 768px) {
+    .menu-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+}
+
+.menu-item {
+    background: white;
+    border: 2px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 20px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    color: #1A1D2E;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (min-width: 768px) {
+    .menu-item {
+        padding: 24px 20px;
+        min-height: 120px;
+    }
+}
+
+.menu-item:hover {
+    border-color: #5B7FFF;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(91, 127, 255, 0.2);
+}
+
+.menu-item.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.menu-item {
+    transition: all 0.2s ease;
+}
+
+.menu-item.dragging {
+    opacity: 0.4;
+    transform: scale(0.95);
+    cursor: grabbing !important;
+}
+
+.menu-item.drag-over {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 3px #5B7FFF;
+}
+
+.menu-item:not(.disabled) {
+    cursor: grab;
+}
+
+.menu-item:not(.disabled):active {
+    cursor: grabbing;
+}
+
+.drag-placeholder {
+    background: linear-gradient(135deg, #5B7FFF20 0%, #4A63CC20 100%);
+    border: 3px dashed #5B7FFF;
+    border-radius: 12px;
+}
+
+.menu-item-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
+@media (min-width: 768px) {
+    .menu-item-icon {
+        font-size: 36px;
+        margin-bottom: 12px;
+    }
+}
+
+.menu-item-title {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+@media (min-width: 768px) {
+    .menu-item-title {
+        font-size: 16px;
+    }
+}
+
+/* ==========================================
+   AUTOCOMPLETE
+   ========================================== */
+
+.input-wrapper {
+    position: relative;
+}
+
+.autocomplete-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 2px solid #5B7FFF;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+}
+
+.autocomplete-list.active {
+    display: block;
+}
+
+.autocomplete-item {
+    padding: 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s;
+}
+
+.autocomplete-item:hover {
+    background-color: #F8F9FB;
+}
+
+.autocomplete-item-nombre {
+    font-weight: 600;
+    color: #1A1D2E;
+}
+
+.autocomplete-item-codigo {
+    font-size: 12px;
+    color: #6B7280;
+}
+
+.info-stock {
+    font-size: 12px;
+    color: #6B7280;
+    margin-top: 4px;
+}
+
+/* ==========================================
+   RADIO GROUPS Y OPCIONES
+   ========================================== */
+
+.medida-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.radio-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.radio-group input[type="radio"] {
+    width: auto;
+    margin: 0;
+    cursor: pointer;
+}
+
+.radio-group label {
+    margin-bottom: 0;
+    font-weight: 400;
+    cursor: pointer;
+}
+
+.tipo-producto-group {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.tipo-producto-option {
+    flex: 1;
+    min-width: 200px;
+    padding: 15px;
+    border: 2px solid #E5E7EB;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+}
+
+.tipo-producto-option:hover {
+    border-color: #5B7FFF;
+    background: #F8F9FB;
+}
+
+.tipo-producto-option input[type="radio"] {
+    display: none;
+}
+
+.tipo-producto-option input[type="radio"]:checked+label {
+    color: #5B7FFF;
+    font-weight: 700;
+}
+
+.tipo-producto-option.selected {
+    border-color: #5B7FFF;
+    background: #F8F9FB;
+}
+
+/* ==========================================
+   RECETAS
+   ========================================== */
+
+.receta-section {
+    display: none;
+    background: #F8F9FB;
+    border: 2px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.receta-section.active {
+    display: block;
+}
+
+.ingrediente-item {
+    background: white;
+    border: 2px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ingrediente-info {
+    flex: 1;
+}
+
+.ingrediente-nombre {
+    font-weight: 600;
+    color: #1A1D2E;
+    margin-bottom: 4px;
+}
+
+.ingrediente-cantidad {
+    font-size: 14px;
+    color: #6B7280;
+}
+
+.btn-remove-ingrediente {
+    padding: 6px 10px;
+    background: #EF4444;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    min-width: 70px;
+    width: auto;
+}
+
+.ingrediente-form {
+    background: white;
+    border: 2px dashed #5B7FFF;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.form-row-ingrediente {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    align-items: stretch;
+}
+
+@media (min-width: 768px) {
+    .form-row-ingrediente {
+        grid-template-columns: 2fr 1fr 1fr auto;
+        gap: 10px;
+        align-items: end;
+    }
+}
+
+.empty-receta {
+    text-align: center;
+    padding: 40px;
+    color: #6B7280;
+    font-style: italic;
+}
+
+.badge-procesado {
+    display: inline-block;
+    padding: 4px 8px;
+    background: #FEF3C7;
+    color: #92400E;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+/* ==========================================
+   TABLAS
+   ========================================== */
+
+.productos-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.productos-table th,
+.productos-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.productos-table th {
+    background: #F8F9FB;
+    font-weight: 600;
+    color: #5B7FFF;
+}
+
+.productos-table tr:hover {
+    background: #f9f9f9;
+}
+
+/* ==========================================
+   BADGES
+   ========================================== */
+
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.badge-success {
+    background: #D1FAE5;
+    color: #065F46;
+}
+
+.badge-warning {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+.badge-danger {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+/* ==========================================
+   NUEVO LAYOUT DASHBOARD - MOBILE FIRST
+   ========================================== */
+
+.dashboard-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* =============================================
+   HEADER MÓVIL - Nombre del negocio
+   ============================================= */
+.mobile-header {
+    background: linear-gradient(135deg, #5B7FFF 0%, #4A63CC 100%);
+    padding: 20px 16px 16px;
+    color: white;
+}
+
+.mobile-header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    letter-spacing: -0.3px;
+}
+
+.header-subtitle {
+    font-size: 13px;
+    opacity: 0.85;
+    font-weight: 400;
+}
+
+/* =============================================
+   BARRA DE USUARIO MÓVIL
+   ============================================= */
+.mobile-user-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: white;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.user-details .user-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1A1D2E;
+}
+
+.user-details .user-meta {
+    font-size: 12px;
+    color: #6B7280;
+}
+
+.btn-salir {
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #FEE2E2;
+    color: #DC2626;
+    border: 1px solid #FECACA;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: auto;
+    min-height: auto;
+}
+
+.btn-salir:hover {
+    background: #DC2626;
+    color: white;
+    transform: none;
+    box-shadow: none;
+}
+
+/* =============================================
+   RESUMEN RÁPIDO MÓVIL
+   ============================================= */
+.quick-summary {
+    margin: 12px 16px;
+    padding: 14px 16px;
+    background: #F0F4FF;
+    border-radius: 12px;
+    border: 1px solid #D4DDFF;
+}
+
+.quick-summary h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1A1D2E;
+    margin-bottom: 4px;
+}
+
+.quick-summary p {
+    font-size: 13px;
+    color: #5B7FFF;
+    font-weight: 500;
+}
+
+/* =============================================
+   LAYOUT DEL DASHBOARD
+   ============================================= */
+.dashboard-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0 16px 16px;
+    overflow-y: auto;
+}
+
+/* Sidebar en móvil - solo muestra el menu grid */
+.sidebar-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: transparent;
+    border-radius: 0;
+    padding: 0;
+}
+
+/* Header del sidebar (solo desktop) */
+.sidebar-header {
+    display: none;
+}
+
+/* User info oculta en móvil (se muestra arriba) */
+.sidebar-panel .user-info {
+    display: none;
+}
+
+/* =============================================
+   MENÚ GRID MÓVIL - 2 columnas
+   ============================================= */
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.menu-item {
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 14px;
+    padding: 20px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    color: #1A1D2E;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.menu-item:hover {
+    border-color: #5B7FFF;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(91, 127, 255, 0.15);
+}
+
+.menu-item.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.menu-item-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.menu-item-title {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #1A1D2E;
+}
+
+/* Área de contenido oculta en móvil */
+.content-area {
+    display: none;
+}
+
+/* Controles de visibilidad */
+.desktop-only {
+    display: none;
+}
+
+.mobile-only {
+    display: block;
+}
+
+@media (min-width: 900px) {
+
+    /* Container ocupa toda la pantalla en desktop */
+    .container {
+        border-radius: 20px;
+        box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
+        max-width: 1100px;
+        margin: 30px auto;
+        min-height: calc(100vh - 60px);
+        overflow: hidden;
+    }
+
+    /* Ocultar header cuando dashboard está visible */
+    .container:has(#dashboard:not(.hidden)) .header {
+        display: none;
+    }
+
+    /* Dashboard ocupa todo el espacio */
+    #dashboard {
+        min-height: 100%;
+    }
+
+    .dashboard-shell {
+        min-height: 100%;
+    }
+
+    /* Ocultar elementos móviles en desktop */
+    .mobile-header,
+    .mobile-user-bar,
+    .quick-summary {
+        display: none;
+    }
+
+    /* Layout principal: sidebar + content */
+    .dashboard-layout {
+        flex-direction: row;
+        gap: 0;
+        padding: 0;
+        min-height: calc(100vh - 60px);
+    }
+
+    /* =============================================
+       SIDEBAR IZQUIERDO - DISEÑO LIMPIO
+       ============================================= */
+    .sidebar-panel {
+        width: 300px;
+        min-width: 300px;
+        background: white;
+        border-radius: 0;
+        padding: 0;
+        gap: 0;
+        align-self: stretch;
+        display: flex;
+        flex-direction: column;
+        border-right: none;
+        box-shadow: 2px 0 20px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Header del sidebar con nombre del negocio */
+    .sidebar-header {
+        display: block;
+        background: linear-gradient(135deg, #5B7FFF 0%, #4A63CC 100%);
+        color: white;
+        padding: 24px;
+        border-radius: 20px 0 0 0;
+    }
+
+    .sidebar-header h1 {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 4px;
+        letter-spacing: -0.3px;
+    }
+
+    .sidebar-header p {
+        font-size: 13px;
+        opacity: 0.85;
+        font-weight: 400;
+    }
+
+    /* User info en sidebar - Estilo tarjeta */
+    .sidebar-panel .user-info {
+        background: white;
+        padding: 20px;
+        margin: 16px;
+        border-radius: 12px;
+        display: block;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        border: 1px solid #F0F0F0;
+    }
+
+    .sidebar-panel .user-info h2 {
+        font-size: 15px;
+        font-weight: 700;
+        color: #1A1D2E;
+        margin-bottom: 4px;
+    }
+
+    .sidebar-panel .user-info p {
+        font-size: 12px;
+        color: #6B7280;
+        margin-bottom: 2px;
+    }
+
+    /* =============================================
+       MENÚ COMO LISTA VERTICAL
+       ============================================= */
+    .sidebar-panel .menu-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        padding: 0 16px;
+        flex: 1;
+    }
+
+    .sidebar-panel .menu-item {
+        background: white;
+        border: 1px solid #E8E8E8;
+        border-radius: 10px;
+        padding: 14px 16px;
+        min-height: auto;
+        font-size: 14px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 14px;
+        margin-bottom: 8px;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    }
+
+    .sidebar-panel .menu-item:hover {
+        background: #F8F9FF;
+        border-color: #5B7FFF;
+        transform: translateX(4px);
+        box-shadow: 0 4px 12px rgba(91, 127, 255, 0.15);
+    }
+
+    .sidebar-panel .menu-item-icon {
+        font-size: 24px;
+        margin-bottom: 0;
+        flex-shrink: 0;
+        width: 32px;
+        text-align: center;
+    }
+
+    .sidebar-panel .menu-item-title {
+        font-size: 14px;
+        font-weight: 500;
+        color: #1A1D2E;
+    }
+
+    /* Botón logout en sidebar */
+    .sidebar-panel .logout-btn {
+        margin: auto 16px 20px;
+        border-radius: 25px;
+        padding: 14px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        transition: all 0.2s ease;
+    }
+
+    .sidebar-panel .logout-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+    }
+
+    /* =============================================
+       ÁREA DE CONTENIDO PRINCIPAL
+       ============================================= */
+    .content-area {
+        display: block;
+        flex: 1;
+        background: white;
+        border-radius: 0 20px 20px 0;
+        padding: 32px;
+        overflow-y: auto;
+        position: relative;
+    }
+
+    .content-area h3 {
+        font-size: 22px;
+        font-weight: 700;
+        color: #1A1D2E;
+        margin-bottom: 10px;
+        letter-spacing: -0.3px;
+    }
+
+    .content-area p {
+        color: #6B7280;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    /* Controles de visibilidad */
+    .desktop-only {
+        display: block;
+    }
+
+    .logout-mini,
+    .mobile-only {
+        display: none;
+    }
+}
+
+/* ==========================================
+   BOTÓN FLOTANTE CHAT
+   ========================================== */
+
+.fab-chat-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #5B7FFF 0%, #4A63CC 100%);
+    color: white;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(91, 127, 255, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    z-index: 1000;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.fab-chat-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(91, 127, 255, 0.5);
+}
+
+.fab-chat-btn:active {
+    transform: scale(0.95);
+}
