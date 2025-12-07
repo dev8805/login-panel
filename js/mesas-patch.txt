@@ -1,0 +1,228 @@
+PARCHE PARA MESAS.JS - EVITAR QUE SE OCULTE EL TECLADO
+
+PROBLEMA IDENTIFICADO:
+======================
+Cuando se ajusta la cantidad de un producto, se elimina un producto o se agrega un producto a la mesa, 
+el input del buscador pierde el foco, causando que el teclado se oculte en móvil.
+
+SOLUCIÓN:
+=========
+Preservar el foco del input del buscador después de actualizar la interfaz.
+
+MODIFICAR LAS SIGUIENTES 3 FUNCIONES:
+
+-------------------------------------------
+1. FUNCIÓN seleccionarProductoMesa() - Línea ~913
+-------------------------------------------
+
+REEMPLAZAR DESDE:
+    if (mesaSeleccionadaId === mesaId) {
+        // Guardar posición de scroll
+        const panel = document.getElementById('panelDetalleMesa');
+        const detalleBody = panel?.querySelector('.detalle-body');
+        const scrollPos = detalleBody?.scrollTop || 0;
+        
+        // OPTIMIZACIÓN: Solo actualizar la lista de productos, NO regenerar el buscador
+        // Esto evita que el input pierda el foco y el teclado se oculte
+        actualizarPanelDetalle(mesaId, true);
+        
+        // Restaurar posición de scroll
+        if (detalleBody) {
+            const nuevoDetalleBody = panel.querySelector('.detalle-body');
+            if (nuevoDetalleBody) {
+                nuevoDetalleBody.scrollTop = scrollPos;
+            }
+        }
+    }
+
+POR:
+    if (mesaSeleccionadaId === mesaId) {
+        // Guardar posición de scroll
+        const panel = document.getElementById('panelDetalleMesa');
+        const detalleBody = panel?.querySelector('.detalle-body');
+        const scrollPos = detalleBody?.scrollTop || 0;
+        
+        // OPTIMIZACIÓN: Solo actualizar la lista de productos, NO regenerar el buscador
+        // Esto evita que el input pierda el foco y el teclado se oculte
+        actualizarPanelDetalle(mesaId, true);
+        
+        // Restaurar posición de scroll
+        if (detalleBody) {
+            const nuevoDetalleBody = panel.querySelector('.detalle-body');
+            if (nuevoDetalleBody) {
+                nuevoDetalleBody.scrollTop = scrollPos;
+            }
+        }
+        
+        // ✅ MANTENER EL FOCO en el input del buscador para evitar que se oculte el teclado
+        setTimeout(() => {
+            const inputNuevo = document.getElementById(`buscar-${mesaId}`);
+            if (inputNuevo) {
+                inputNuevo.focus();
+            }
+        }, 50);
+    }
+
+-------------------------------------------
+2. FUNCIÓN ajustarCantidad() - Línea ~786
+-------------------------------------------
+
+REEMPLAZAR DESDE:
+function ajustarCantidad(mesaId, productoIndex, delta) {
+    const mesa = mesasData[mesaId];
+    if (!mesa || !mesa.productos[productoIndex]) return;
+
+    mesa.productos[productoIndex].cantidad += delta;
+    if (mesa.productos[productoIndex].cantidad <= 0) {
+        mesa.productos.splice(productoIndex, 1);
+    }
+    guardarMesa(mesaId);
+
+    if (mesaSeleccionadaId === mesaId) {
+        const panel = document.getElementById('panelDetalleMesa');
+        const detalleBody = panel?.querySelector('.detalle-body');
+        const scrollPos = detalleBody?.scrollTop || 0;
+        
+        // OPTIMIZACIÓN: Solo actualizar lista, no regenerar buscador
+        actualizarPanelDetalle(mesaId, true);
+        
+        // Restaurar scroll
+        if (detalleBody) {
+            const nuevoDetalleBody = panel.querySelector('.detalle-body');
+            if (nuevoDetalleBody) nuevoDetalleBody.scrollTop = scrollPos;
+        }
+    }
+    actualizarPreviewMesa(mesaId, mesa);
+}
+
+POR:
+function ajustarCantidad(mesaId, productoIndex, delta) {
+    const mesa = mesasData[mesaId];
+    if (!mesa || !mesa.productos[productoIndex]) return;
+
+    // ✅ Verificar si el input del buscador tiene el foco ANTES de actualizar
+    const inputBuscador = document.getElementById(`buscar-${mesaId}`);
+    const teniaFoco = (document.activeElement === inputBuscador);
+
+    mesa.productos[productoIndex].cantidad += delta;
+    if (mesa.productos[productoIndex].cantidad <= 0) {
+        mesa.productos.splice(productoIndex, 1);
+    }
+    guardarMesa(mesaId);
+
+    if (mesaSeleccionadaId === mesaId) {
+        const panel = document.getElementById('panelDetalleMesa');
+        const detalleBody = panel?.querySelector('.detalle-body');
+        const scrollPos = detalleBody?.scrollTop || 0;
+        
+        // OPTIMIZACIÓN: Solo actualizar lista, no regenerar buscador
+        actualizarPanelDetalle(mesaId, true);
+        
+        // Restaurar scroll
+        if (detalleBody) {
+            const nuevoDetalleBody = panel.querySelector('.detalle-body');
+            if (nuevoDetalleBody) nuevoDetalleBody.scrollTop = scrollPos;
+        }
+        
+        // ✅ MANTENER EL FOCO si el input lo tenía antes
+        if (teniaFoco) {
+            setTimeout(() => {
+                const inputNuevo = document.getElementById(`buscar-${mesaId}`);
+                if (inputNuevo) {
+                    inputNuevo.focus();
+                }
+            }, 50);
+        }
+    }
+    actualizarPreviewMesa(mesaId, mesa);
+}
+
+-------------------------------------------
+3. FUNCIÓN eliminarProductoMesa() - Línea ~806
+-------------------------------------------
+
+REEMPLAZAR DESDE:
+function eliminarProductoMesa(mesaId, productoIndex) {
+    const mesa = mesasData[mesaId];
+    if (!mesa || !mesa.productos[productoIndex]) return;
+
+    mesa.productos.splice(productoIndex, 1);
+    guardarMesa(mesaId);
+
+    if (mesaSeleccionadaId === mesaId) {
+        const panel = document.getElementById('panelDetalleMesa');
+        const detalleBody = panel?.querySelector('.detalle-body');
+        const scrollPos = detalleBody?.scrollTop || 0;
+        
+        // OPTIMIZACIÓN: Solo actualizar lista, no regenerar buscador
+        actualizarPanelDetalle(mesaId, true);
+        
+        // Restaurar scroll
+        if (detalleBody) {
+            const nuevoDetalleBody = panel.querySelector('.detalle-body');
+            if (nuevoDetalleBody) nuevoDetalleBody.scrollTop = scrollPos;
+        }
+    }
+
+    actualizarPreviewMesa(mesaId, mesa);
+}
+
+POR:
+function eliminarProductoMesa(mesaId, productoIndex) {
+    const mesa = mesasData[mesaId];
+    if (!mesa || !mesa.productos[productoIndex]) return;
+
+    // ✅ Verificar si el input del buscador tiene el foco ANTES de actualizar
+    const inputBuscador = document.getElementById(`buscar-${mesaId}`);
+    const teniaFoco = (document.activeElement === inputBuscador);
+
+    mesa.productos.splice(productoIndex, 1);
+    guardarMesa(mesaId);
+
+    if (mesaSeleccionadaId === mesaId) {
+        const panel = document.getElementById('panelDetalleMesa');
+        const detalleBody = panel?.querySelector('.detalle-body');
+        const scrollPos = detalleBody?.scrollTop || 0;
+        
+        // OPTIMIZACIÓN: Solo actualizar lista, no regenerar buscador
+        actualizarPanelDetalle(mesaId, true);
+        
+        // Restaurar scroll
+        if (detalleBody) {
+            const nuevoDetalleBody = panel.querySelector('.detalle-body');
+            if (nuevoDetalleBody) nuevoDetalleBody.scrollTop = scrollPos;
+        }
+        
+        // ✅ MANTENER EL FOCO si el input lo tenía antes
+        if (teniaFoco) {
+            setTimeout(() => {
+                const inputNuevo = document.getElementById(`buscar-${mesaId}`);
+                if (inputNuevo) {
+                    inputNuevo.focus();
+                }
+            }, 50);
+        }
+    }
+
+    actualizarPreviewMesa(mesaId, mesa);
+}
+
+-------------------------------------------
+EXPLICACIÓN DE LA SOLUCIÓN:
+-------------------------------------------
+
+1. En ajustarCantidad() y eliminarProductoMesa():
+   - Detectamos SI el input del buscador tenía el foco ANTES de actualizar la interfaz
+   - Después de actualizar, SI tenía el foco, lo restauramos con setTimeout
+
+2. En seleccionarProductoMesa():
+   - SIEMPRE restauramos el foco del input después de agregar un producto
+   - Esto es para mantener el flujo de trabajo: agregar producto → seguir buscando
+
+RESULTADO:
+==========
+✅ Al agregar un producto, el teclado se mantiene abierto
+✅ Al ajustar cantidad estando en el buscador, el teclado se mantiene abierto
+✅ Al eliminar un producto estando en el buscador, el teclado se mantiene abierto
+✅ Como referencia, el buscador de cantidad de la mesa seleccionada ya funciona correctamente
+

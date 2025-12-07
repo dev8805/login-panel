@@ -1063,6 +1063,10 @@ function ajustarCantidad(mesaId, productoIndex, delta) {
     const mesa = mesasData[mesaId];
     if (!mesa || !mesa.productos[productoIndex]) return;
 
+    // ✅ Verificar si el input del buscador tiene el foco ANTES de actualizar
+    const inputBuscador = document.getElementById(`buscar-${mesaId}`);
+    const teniaFoco = (document.activeElement === inputBuscador);
+
     mesa.productos[productoIndex].cantidad += delta;
     if (mesa.productos[productoIndex].cantidad <= 0) {
         mesa.productos.splice(productoIndex, 1);
@@ -1081,6 +1085,16 @@ function ajustarCantidad(mesaId, productoIndex, delta) {
         if (detalleBody) {
             const nuevoDetalleBody = panel.querySelector('.detalle-body');
             if (nuevoDetalleBody) nuevoDetalleBody.scrollTop = scrollPos;
+        }
+        
+        // ✅ MANTENER EL FOCO si el input lo tenía antes
+        if (teniaFoco) {
+            setTimeout(() => {
+                const inputNuevo = document.getElementById(`buscar-${mesaId}`);
+                if (inputNuevo) {
+                    inputNuevo.focus();
+                }
+            }, 50);
         }
     }
     actualizarPreviewMesa(mesaId, mesa);
@@ -1107,6 +1121,10 @@ function eliminarProductoMesa(mesaId, productoIndex) {
     const mesa = mesasData[mesaId];
     if (!mesa || !mesa.productos[productoIndex]) return;
 
+    // ✅ Verificar si el input del buscador tiene el foco ANTES de actualizar
+    const inputBuscador = document.getElementById(`buscar-${mesaId}`);
+    const teniaFoco = (document.activeElement === inputBuscador);
+
     mesa.productos.splice(productoIndex, 1);
     guardarMesa(mesaId);
 
@@ -1122,6 +1140,16 @@ function eliminarProductoMesa(mesaId, productoIndex) {
         if (detalleBody) {
             const nuevoDetalleBody = panel.querySelector('.detalle-body');
             if (nuevoDetalleBody) nuevoDetalleBody.scrollTop = scrollPos;
+        }
+        
+        // ✅ MANTENER EL FOCO si el input lo tenía antes
+        if (teniaFoco) {
+            setTimeout(() => {
+                const inputNuevo = document.getElementById(`buscar-${mesaId}`);
+                if (inputNuevo) {
+                    inputNuevo.focus();
+                }
+            }, 50);
         }
     }
 
@@ -1293,6 +1321,14 @@ function seleccionarProductoMesa(mesaId, producto) {
                 nuevoDetalleBody.scrollTop = scrollPos;
             }
         }
+        
+        // ✅ MANTENER EL FOCO en el input del buscador para evitar que se oculte el teclado
+        setTimeout(() => {
+            const inputNuevo = document.getElementById(`buscar-${mesaId}`);
+            if (inputNuevo) {
+                inputNuevo.focus();
+            }
+        }, 50);
     }
 
     actualizarPreviewMesa(mesaId, mesa);
