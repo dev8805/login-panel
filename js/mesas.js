@@ -753,11 +753,39 @@ function seleccionarMesa(mesaId) {
     }, 100);
 }
 
-function actualizarPanelDetalle(mesaId) {
+function actualizarPanelDetalle(mesaId, soloListaProductos = false) {
     const panel = document.getElementById('panelDetalleMesa');
     if (!panel) return;
     const mesa = mesaId ? mesasData[mesaId] : null;
-    panel.innerHTML = renderizarDetalleMesa(mesa);
+    
+    // Si solo queremos actualizar la lista de productos (optimización para móvil)
+    if (soloListaProductos && mesa) {
+        const detalleBody = panel.querySelector('.detalle-body');
+        const detalleFooter = panel.querySelector('.detalle-footer');
+        
+        if (detalleBody) {
+            const productosHTML = mesa.productos && mesa.productos.length > 0 ? generarHTMLProductos(mesa) : '';
+            const estaOcupada = mesa.productos && mesa.productos.length > 0;
+            
+            const listaHTML = estaOcupada
+                ? `<div class="productos-lista">${productosHTML}</div>`
+                : `<div class="empty-state"><div class="empty-icon">--</div><div class="empty-text">Mesa vacía - agrega productos</div></div>`;
+            
+            detalleBody.innerHTML = listaHTML;
+        }
+        
+        // Actualizar también el botón del footer con el total actualizado
+        if (detalleFooter) {
+            const totalMesa = mesa.productos?.reduce((sum, p) => sum + ((p.precio_unitario || p.precio || 0) * p.cantidad), 0) || 0;
+            const btnRegistrar = detalleFooter.querySelector('.btn-primary');
+            if (btnRegistrar) {
+                btnRegistrar.textContent = `Registrar venta • ${totalMesa.toLocaleString('es-CO')}`;
+            }
+        }
+    } else {
+        // Actualización completa (regenerar todo el HTML)
+        panel.innerHTML = renderizarDetalleMesa(mesa);
+    }
 }
 
 function generarHTMLProductos(mesa) {
@@ -1035,11 +1063,6 @@ function ajustarCantidad(mesaId, productoIndex, delta) {
     const mesa = mesasData[mesaId];
     if (!mesa || !mesa.productos[productoIndex]) return;
 
-    const inputBuscador = document.getElementById(`buscar-${mesaId}`);
-    const teniaFoco = (document.activeElement === inputBuscador);
-    const valorInput = inputBuscador?.value || '';
-    const cursorPos = inputBuscador?.selectionStart || 0;
-
     mesa.productos[productoIndex].cantidad += delta;
     if (mesa.productos[productoIndex].cantidad <= 0) {
         mesa.productos.splice(productoIndex, 1);
@@ -1051,19 +1074,14 @@ function ajustarCantidad(mesaId, productoIndex, delta) {
         const detalleBody = panel?.querySelector('.detalle-body');
         const scrollPos = detalleBody?.scrollTop || 0;
         
-        actualizarPanelDetalle(mesaId);
+        // OPTIMIZACIÓN: Solo actualizar lista, no regenerar buscador
+        actualizarPanelDetalle(mesaId, true);
         
-        requestAnimationFrame(() => {
-            if (detalleBody) detalleBody.scrollTop = scrollPos;
-            if (teniaFoco || valorInput) {
-                const nuevoInput = document.getElementById(`buscar-${mesaId}`);
-                if (nuevoInput) {
-                    nuevoInput.value = valorInput;
-                    nuevoInput.focus();
-                    nuevoInput.setSelectionRange(cursorPos, cursorPos);
-                }
-            }
-        });
+        // Restaurar scroll
+        if (detalleBody) {
+            const nuevoDetalleBody = panel.querySelector('.detalle-body');
+            if (nuevoDetalleBody) nuevoDetalleBody.scrollTop = scrollPos;
+        }
     }
     actualizarPreviewMesa(mesaId, mesa);
 }
@@ -1089,11 +1107,6 @@ function eliminarProductoMesa(mesaId, productoIndex) {
     const mesa = mesasData[mesaId];
     if (!mesa || !mesa.productos[productoIndex]) return;
 
-    const inputBuscador = document.getElementById(`buscar-${mesaId}`);
-    const teniaFoco = (document.activeElement === inputBuscador);
-    const valorInput = inputBuscador?.value || '';
-    const cursorPos = inputBuscador?.selectionStart || 0;
-
     mesa.productos.splice(productoIndex, 1);
     guardarMesa(mesaId);
 
@@ -1102,19 +1115,14 @@ function eliminarProductoMesa(mesaId, productoIndex) {
         const detalleBody = panel?.querySelector('.detalle-body');
         const scrollPos = detalleBody?.scrollTop || 0;
         
-        actualizarPanelDetalle(mesaId);
+        // OPTIMIZACIÓN: Solo actualizar lista, no regenerar buscador
+        actualizarPanelDetalle(mesaId, true);
         
-        requestAnimationFrame(() => {
-            if (detalleBody) detalleBody.scrollTop = scrollPos;
-            if (teniaFoco || valorInput) {
-                const nuevoInput = document.getElementById(`buscar-${mesaId}`);
-                if (nuevoInput) {
-                    nuevoInput.value = valorInput;
-                    nuevoInput.focus();
-                    nuevoInput.setSelectionRange(cursorPos, cursorPos);
-                }
-            }
-        });
+        // Restaurar scroll
+        if (detalleBody) {
+            const nuevoDetalleBody = panel.querySelector('.detalle-body');
+            if (nuevoDetalleBody) nuevoDetalleBody.scrollTop = scrollPos;
+        }
     }
 
     actualizarPreviewMesa(mesaId, mesa);
@@ -1269,13 +1277,22 @@ function seleccionarProductoMesa(mesaId, producto) {
     if (inputCantidad) inputCantidad.value = '1';
 
     if (mesaSeleccionadaId === mesaId) {
-        actualizarPanelDetalle(mesaId);
-        setTimeout(() => {
-            const nuevoInput = document.getElementById(`buscar-${mesaId}`);
-            if (nuevoInput) {
-                nuevoInput.focus();
+        // Guardar posición de scroll
+        const panel = document.getElementById('panelDetalleMesa');
+        const detalleBody = panel?.querySelector('.detalle-body');
+        const scrollPos = detalleBody?.scrollTop || 0;
+        
+        // OPTIMIZACIÓN: Solo actualizar la lista de productos, NO regenerar el buscador
+        // Esto evita que el input pierda el foco y el teclado se oculte
+        actualizarPanelDetalle(mesaId, true);
+        
+        // Restaurar posición de scroll
+        if (detalleBody) {
+            const nuevoDetalleBody = panel.querySelector('.detalle-body');
+            if (nuevoDetalleBody) {
+                nuevoDetalleBody.scrollTop = scrollPos;
             }
-        }, 50);
+        }
     }
 
     actualizarPreviewMesa(mesaId, mesa);
