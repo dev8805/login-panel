@@ -722,7 +722,6 @@ function renderizarMesas(modalBody) {
 function seleccionarMesa(mesaId) {
     if (!mesasData[mesaId]) return;
 
-    // En móvil, permitir re-seleccionar la misma mesa para abrir el panel
     const esMismaMesa = mesaSeleccionadaId === mesaId;
 
     if (!esMismaMesa) {
@@ -733,7 +732,7 @@ function seleccionarMesa(mesaId) {
         actualizarPanelDetalle(mesaId);
     }
 
-    // Siempre mostrar bottom sheet en móvil/tablet cuando se selecciona una mesa
+    // Mostrar bottom sheet en móvil/tablet
     if (window.innerWidth <= 1024) {
         const panel = document.getElementById('panelDetalleMesa');
         const overlay = document.getElementById('bottomSheetOverlay');
@@ -745,15 +744,13 @@ function seleccionarMesa(mesaId) {
         }
     }
 
-    // En desktop, enfocar automáticamente el input del buscador
-    if (window.innerWidth > 1024) {
-        setTimeout(() => {
-            const inputBuscador = document.getElementById(`buscar-${mesaId}`);
-            if (inputBuscador) {
-                inputBuscador.focus();
-            }
-        }, 50);
-    }
+    // Enfocar automáticamente el input del buscador (TODAS las pantallas)
+    setTimeout(() => {
+        const inputBuscador = document.getElementById(`buscar-${mesaId}`);
+        if (inputBuscador) {
+            inputBuscador.focus();
+        }
+    }, 100);
 }
 
 function actualizarPanelDetalle(mesaId) {
@@ -1040,24 +1037,35 @@ function ajustarCantidad(mesaId, productoIndex, delta) {
 
     const inputBuscador = document.getElementById(`buscar-${mesaId}`);
     const teniaFoco = (document.activeElement === inputBuscador);
+    const valorInput = inputBuscador?.value || '';
+    const cursorPos = inputBuscador?.selectionStart || 0;
 
     mesa.productos[productoIndex].cantidad += delta;
     if (mesa.productos[productoIndex].cantidad <= 0) {
         mesa.productos.splice(productoIndex, 1);
     }
-    guardarMesa(mesaId);  // ← Solo guarda esta mesa
+    guardarMesa(mesaId);
 
     if (mesaSeleccionadaId === mesaId) {
+        const panel = document.getElementById('panelDetalleMesa');
+        const detalleBody = panel?.querySelector('.detalle-body');
+        const scrollPos = detalleBody?.scrollTop || 0;
+        
         actualizarPanelDetalle(mesaId);
+        
+        requestAnimationFrame(() => {
+            if (detalleBody) detalleBody.scrollTop = scrollPos;
+            if (teniaFoco || valorInput) {
+                const nuevoInput = document.getElementById(`buscar-${mesaId}`);
+                if (nuevoInput) {
+                    nuevoInput.value = valorInput;
+                    nuevoInput.focus();
+                    nuevoInput.setSelectionRange(cursorPos, cursorPos);
+                }
+            }
+        });
     }
     actualizarPreviewMesa(mesaId, mesa);
-
-    if (teniaFoco) {
-        setTimeout(() => {
-            const nuevoInput = document.getElementById(`buscar-${mesaId}`);
-            if (nuevoInput) nuevoInput.focus();
-        }, 10);
-    }
 }
 
 function ajustarCantidadBusqueda(mesaId, delta) {
@@ -1083,22 +1091,33 @@ function eliminarProductoMesa(mesaId, productoIndex) {
 
     const inputBuscador = document.getElementById(`buscar-${mesaId}`);
     const teniaFoco = (document.activeElement === inputBuscador);
+    const valorInput = inputBuscador?.value || '';
+    const cursorPos = inputBuscador?.selectionStart || 0;
 
     mesa.productos.splice(productoIndex, 1);
-    guardarMesa(mesaId);  // ← Solo guarda esta mesa
+    guardarMesa(mesaId);
 
     if (mesaSeleccionadaId === mesaId) {
+        const panel = document.getElementById('panelDetalleMesa');
+        const detalleBody = panel?.querySelector('.detalle-body');
+        const scrollPos = detalleBody?.scrollTop || 0;
+        
         actualizarPanelDetalle(mesaId);
+        
+        requestAnimationFrame(() => {
+            if (detalleBody) detalleBody.scrollTop = scrollPos;
+            if (teniaFoco || valorInput) {
+                const nuevoInput = document.getElementById(`buscar-${mesaId}`);
+                if (nuevoInput) {
+                    nuevoInput.value = valorInput;
+                    nuevoInput.focus();
+                    nuevoInput.setSelectionRange(cursorPos, cursorPos);
+                }
+            }
+        });
     }
 
     actualizarPreviewMesa(mesaId, mesa);
-
-    if (teniaFoco) {
-        setTimeout(() => {
-            const nuevoInput = document.getElementById(`buscar-${mesaId}`);
-            if (nuevoInput) nuevoInput.focus();
-        }, 10);
-    }
 }
 
 async function iniciarGrabacionMesa(mesaId, btnElement) {
