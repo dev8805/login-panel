@@ -14,7 +14,7 @@
     .btn-nueva-mesa-header {
         display: none !important;
     }
-    
+
     .mesa-card.mesa-nueva {
         display: flex !important;
     }
@@ -119,7 +119,7 @@
    CONTENEDOR DE MESAS - Cool Breeze Theme
    ========================================== */
 
-   #modalMesas .modal-content {
+#modalMesas .modal-content {
     background: #ffffff;
     width: 98%;
     max-width: none;
@@ -544,6 +544,7 @@
    ========================================== */
 
 @media (min-width: 1025px) {
+
     /* Grid de 4 columnas en desktop */
     .modal-mesas-grid {
         grid-template-columns: repeat(4, 1fr) !important;
@@ -599,6 +600,7 @@
     border-left: 3px solid #10b981;
     background: #ffffff;
 }
+
 /* ==========================================
    NUEVA ESTRUCTURA SIMPLIFICADA
    ========================================== */
@@ -1616,28 +1618,28 @@
     background: transparent;
     color: #ef4444;
     border: none;
-    width: 24px;
-    height: 24px;
-    min-width: 50px;
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
     line-height: 1;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: center;
     transition: all 0.15s;
     opacity: 0.8;
     margin-left: auto;
     flex-shrink: 0;
-    padding-right: 0;
+    padding: 0;
 }
 
 .btn-delete-mesa:hover {
-    background: rgba(239, 68, 68, 0.15);
+    background: rgba(239, 68, 68, 0.12);
     opacity: 1;
-    transform: scale(1.1);
+    transform: scale(1.05);
 }
 
 /* ==========================================
