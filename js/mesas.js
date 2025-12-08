@@ -178,6 +178,11 @@ function suscribirseACambiosMesas() {
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'mesas_activas', filter: `tenant_id=eq.${userData.tenant_id}` },
             async (payload) => {
+                console.log('═══════════════════════════════════════');
+                console.log('📡 [Realtime] EVENTO RECIBIDO');
+                console.log('Event Type:', payload.eventType);
+                console.log('═══════════════════════════════════════');
+                
                 let mesaModificadaId;
                 if (payload.eventType === 'DELETE') {
                     mesaModificadaId = window.mesaIdMap[payload.old?.id];
@@ -185,12 +190,21 @@ function suscribirseACambiosMesas() {
                     mesaModificadaId = payload.new?.mesa_id;
                 }
 
+                console.log('- Mesa modificada ID:', mesaModificadaId);
+                console.log('- Mesa seleccionada ID:', mesaSeleccionadaId);
+
                 detenerPollingMesas();
                 const modal = document.getElementById('modalMesas');
-                if (!modal || !modal.classList.contains('show')) return;
+                if (!modal || !modal.classList.contains('show')) {
+                    console.log('ℹ️ [Realtime] Modal no visible, ignorando evento');
+                    return;
+                }
 
                 if (payload.eventType === 'INSERT') {
-                    if (window.mesaRecienCreada === mesaModificadaId) return;
+                    if (window.mesaRecienCreada === mesaModificadaId) {
+                        console.log('ℹ️ [Realtime] Mesa recién creada localmente, ignorando INSERT');
+                        return;
+                    }
                     // Solo agregar la nueva mesa, no recargar todo
                     if (payload.new) {
                         mesasData[mesaModificadaId] = {
@@ -203,14 +217,19 @@ function suscribirseACambiosMesas() {
                         // Actualizar el mapeo
                         window.mesaIdMap[payload.new.id] = payload.new.mesa_id;
                     }
+                    console.log('✅ [Realtime] Mesa INSERT procesada, renderizando mesas');
                     const modalBody = document.getElementById('modalBodyMesas');
                     renderizarMesas(modalBody);
                 }
                 else if (payload.eventType === 'DELETE') {
+                    console.log('🗑️ [Realtime] Mesa DELETE procesada');
                     delete mesasData[mesaModificadaId];
                     const modalBody = document.getElementById('modalBodyMesas');
                     renderizarMesas(modalBody);
-                } else if (payload.eventType === 'UPDATE') {
+                } 
+                else if (payload.eventType === 'UPDATE') {
+                    console.log('🔄 [Realtime] Procesando UPDATE...');
+                    
                     // Solo actualizar la mesa modificada, no recargar todo
                     if (payload.new) {
                         mesasData[mesaModificadaId] = {
@@ -222,35 +241,78 @@ function suscribirseACambiosMesas() {
                         };
                     }
                     const mesa = mesasData[mesaModificadaId];
-                    if (!mesa) return;
+                    if (!mesa) {
+                        console.warn('⚠️ [Realtime] Mesa no encontrada después de UPDATE');
+                        return;
+                    }
 
                     if (mesaSeleccionadaId === mesaModificadaId) {
+                        console.log('🎯 [Realtime] UPDATE es para la mesa SELECCIONADA');
+                        
+                        // GUARDAR ESTADO DEL INPUT ANTES DE ACTUALIZAR
                         const inputBuscador = document.getElementById(`buscar-${mesaModificadaId}`);
                         const teniaFoco = (document.activeElement === inputBuscador);
                         const valorInput = inputBuscador?.value || '';
                         const cursorPos = inputBuscador?.selectionStart || 0;
+                        
+                        console.log('📊 [Realtime] Estado del input ANTES:');
+                        console.log('- Input existe?', !!inputBuscador);
+                        console.log('- teniaFoco?', teniaFoco);
+                        console.log('- valorInput:', valorInput);
+                        console.log('- cursorPos:', cursorPos);
 
-                        actualizarPanelDetalle(mesaModificadaId);
+                        // ❌ ANTES: actualizarPanelDetalle(mesaModificadaId); // regeneraba TODO
+                        // ✅ AHORA: Solo actualizar la lista de productos
+                        console.log('- Llamando actualizarPanelDetalle(soloListaProductos=true)');
+                        actualizarPanelDetalle(mesaModificadaId, true);
 
+                        // RESTAURAR ESTADO DEL INPUT DESPUÉS DE ACTUALIZAR
                         if (teniaFoco || valorInput) {
+                            console.log('🔄 [Realtime] Restaurando estado del input...');
                             setTimeout(() => {
                                 const nuevoInput = document.getElementById(`buscar-${mesaModificadaId}`);
+                                console.log('- Nuevo input encontrado?', !!nuevoInput);
+                                
                                 if (nuevoInput) {
-                                    nuevoInput.value = valorInput;
+                                    if (valorInput) {
+                                        nuevoInput.value = valorInput;
+                                        console.log('✅ [Realtime] Valor restaurado:', valorInput);
+                                    }
                                     if (teniaFoco) {
                                         nuevoInput.focus();
-                                        nuevoInput.setSelectionRange(cursorPos, cursorPos);
+                                        if (cursorPos > 0) {
+                                            nuevoInput.setSelectionRange(cursorPos, cursorPos);
+                                        }
+                                        console.log('✅ [Realtime] Foco restaurado');
+                                        
+                                        // Verificar que el foco se restauró
+                                        const focoActual = document.activeElement;
+                                        console.log('- Elemento con foco después de restaurar:', focoActual?.tagName, focoActual?.id);
+                                        console.log('- ¿Foco restaurado correctamente?', focoActual === nuevoInput);
                                     }
+                                } else {
+                                    console.error('❌ [Realtime] Input no encontrado para restaurar estado');
                                 }
-                            }, 10);
+                            }, 50);
+                        } else {
+                            console.log('ℹ️ [Realtime] No es necesario restaurar estado (sin foco ni valor)');
                         }
+                    } else {
+                        console.log('ℹ️ [Realtime] UPDATE es para otra mesa (no seleccionada)');
                     }
 
                     actualizarPreviewMesa(mesaModificadaId, mesa);
+                    console.log('✅ [Realtime] UPDATE procesado completamente');
                 }
+                
+                console.log('═══════════════════════════════════════');
+                console.log('🏁 [Realtime] FIN procesamiento evento');
+                console.log('═══════════════════════════════════════');
+                console.log('');
             }
         )
         .subscribe((status) => {
+            console.log('📡 [Realtime] Estado de suscripción:', status);
             if (status === 'SUBSCRIBED') {
                 intentosReconexion = 0;
                 detenerPollingMesas();
@@ -258,6 +320,7 @@ function suscribirseACambiosMesas() {
                 actualizarIndicadorEstado();
             }
             if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                console.error('❌ [Realtime] Error de canal, iniciando polling');
                 iniciarPollingMesas();
             }
         });
@@ -339,6 +402,7 @@ async function abrirModalMesas() {
     modalBody.addEventListener('click', handleClickActions);
     modalBody.addEventListener('mousedown', handleMouseDown);
     modalBody.addEventListener('mouseup', handleMouseUp);
+    modalBody.addEventListener('mousedown', handleSugerenciaMouseDown, true); // ← AGREGADO (con capture)
     modalBody.addEventListener('mouseleave', handleMouseLeave);
     modalBody.addEventListener('touchstart', handleTouchStart);
     modalBody.addEventListener('touchend', handleTouchEnd);
@@ -367,6 +431,24 @@ window.abrirModalMesas = abrirModalMesas;
 // HANDLERS PARA EVENT DELEGATION
 // ==============================================
 
+// Handler para mousedown en sugerencias (prevenir pérdida de foco)
+function handleSugerenciaMouseDown(e) {
+    const resultadoItem = e.target.closest('.resultado-producto-item');
+    if (resultadoItem) {
+        // Prevenir que el mousedown quite el foco del input
+        e.preventDefault();
+        
+        const mesaId = resultadoItem.dataset.mesaId;
+        const producto = JSON.parse(resultadoItem.dataset.producto);
+        
+        // Agregar producto inmediatamente (sin esperar al click)
+        seleccionarProductoMesa(mesaId, producto);
+        
+        // El input NUNCA pierde el foco porque preventDefault() bloquea el mousedown
+        return false;
+    }
+}
+
 // Handler para inputs de búsqueda
 function handleSearchInput(e) {
     const target = e.target;
@@ -394,10 +476,9 @@ function handleClickActions(e) {
     // Verificar si es un resultado de búsqueda
     const resultadoItem = e.target.closest('.resultado-producto-item');
     if (resultadoItem) {
+        // Ya se manejó en mousedown, ignorar click
         e.preventDefault();
-        const mesaId = resultadoItem.dataset.mesaId;
-        const producto = JSON.parse(resultadoItem.dataset.producto);
-        seleccionarProductoMesa(mesaId, producto);
+        e.stopPropagation();
         return;
     }
 
@@ -754,16 +835,34 @@ function seleccionarMesa(mesaId) {
 }
 
 function actualizarPanelDetalle(mesaId, soloListaProductos = false) {
+    console.log('═══════════════════════════════════════');
+    console.log('🔄 [actualizarPanelDetalle] INICIO');
+    console.log('Mesa ID:', mesaId);
+    console.log('soloListaProductos:', soloListaProductos);
+    console.log('═══════════════════════════════════════');
+    
     const panel = document.getElementById('panelDetalleMesa');
-    if (!panel) return;
+    if (!panel) {
+        console.error('❌ [actualizarPanelDetalle] Panel no encontrado');
+        return;
+    }
+    
     const mesa = mesaId ? mesasData[mesaId] : null;
     
-    // Si solo queremos actualizar la lista de productos (optimización para móvil)
+    // Si solo queremos actualizar la lista de productos (optimización para evitar perder foco)
     if (soloListaProductos && mesa) {
+        console.log('🎯 [actualizarPanelDetalle] Modo SOLO LISTA (preservando footer/buscador)');
+        
         const detalleBody = panel.querySelector('.detalle-body');
         const detalleFooter = panel.querySelector('.detalle-footer');
         
+        console.log('- DetalleBody encontrado?', !!detalleBody);
+        console.log('- DetalleFooter encontrado?', !!detalleFooter);
+        
         if (detalleBody) {
+            const scrollPos = detalleBody.scrollTop || 0;
+            console.log('- Posición scroll antes:', scrollPos);
+            
             const productosHTML = mesa.productos && mesa.productos.length > 0 ? generarHTMLProductos(mesa) : '';
             const estaOcupada = mesa.productos && mesa.productos.length > 0;
             
@@ -772,20 +871,33 @@ function actualizarPanelDetalle(mesaId, soloListaProductos = false) {
                 : `<div class="empty-state"><div class="empty-icon">--</div><div class="empty-text">Mesa vacía - agrega productos</div></div>`;
             
             detalleBody.innerHTML = listaHTML;
+            detalleBody.scrollTop = scrollPos;
+            console.log('✅ [actualizarPanelDetalle] DetalleBody actualizado');
+            console.log('- Posición scroll después:', detalleBody.scrollTop);
         }
         
-        // Actualizar también el botón del footer con el total actualizado
+        // Actualizar solo el botón del footer con el total actualizado (SIN tocar el buscador)
         if (detalleFooter) {
             const totalMesa = mesa.productos?.reduce((sum, p) => sum + ((p.precio_unitario || p.precio || 0) * p.cantidad), 0) || 0;
             const btnRegistrar = detalleFooter.querySelector('.btn-primary');
             if (btnRegistrar) {
                 btnRegistrar.textContent = `Registrar venta • ${totalMesa.toLocaleString('es-CO')}`;
+                console.log('✅ [actualizarPanelDetalle] Botón registrar actualizado con total:', totalMesa);
             }
         }
+        
+        console.log('✅ [actualizarPanelDetalle] Actualización parcial completada (buscador preservado)');
     } else {
+        console.log('🔄 [actualizarPanelDetalle] Modo COMPLETO (regenerando todo el HTML)');
         // Actualización completa (regenerar todo el HTML)
         panel.innerHTML = renderizarDetalleMesa(mesa);
+        console.log('✅ [actualizarPanelDetalle] Actualización completa');
     }
+    
+    console.log('═══════════════════════════════════════');
+    console.log('🏁 [actualizarPanelDetalle] FIN');
+    console.log('═══════════════════════════════════════');
+    console.log('');
 }
 
 function generarHTMLProductos(mesa) {
@@ -857,7 +969,7 @@ function renderizarBuscadorMesa(mesa) {
                     <div class="producto-controls" style="display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 6px; height: 26px; background: white; flex-shrink: 0;">
                         <div class="qty-btn qty-btn-busqueda-minus" data-mesa-id="${mesa.id}" data-action="ajustar-busqueda" data-delta="-1" style="width: 24px; height: 100%; cursor: pointer; font-size: 12px; color: #64748b; display: flex; align-items: center; justify-content: center; user-select: none; transition: all 0.2s;" onmouseover="this.style.background='#6366f1'; this.style.color='white';" onmouseout="this.style.background='transparent'; this.style.color='#64748b';">−</div>
                         
-                        <input type="number" class="cantidad-input" id="cantidad-buscar-${mesa.id}" value="1" min="1" data-mesa-id="${mesa.id}" data-action="validar-cantidad-busqueda" style="width: 28px; height: 100%; text-align: center; padding: 0; border: none; border-left: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; font-size: 12px; font-weight: 700; outline: none; -moz-appearance: textfield; background: white; color: #059669;">
+                        <input type="number" class="cantidad-input" id="cantidad-buscar-${mesa.id}" value="1" min="1" data-mesa-id="${mesa.id}" data-action="validar-cantidad-busqueda" style="width: 28px; height: 100%; text-align: center; padding: 0; border: none; font-size: 12px; font-weight: 700; outline: none; -moz-appearance: textfield; background: transparent; color: #059669;">
                         
                         <div class="qty-btn qty-btn-busqueda-plus" data-mesa-id="${mesa.id}" data-action="ajustar-busqueda" data-delta="1" style="width: 24px; height: 100%; cursor: pointer; font-size: 12px; color: #64748b; display: flex; align-items: center; justify-content: center; user-select: none; transition: all 0.2s;" onmouseover="this.style.background='#6366f1'; this.style.color='white';" onmouseout="this.style.background='transparent'; this.style.color='#64748b';">+</div>
                     </div>
@@ -1060,44 +1172,199 @@ async function editarDescripcionMesa(mesaId) {
 }
 
 function ajustarCantidad(mesaId, productoIndex, delta) {
+    console.log('═══════════════════════════════════════');
+    console.log('🔧 [ajustarCantidad] INICIO');
+    console.log('Mesa ID:', mesaId);
+    console.log('Producto Index:', productoIndex);
+    console.log('Delta:', delta);
+    console.log('═══════════════════════════════════════');
+    
     const mesa = mesasData[mesaId];
-    if (!mesa || !mesa.productos[productoIndex]) return;
+    if (!mesa || !mesa.productos[productoIndex]) {
+        console.error('❌ [ajustarCantidad] Mesa o producto no encontrado');
+        return;
+    }
 
-    // ✅ Verificar si el input del buscador tiene el foco ANTES de actualizar
+    // ═══════════════════════════════════════════════════════════
+    // LOG 1: Estado ANTES de actualizar
+    // ═══════════════════════════════════════════════════════════
     const inputBuscador = document.getElementById(`buscar-${mesaId}`);
-    const teniaFoco = (document.activeElement === inputBuscador);
+    const elementoActivo = document.activeElement;
+    
+    console.log('📊 [ajustarCantidad] ESTADO ANTES:');
+    console.log('- Input buscador existe?', !!inputBuscador);
+    console.log('- Input buscador ID:', inputBuscador?.id);
+    console.log('- Elemento activo (foco):', elementoActivo?.tagName, elementoActivo?.id, elementoActivo?.className);
+    console.log('- Input tiene el foco?', elementoActivo === inputBuscador);
+    console.log('- Input valor:', inputBuscador?.value);
+    console.log('- Posición cursor:', inputBuscador?.selectionStart);
+    console.log('- ¿Es móvil? (innerWidth <= 1024):', window.innerWidth <= 1024);
+    console.log('- Ancho ventana:', window.innerWidth);
+    
+    const teniaFoco = (elementoActivo === inputBuscador);
+    const valorInput = inputBuscador?.value || '';
+    const cursorPos = inputBuscador?.selectionStart || 0;
+    
+    console.log('✅ [ajustarCantidad] Variables guardadas:');
+    console.log('- teniaFoco:', teniaFoco);
+    console.log('- valorInput:', valorInput);
+    console.log('- cursorPos:', cursorPos);
 
+    // ═══════════════════════════════════════════════════════════
+    // LOG 2: Modificación de datos
+    // ═══════════════════════════════════════════════════════════
+    console.log('🔄 [ajustarCantidad] MODIFICANDO PRODUCTO:');
+    console.log('- Cantidad actual:', mesa.productos[productoIndex].cantidad);
+    
     mesa.productos[productoIndex].cantidad += delta;
+    
+    console.log('- Cantidad nueva:', mesa.productos[productoIndex].cantidad);
+    
     if (mesa.productos[productoIndex].cantidad <= 0) {
+        console.log('⚠️ [ajustarCantidad] Cantidad <= 0, eliminando producto');
         mesa.productos.splice(productoIndex, 1);
     }
+    
+    console.log('📤 [ajustarCantidad] Guardando en Supabase...');
     guardarMesa(mesaId);
 
+    // ═══════════════════════════════════════════════════════════
+    // LOG 3: Actualización de UI
+    // ═══════════════════════════════════════════════════════════
     if (mesaSeleccionadaId === mesaId) {
+        console.log('🎨 [ajustarCantidad] ACTUALIZANDO UI (mesa seleccionada):');
+        
         const panel = document.getElementById('panelDetalleMesa');
         const detalleBody = panel?.querySelector('.detalle-body');
         const scrollPos = detalleBody?.scrollTop || 0;
         
-        // OPTIMIZACIÓN: Solo actualizar lista, no regenerar buscador
+        console.log('- Panel existe?', !!panel);
+        console.log('- DetalleBody existe?', !!detalleBody);
+        console.log('- Scroll position:', scrollPos);
+        console.log('- Llamando actualizarPanelDetalle(soloListaProductos=true)...');
+        
+        // OPTIMIZACIÓN: Solo actualizar lista, NO tocar el footer/buscador
         actualizarPanelDetalle(mesaId, true);
         
-        // Restaurar scroll
-        if (detalleBody) {
-            const nuevoDetalleBody = panel.querySelector('.detalle-body');
-            if (nuevoDetalleBody) nuevoDetalleBody.scrollTop = scrollPos;
+        console.log('✅ [ajustarCantidad] UI actualizada');
+        
+        // ═══════════════════════════════════════════════════════
+        // LOG 4: Verificación DESPUÉS de actualizar UI
+        // ═══════════════════════════════════════════════════════
+        console.log('📊 [ajustarCantidad] ESTADO DESPUÉS de actualizarPanelDetalle:');
+        const inputNuevoAntes = document.getElementById(`buscar-${mesaId}`);
+        const elementoActivoAntes = document.activeElement;
+        
+        console.log('- Input buscador todavía existe?', !!inputNuevoAntes);
+        console.log('- Input es el mismo elemento? (referencia):', inputNuevoAntes === inputBuscador);
+        console.log('- Input ID:', inputNuevoAntes?.id);
+        console.log('- Elemento activo ahora:', elementoActivoAntes?.tagName, elementoActivoAntes?.id, elementoActivoAntes?.className);
+        console.log('- Input mantiene el foco?', elementoActivoAntes === inputNuevoAntes);
+        console.log('- Input valor después:', inputNuevoAntes?.value);
+        console.log('- Posición cursor después:', inputNuevoAntes?.selectionStart);
+        
+        // ═══════════════════════════════════════════════════════
+        // DIAGNÓSTICO DEL PROBLEMA
+        // ═══════════════════════════════════════════════════════
+        console.log('');
+        console.log('🔍 [ajustarCantidad] DIAGNÓSTICO:');
+        
+        if (inputNuevoAntes !== inputBuscador) {
+            console.error('❌ PROBLEMA CRÍTICO: El input es un NUEVO ELEMENTO');
+            console.error('   → El input fue eliminado y recreado por innerHTML');
+            console.error('   → Esto causará que el teclado se oculte en móvil');
+            console.error('   → SOLUCIÓN: actualizarPanelDetalle NO debe tocar el footer');
+        } else {
+            console.log('✅ CORRECTO: El input es el MISMO elemento (no se recreó)');
+            console.log('   → El input se preservó correctamente');
+            
+            if (elementoActivoAntes === inputNuevoAntes) {
+                console.log('✅ PERFECTO: El input MANTIENE el foco');
+                console.log('   → El teclado NO se ocultará');
+            } else if (teniaFoco) {
+                console.warn('⚠️ ADVERTENCIA: El input perdió el foco pero existe');
+                console.warn('   → El teclado podría ocultarse');
+                console.warn('   → Foco actual en:', elementoActivoAntes?.tagName, elementoActivoAntes?.id);
+            }
         }
         
-        // ✅ MANTENER EL FOCO si el input lo tenía antes
-        if (teniaFoco) {
+        // ═══════════════════════════════════════════════════════
+        // LOG 5: Restaurar foco si es necesario
+        // ═══════════════════════════════════════════════════════
+        if (teniaFoco && elementoActivoAntes !== inputNuevoAntes) {
+            console.log('');
+            console.log('🔄 [ajustarCantidad] RESTAURANDO FOCO (perdido durante actualización):');
+            console.log('- teniaFoco es true pero se perdió, ejecutando setTimeout en 10ms...');
+            
             setTimeout(() => {
-                const inputNuevo = document.getElementById(`buscar-${mesaId}`);
-                if (inputNuevo) {
-                    inputNuevo.focus();
+                console.log('⏱️ [ajustarCantidad] setTimeout ejecutándose:');
+                const inputFinal = document.getElementById(`buscar-${mesaId}`);
+                
+                console.log('- Input encontrado?', !!inputFinal);
+                console.log('- Input ID:', inputFinal?.id);
+                console.log('- Input es visible?', inputFinal?.offsetParent !== null);
+                console.log('- Input está en el DOM?', document.body.contains(inputFinal));
+                
+                if (inputFinal) {
+                    console.log('✅ [ajustarCantidad] Restaurando valores y foco:');
+                    console.log('- Valor a restaurar:', valorInput);
+                    console.log('- Cursor a restaurar:', cursorPos);
+                    
+                    inputFinal.value = valorInput;
+                    
+                    console.log('- Llamando inputFinal.focus()...');
+                    inputFinal.focus();
+                    
+                    if (cursorPos > 0) {
+                        inputFinal.setSelectionRange(cursorPos, cursorPos);
+                    }
+                    
+                    // Verificar si el foco se restauró
+                    const elementoActivoFinal = document.activeElement;
+                    console.log('- Elemento activo después de focus():', elementoActivoFinal?.tagName, elementoActivoFinal?.id);
+                    console.log('- ¿Foco restaurado exitosamente?', elementoActivoFinal === inputFinal);
+                    
+                    if (elementoActivoFinal !== inputFinal) {
+                        console.error('❌ FOCO NO SE PUDO RESTAURAR');
+                        console.error('   → El teclado no reaparecerá');
+                        console.error('   → Revisar por qué el input no puede recibir foco');
+                        console.error('   → Posibles causas:');
+                        console.error('     1. El input fue eliminado inmediatamente después');
+                        console.error('     2. Otro elemento intercepta el foco');
+                        console.error('     3. El elemento está oculto o deshabilitado');
+                    } else {
+                        console.log('✅ FOCO RESTAURADO EXITOSAMENTE');
+                        console.log('   → El teclado debería permanecer abierto');
+                    }
+                } else {
+                    console.error('❌ [ajustarCantidad] Input NO ENCONTRADO en setTimeout');
+                    console.error('   → El input fue eliminado del DOM');
+                    console.error('   → Revisar actualizarPanelDetalle()');
                 }
-            }, 50);
+                
+                console.log('═══════════════════════════════════════');
+                console.log('🏁 [ajustarCantidad] FIN setTimeout');
+                console.log('═══════════════════════════════════════');
+            }, 10);
+        } else {
+            console.log('ℹ️ [ajustarCantidad] No es necesario restaurar foco:');
+            if (!teniaFoco) {
+                console.log('   → El input no tenía foco originalmente');
+            } else {
+                console.log('   → El input mantuvo el foco correctamente');
+            }
         }
+    } else {
+        console.log('ℹ️ [ajustarCantidad] Mesa no está seleccionada, no se actualiza UI');
     }
+
+    // Actualizar preview de la tarjeta de la mesa
     actualizarPreviewMesa(mesaId, mesa);
+    
+    console.log('═══════════════════════════════════════');
+    console.log('🏁 [ajustarCantidad] FIN');
+    console.log('═══════════════════════════════════════');
+    console.log('');
 }
 
 function ajustarCantidadBusqueda(mesaId, delta) {
@@ -1118,42 +1385,194 @@ function ajustarCantidadBusqueda(mesaId, delta) {
 }
 
 function eliminarProductoMesa(mesaId, productoIndex) {
+    console.log('═══════════════════════════════════════');
+    console.log('🗑️ [eliminarProductoMesa] INICIO');
+    console.log('Mesa ID:', mesaId);
+    console.log('Producto Index:', productoIndex);
+    console.log('═══════════════════════════════════════');
+    
     const mesa = mesasData[mesaId];
-    if (!mesa || !mesa.productos[productoIndex]) return;
+    if (!mesa || !mesa.productos[productoIndex]) {
+        console.error('❌ [eliminarProductoMesa] Mesa o producto no encontrado');
+        return;
+    }
 
-    // ✅ Verificar si el input del buscador tiene el foco ANTES de actualizar
+    // ═══════════════════════════════════════════════════════════
+    // LOG 1: Estado ANTES de eliminar
+    // ═══════════════════════════════════════════════════════════
     const inputBuscador = document.getElementById(`buscar-${mesaId}`);
-    const teniaFoco = (document.activeElement === inputBuscador);
+    const elementoActivo = document.activeElement;
+    
+    console.log('📊 [eliminarProductoMesa] ESTADO ANTES:');
+    console.log('- Input buscador existe?', !!inputBuscador);
+    console.log('- Input buscador ID:', inputBuscador?.id);
+    console.log('- Elemento activo (foco):', elementoActivo?.tagName, elementoActivo?.id, elementoActivo?.className);
+    console.log('- Input tiene el foco?', elementoActivo === inputBuscador);
+    console.log('- Input valor:', inputBuscador?.value);
+    console.log('- Posición cursor:', inputBuscador?.selectionStart);
+    console.log('- ¿Es móvil? (innerWidth <= 1024):', window.innerWidth <= 1024);
+    console.log('- Ancho ventana:', window.innerWidth);
+    
+    const teniaFoco = (elementoActivo === inputBuscador);
+    const valorInput = inputBuscador?.value || '';
+    const cursorPos = inputBuscador?.selectionStart || 0;
+    
+    console.log('✅ [eliminarProductoMesa] Variables guardadas:');
+    console.log('- teniaFoco:', teniaFoco);
+    console.log('- valorInput:', valorInput);
+    console.log('- cursorPos:', cursorPos);
 
+    // ═══════════════════════════════════════════════════════════
+    // LOG 2: Eliminación de producto
+    // ═══════════════════════════════════════════════════════════
+    console.log('🔄 [eliminarProductoMesa] ELIMINANDO PRODUCTO:');
+    console.log('- Producto a eliminar:', mesa.productos[productoIndex].nombre);
+    console.log('- Total productos antes:', mesa.productos.length);
+    
     mesa.productos.splice(productoIndex, 1);
+    
+    console.log('- Total productos después:', mesa.productos.length);
+    console.log('📤 [eliminarProductoMesa] Guardando en Supabase...');
+    
     guardarMesa(mesaId);
 
+    // ═══════════════════════════════════════════════════════════
+    // LOG 3: Actualización de UI
+    // ═══════════════════════════════════════════════════════════
     if (mesaSeleccionadaId === mesaId) {
+        console.log('🎨 [eliminarProductoMesa] ACTUALIZANDO UI (mesa seleccionada):');
+        
         const panel = document.getElementById('panelDetalleMesa');
         const detalleBody = panel?.querySelector('.detalle-body');
         const scrollPos = detalleBody?.scrollTop || 0;
         
-        // OPTIMIZACIÓN: Solo actualizar lista, no regenerar buscador
+        console.log('- Panel existe?', !!panel);
+        console.log('- DetalleBody existe?', !!detalleBody);
+        console.log('- Scroll position:', scrollPos);
+        console.log('- Llamando actualizarPanelDetalle(soloListaProductos=true)...');
+        
+        // OPTIMIZACIÓN: Solo actualizar lista, NO tocar el footer/buscador
         actualizarPanelDetalle(mesaId, true);
         
-        // Restaurar scroll
-        if (detalleBody) {
-            const nuevoDetalleBody = panel.querySelector('.detalle-body');
-            if (nuevoDetalleBody) nuevoDetalleBody.scrollTop = scrollPos;
+        console.log('✅ [eliminarProductoMesa] UI actualizada');
+        
+        // ═══════════════════════════════════════════════════════
+        // LOG 4: Verificación DESPUÉS de actualizar UI
+        // ═══════════════════════════════════════════════════════
+        console.log('📊 [eliminarProductoMesa] ESTADO DESPUÉS de actualizarPanelDetalle:');
+        const inputNuevoAntes = document.getElementById(`buscar-${mesaId}`);
+        const elementoActivoAntes = document.activeElement;
+        
+        console.log('- Input buscador todavía existe?', !!inputNuevoAntes);
+        console.log('- Input es el mismo elemento? (referencia):', inputNuevoAntes === inputBuscador);
+        console.log('- Input ID:', inputNuevoAntes?.id);
+        console.log('- Elemento activo ahora:', elementoActivoAntes?.tagName, elementoActivoAntes?.id, elementoActivoAntes?.className);
+        console.log('- Input mantiene el foco?', elementoActivoAntes === inputNuevoAntes);
+        console.log('- Input valor después:', inputNuevoAntes?.value);
+        console.log('- Posición cursor después:', inputNuevoAntes?.selectionStart);
+        
+        // ═══════════════════════════════════════════════════════
+        // DIAGNÓSTICO DEL PROBLEMA
+        // ═══════════════════════════════════════════════════════
+        console.log('');
+        console.log('🔍 [eliminarProductoMesa] DIAGNÓSTICO:');
+        
+        if (inputNuevoAntes !== inputBuscador) {
+            console.error('❌ PROBLEMA CRÍTICO: El input es un NUEVO ELEMENTO');
+            console.error('   → El input fue eliminado y recreado por innerHTML');
+            console.error('   → Esto causará que el teclado se oculte en móvil');
+            console.error('   → SOLUCIÓN: actualizarPanelDetalle NO debe tocar el footer');
+        } else {
+            console.log('✅ CORRECTO: El input es el MISMO elemento (no se recreó)');
+            console.log('   → El input se preservó correctamente');
+            
+            if (elementoActivoAntes === inputNuevoAntes) {
+                console.log('✅ PERFECTO: El input MANTIENE el foco');
+                console.log('   → El teclado NO se ocultará');
+            } else if (teniaFoco) {
+                console.warn('⚠️ ADVERTENCIA: El input perdió el foco pero existe');
+                console.warn('   → El teclado podría ocultarse');
+                console.warn('   → Foco actual en:', elementoActivoAntes?.tagName, elementoActivoAntes?.id);
+            }
         }
         
-        // ✅ MANTENER EL FOCO si el input lo tenía antes
-        if (teniaFoco) {
+        // ═══════════════════════════════════════════════════════
+        // LOG 5: Restaurar foco si es necesario
+        // ═══════════════════════════════════════════════════════
+        if (teniaFoco && elementoActivoAntes !== inputNuevoAntes) {
+            console.log('');
+            console.log('🔄 [eliminarProductoMesa] RESTAURANDO FOCO (perdido durante actualización):');
+            console.log('- teniaFoco es true pero se perdió, ejecutando setTimeout en 10ms...');
+            
             setTimeout(() => {
-                const inputNuevo = document.getElementById(`buscar-${mesaId}`);
-                if (inputNuevo) {
-                    inputNuevo.focus();
+                console.log('⏱️ [eliminarProductoMesa] setTimeout ejecutándose:');
+                const inputFinal = document.getElementById(`buscar-${mesaId}`);
+                
+                console.log('- Input encontrado?', !!inputFinal);
+                console.log('- Input ID:', inputFinal?.id);
+                console.log('- Input es visible?', inputFinal?.offsetParent !== null);
+                console.log('- Input está en el DOM?', document.body.contains(inputFinal));
+                
+                if (inputFinal) {
+                    console.log('✅ [eliminarProductoMesa] Restaurando valores y foco:');
+                    console.log('- Valor a restaurar:', valorInput);
+                    console.log('- Cursor a restaurar:', cursorPos);
+                    
+                    inputFinal.value = valorInput;
+                    
+                    console.log('- Llamando inputFinal.focus()...');
+                    inputFinal.focus();
+                    
+                    if (cursorPos > 0) {
+                        inputFinal.setSelectionRange(cursorPos, cursorPos);
+                    }
+                    
+                    // Verificar si el foco se restauró
+                    const elementoActivoFinal = document.activeElement;
+                    console.log('- Elemento activo después de focus():', elementoActivoFinal?.tagName, elementoActivoFinal?.id);
+                    console.log('- ¿Foco restaurado exitosamente?', elementoActivoFinal === inputFinal);
+                    
+                    if (elementoActivoFinal !== inputFinal) {
+                        console.error('❌ FOCO NO SE PUDO RESTAURAR');
+                        console.error('   → El teclado no reaparecerá');
+                        console.error('   → Revisar por qué el input no puede recibir foco');
+                        console.error('   → Posibles causas:');
+                        console.error('     1. El input fue eliminado inmediatamente después');
+                        console.error('     2. Otro elemento intercepta el foco');
+                        console.error('     3. El elemento está oculto o deshabilitado');
+                    } else {
+                        console.log('✅ FOCO RESTAURADO EXITOSAMENTE');
+                        console.log('   → El teclado debería permanecer abierto');
+                    }
+                } else {
+                    console.error('❌ [eliminarProductoMesa] Input NO ENCONTRADO en setTimeout');
+                    console.error('   → El input fue eliminado del DOM');
+                    console.error('   → Revisar actualizarPanelDetalle()');
                 }
-            }, 50);
+                
+                console.log('═══════════════════════════════════════');
+                console.log('🏁 [eliminarProductoMesa] FIN setTimeout');
+                console.log('═══════════════════════════════════════');
+            }, 10);
+        } else {
+            console.log('ℹ️ [eliminarProductoMesa] No es necesario restaurar foco:');
+            if (!teniaFoco) {
+                console.log('   → El input no tenía foco originalmente');
+            } else {
+                console.log('   → El input mantuvo el foco correctamente');
+            }
         }
+    } else {
+        console.log('ℹ️ [eliminarProductoMesa] Mesa no está seleccionada, no se actualiza UI');
     }
 
+    // Actualizar preview de la tarjeta de la mesa
     actualizarPreviewMesa(mesaId, mesa);
+    
+    console.log('═══════════════════════════════════════');
+    console.log('🏁 [eliminarProductoMesa] FIN');
+    console.log('═══════════════════════════════════════');
+    console.log('');
 }
 
 async function iniciarGrabacionMesa(mesaId, btnElement) {
@@ -1268,18 +1687,55 @@ async function enviarAudioMesa(mesaId, audioBlob) {
 }
 
 function seleccionarProductoMesa(mesaId, producto) {
+    console.log('═══════════════════════════════════════');
+    console.log('➕ [seleccionarProductoMesa] INICIO');
+    console.log('Mesa ID:', mesaId);
+    console.log('Producto:', producto.producto);
+    console.log('═══════════════════════════════════════');
+    
     const mesa = mesasData[mesaId];
-    if (!mesa) return;
+    if (!mesa) {
+        console.error('❌ [seleccionarProductoMesa] Mesa no encontrada');
+        return;
+    }
+    
     if (!mesa.productos) mesa.productos = [];
 
+    // ═══════════════════════════════════════════════════════════
+    // LOG 1: Estado ANTES de agregar producto
+    // ═══════════════════════════════════════════════════════════
+    const inputBuscador = document.getElementById(`buscar-${mesaId}`);
     const inputCantidad = document.getElementById(`cantidad-buscar-${mesaId}`);
+    const elementoActivo = document.activeElement;
+    
+    console.log('📊 [seleccionarProductoMesa] ESTADO ANTES:');
+    console.log('- Input buscador existe?', !!inputBuscador);
+    console.log('- Input buscador ID:', inputBuscador?.id);
+    console.log('- Input cantidad existe?', !!inputCantidad);
+    console.log('- Elemento activo (foco):', elementoActivo?.tagName, elementoActivo?.id, elementoActivo?.className);
+    console.log('- Input buscador tiene el foco?', elementoActivo === inputBuscador);
+    console.log('- Input valor:', inputBuscador?.value);
+    console.log('- Posición cursor:', inputBuscador?.selectionStart);
+    console.log('- ¿Es móvil? (innerWidth <= 1024):', window.innerWidth <= 1024);
+    console.log('- Ancho ventana:', window.innerWidth);
+
+    // ═══════════════════════════════════════════════════════════
+    // LOG 2: Agregar producto
+    // ═══════════════════════════════════════════════════════════
     const cantidadAgregar = inputCantidad ? parseInt(inputCantidad.value) || 1 : 1;
     const existente = mesa.productos.find(p => p.codigo === producto.codigo);
 
+    console.log('🔄 [seleccionarProductoMesa] AGREGANDO PRODUCTO:');
+    console.log('- Cantidad a agregar:', cantidadAgregar);
+    console.log('- Producto existe en mesa?', !!existente);
+    console.log('- Total productos antes:', mesa.productos.length);
+
     if (existente) {
         existente.cantidad += cantidadAgregar;
+        console.log('- Producto existente, nueva cantidad:', existente.cantidad);
     } else {
         if (mesa.productos.length >= 10) {
+            console.error('❌ [seleccionarProductoMesa] Mesa llena (10 productos)');
             alert('Una mesa puede tener máximo 10 productos diferentes');
             return;
         }
@@ -1291,47 +1747,171 @@ function seleccionarProductoMesa(mesaId, producto) {
             precio_unitario: parseFloat(producto.precio_venta) || 0,
             unidad: producto.tipo_venta === 'peso' || producto.tipo_venta === 'medida' ? producto.unidad_venta : 'und'
         });
+        console.log('- Producto nuevo agregado');
     }
+    
+    console.log('- Total productos después:', mesa.productos.length);
+    console.log('📤 [seleccionarProductoMesa] Guardando en Supabase...');
+    
+    guardarMesa(mesaId);
 
-    guardarMesa(mesaId);  // ← Solo guarda esta mesa
-
+    // ═══════════════════════════════════════════════════════════
+    // LOG 3: Limpiar UI de búsqueda ANTES de actualizar panel
+    // ═══════════════════════════════════════════════════════════
+    console.log('🧹 [seleccionarProductoMesa] LIMPIANDO UI BÚSQUEDA:');
+    
     const input = document.getElementById(`buscar-${mesaId}`);
     const resultadosDiv = document.getElementById(`resultados-busqueda-${mesaId}`);
 
-    if (resultadosDiv) resultadosDiv.style.display = 'none';
+    if (resultadosDiv) {
+        console.log('- Ocultando resultados');
+        resultadosDiv.style.display = 'none';
+    }
+    
     if (input) {
+        console.log('- Limpiando input buscador');
         input.value = '';
     }
-    if (inputCantidad) inputCantidad.value = '1';
+    
+    if (inputCantidad) {
+        console.log('- Reseteando cantidad a 1');
+        inputCantidad.value = '1';
+    }
 
+    // ═══════════════════════════════════════════════════════════
+    // LOG 4: Actualización de UI
+    // ═══════════════════════════════════════════════════════════
     if (mesaSeleccionadaId === mesaId) {
-        // Guardar posición de scroll
+        console.log('🎨 [seleccionarProductoMesa] ACTUALIZANDO UI (mesa seleccionada):');
+        
         const panel = document.getElementById('panelDetalleMesa');
         const detalleBody = panel?.querySelector('.detalle-body');
         const scrollPos = detalleBody?.scrollTop || 0;
         
+        console.log('- Panel existe?', !!panel);
+        console.log('- DetalleBody existe?', !!detalleBody);
+        console.log('- Scroll position:', scrollPos);
+        console.log('- Llamando actualizarPanelDetalle(soloListaProductos=true)...');
+        
         // OPTIMIZACIÓN: Solo actualizar la lista de productos, NO regenerar el buscador
-        // Esto evita que el input pierda el foco y el teclado se oculte
         actualizarPanelDetalle(mesaId, true);
+        
+        console.log('✅ [seleccionarProductoMesa] UI actualizada');
         
         // Restaurar posición de scroll
         if (detalleBody) {
             const nuevoDetalleBody = panel.querySelector('.detalle-body');
             if (nuevoDetalleBody) {
                 nuevoDetalleBody.scrollTop = scrollPos;
+                console.log('✅ [seleccionarProductoMesa] Scroll restaurado a:', scrollPos);
             }
         }
         
-        // ✅ MANTENER EL FOCO en el input del buscador para evitar que se oculte el teclado
+        // ═══════════════════════════════════════════════════════
+        // LOG 5: Verificación DESPUÉS de actualizar UI
+        // ═══════════════════════════════════════════════════════
+        console.log('📊 [seleccionarProductoMesa] ESTADO DESPUÉS (antes de restaurar foco):');
+        const inputNuevoAntes = document.getElementById(`buscar-${mesaId}`);
+        const elementoActivoAntes = document.activeElement;
+        
+        console.log('- Input nuevo existe?', !!inputNuevoAntes);
+        console.log('- Input es el MISMO elemento? (referencia):', inputNuevoAntes === input);
+        console.log('- Input nuevo ID:', inputNuevoAntes?.id);
+        console.log('- Elemento activo ahora:', elementoActivoAntes?.tagName, elementoActivoAntes?.id, elementoActivoAntes?.className);
+        console.log('- ¿Input tiene foco?', elementoActivoAntes === inputNuevoAntes);
+        
+        // ═══════════════════════════════════════════════════════
+        // DIAGNÓSTICO
+        // ═══════════════════════════════════════════════════════
+        console.log('');
+        console.log('🔍 [seleccionarProductoMesa] DIAGNÓSTICO:');
+        
+        if (inputNuevoAntes !== input) {
+            console.error('❌ PROBLEMA CRÍTICO: El input es un NUEVO ELEMENTO');
+            console.error('   → El input fue recreado por innerHTML');
+            console.error('   → actualizarPanelDetalle debe preservar el footer');
+        } else {
+            console.log('✅ CORRECTO: El input es el MISMO elemento');
+            console.log('   → actualizarPanelDetalle preservó correctamente el buscador');
+        }
+        
+        // ═══════════════════════════════════════════════════════
+        // LOG 6: SIEMPRE restaurar foco al input (MÓVIL)
+        // ═══════════════════════════════════════════════════════
+        console.log('');
+        console.log('🔄 [seleccionarProductoMesa] RESTAURANDO FOCO AL INPUT:');
+        console.log('- Ejecutando setTimeout en 100ms para asegurar que el DOM esté listo...');
+        
         setTimeout(() => {
-            const inputNuevo = document.getElementById(`buscar-${mesaId}`);
-            if (inputNuevo) {
-                inputNuevo.focus();
+            console.log('⏱️ [seleccionarProductoMesa] setTimeout ejecutándose:');
+            const inputFinal = document.getElementById(`buscar-${mesaId}`);
+            
+            console.log('- Input encontrado?', !!inputFinal);
+            console.log('- Input ID:', inputFinal?.id);
+            console.log('- Input es visible?', inputFinal?.offsetParent !== null);
+            console.log('- Input está en el DOM?', document.body.contains(inputFinal));
+            console.log('- Input está habilitado?', !inputFinal?.disabled);
+            
+            if (inputFinal) {
+                console.log('✅ [seleccionarProductoMesa] Forzando foco al input:');
+                
+                // IMPORTANTE: En móvil, a veces es necesario hacer focus() dos veces
+                console.log('- Llamando inputFinal.focus() [intento 1]...');
+                inputFinal.focus();
+                
+                // Pequeño delay y segundo intento (móvil puede necesitarlo)
+                setTimeout(() => {
+                    console.log('- Llamando inputFinal.focus() [intento 2]...');
+                    inputFinal.focus();
+                    
+                    // Verificar si el foco se estableció
+                    const elementoActivoFinal = document.activeElement;
+                    console.log('- Elemento activo después de focus():', elementoActivoFinal?.tagName, elementoActivoFinal?.id);
+                    console.log('- ¿Foco establecido exitosamente?', elementoActivoFinal === inputFinal);
+                    
+                    if (elementoActivoFinal !== inputFinal) {
+                        console.error('❌ FOCO NO SE PUDO ESTABLECER');
+                        console.error('   → El teclado no aparecerá');
+                        console.error('   → Posibles causas:');
+                        console.error('     1. El navegador bloquea focus() programático en móvil');
+                        console.error('     2. Otro elemento intercepta el foco');
+                        console.error('     3. El input está oculto/deshabilitado');
+                        console.error('   → Foco actual en:', elementoActivoFinal?.tagName, elementoActivoFinal?.id);
+                        
+                        // Último intento: hacer click en el input
+                        console.log('⚠️ [seleccionarProductoMesa] Intento final: simular click en input...');
+                        inputFinal.click();
+                        
+                        setTimeout(() => {
+                            const elementoActivoFinalFinal = document.activeElement;
+                            console.log('- Elemento activo después de click():', elementoActivoFinalFinal?.tagName, elementoActivoFinalFinal?.id);
+                            console.log('- ¿Foco establecido con click?', elementoActivoFinalFinal === inputFinal);
+                        }, 50);
+                        
+                    } else {
+                        console.log('✅ FOCO ESTABLECIDO EXITOSAMENTE');
+                        console.log('   → El teclado debería aparecer/permanecer abierto');
+                    }
+                }, 50);
+                
+            } else {
+                console.error('❌ [seleccionarProductoMesa] Input NO ENCONTRADO en setTimeout');
+                console.error('   → El input fue eliminado del DOM');
+                console.error('   → Revisar actualizarPanelDetalle()');
             }
-        }, 50);
+            
+            console.log('═══════════════════════════════════════');
+            console.log('🏁 [seleccionarProductoMesa] FIN setTimeout');
+            console.log('═══════════════════════════════════════');
+        }, 100);
     }
 
     actualizarPreviewMesa(mesaId, mesa);
+    
+    console.log('═══════════════════════════════════════');
+    console.log('🏁 [seleccionarProductoMesa] FIN');
+    console.log('═══════════════════════════════════════');
+    console.log('');
 }
 
 async function registrarVentaMesa(mesaId) {

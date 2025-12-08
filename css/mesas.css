@@ -107,6 +107,7 @@
     flex: 3;
     min-width: 260px;
     padding: 0;
+    border-top: none;
 }
 
 .modal-mesas-grid {
@@ -151,17 +152,20 @@
     transition: background 0.3s ease;
 }
 
-.modal-mesas-grid .mesa-card:hover::before {
+/* Solo mostrar borde en hover para mesas LIBRES en el grid */
+.modal-mesas-grid .mesa-card:not(.ocupada):hover::before {
     background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
 }
 
+/* Estado ocupada - SOLO borde izquierdo verde, SIN barra superior */
 .modal-mesas-grid .mesa-card.ocupada {
-    border-color: #a7f3d0;
+    border-left: 4px solid #10b981;
     background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
 }
 
+/* Mesas ocupadas NO muestran la barra superior */
 .modal-mesas-grid .mesa-card.ocupada::before {
-    background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+    display: none !important;
 }
 
 .modal-mesas-grid .mesa-card.mesa-nueva {
@@ -249,7 +253,6 @@
     justify-content: space-between;
     align-items: center;
     padding: 18px 20px;
-    border-bottom: 1px solid #e2e8f0;
     background: #fafafb;
 }
 
@@ -441,9 +444,11 @@
     height: 3px;
     background: transparent;
     transition: background 0.3s ease;
+    z-index: 1;
 }
 
-.mesa-card:hover::before {
+/* Solo mostrar borde en hover para mesas LIBRES */
+.mesa-card:not(.ocupada):hover::before {
     background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
 }
 
@@ -458,11 +463,6 @@
     border-left: 3px solid #10b981;
     background: #ffffff;
 }
-
-.mesa-card.ocupada::before {
-    background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
-}
-
 /* ==========================================
    NUEVA ESTRUCTURA SIMPLIFICADA
    ========================================== */
@@ -1392,35 +1392,19 @@
 }
 
 /* ==========================================
-   BOTTOM SHEET HANDLE INDICATOR (Solo móvil)
+   BOTTOM SHEET HANDLE INDICATOR - OCULTO
    ========================================== */
 
 .bottom-sheet-handle {
-    display: none;
-    justify-content: center;
-    padding: 12px 0 8px;
-    cursor: grab;
-    touch-action: none;
+    display: none !important;
 }
 
 .bottom-sheet-handle::before {
-    content: "";
-    width: 40px;
-    height: 4px;
-    background: #cbd5e1;
-    border-radius: 2px;
-    transition: all 0.2s;
+    display: none !important;
 }
 
 .bottom-sheet-handle:active::before {
-    width: 50px;
-    background: #94a3b8;
-}
-
-@media (max-width: 767px) {
-    .bottom-sheet-handle {
-        display: flex;
-    }
+    display: none !important;
 }
 
 /* ==========================================
