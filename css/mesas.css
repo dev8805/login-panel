@@ -231,9 +231,10 @@
     flex: 1;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
+    gap: 12px;
     overflow-y: auto;
     padding-right: 8px;
+    align-content: start;
 }
 
 .modal-mesas-layout .mesas-header {
@@ -245,8 +246,8 @@
 
 .modal-mesas-grid .mesa-card {
     border: 2px solid #e2e8f0;
-    padding: 10px;
-    min-height: 80px;
+    padding: 12px;
+    min-height: 95px;
     display: flex;
     flex-direction: column;
     cursor: pointer;
@@ -255,6 +256,7 @@
     background: #ffffff;
     border-radius: 12px;
     overflow: hidden;
+    gap: 6px;
 }
 
 /* Barra superior animada en hover */
@@ -523,6 +525,7 @@
     .mesa-grid.modal-mesas-grid {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 12px;
+        align-content: start !important;
     }
 
     /* Ocultar el handle en tablet */
@@ -533,6 +536,18 @@
     /* No necesitamos overlay en tablet */
     .bottom-sheet-overlay {
         display: none !important;
+    }
+}
+
+/* ==========================================
+   RESPONSIVE - Desktop (>1024px)
+   ========================================== */
+
+@media (min-width: 1025px) {
+    /* Grid de 4 columnas en desktop */
+    .modal-mesas-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 12px !important;
     }
 }
 
@@ -601,12 +616,17 @@
 
 /* Nombre de la mesa - ocupa espacio flexible */
 .mesa-nombre {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
     color: #1e293b;
     flex: 0 1 auto;
     line-height: 1.2;
     min-width: 0;
+}
+
+/* Tamaño específico en el modal del grid */
+.modal-mesas-grid .mesa-nombre {
+    font-size: 13px;
 }
 
 /* Total de la mesa - alineado a la derecha con ancho fijo */
@@ -619,6 +639,12 @@
     flex-shrink: 0;
     min-width: 50px;
     text-align: right;
+}
+
+/* Total más compacto en el modal del grid */
+.modal-mesas-grid .mesa-total {
+    font-size: 13px;
+    min-width: 45px;
 }
 
 /* Chip de descripción - debajo del header */
@@ -640,6 +666,13 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     transition: all 0.2s;
+}
+
+/* Descripción más compacta en el modal del grid */
+.modal-mesas-grid .mesa-descripcion-chip {
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 8px;
 }
 
 /* Placeholder para mesas vacías */
@@ -1066,18 +1099,21 @@
         grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
         gap: 20px;
         align-items: start;
+        align-content: start;
     }
 }
 
 @media (min-width: 1024px) {
     .mesa-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
     }
 }
 
 @media (min-width: 1280px) {
     .mesa-grid {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
     }
 }
 
