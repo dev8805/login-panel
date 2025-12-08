@@ -756,12 +756,15 @@ function renderizarMesas(modalBody) {
         // Crear nuevos controles
         const controlsDiv = document.createElement('div');
         controlsDiv.className = 'mesas-header-controls';
-        controlsDiv.style.cssText = 'display: flex; align-items: center; gap: 10px; margin-left: auto; margin-right: 12px;';
         controlsDiv.innerHTML = `
-            <div class="status-badge" id="estadoMesasBadge" style="font-size: 11px; padding: 4px 10px;">
+            <button onclick="crearNuevaMesa()" class="btn-nueva-mesa-header">
+                <span style="font-size: 13px; line-height: 1;">+</span>
+                <span>Mesa</span>
+            </button>
+            <div class="status-badge ${canalMesas && canalMesas.state === 'joined' ? 'status-online' : pollingInterval ? 'status-polling' : 'status-offline'}" id="estadoMesasBadge">
                 ${canalMesas && canalMesas.state === 'joined' ? 'Tiempo real activo' : pollingInterval ? 'Modo polling (3s)' : 'Desconectado'}
             </div>
-            <button onclick="abrirHistorialMesas()" class="btn-historial" style="padding: 4px 10px; font-size: 11px; min-height: auto;">
+            <button onclick="abrirHistorialMesas()" class="btn-historial">
                 Historial
             </button>
         `;

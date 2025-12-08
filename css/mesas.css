@@ -1,4 +1,121 @@
 /* ==========================================
+   BOTÓN NUEVA MESA - RESPONSIVE
+   ========================================== */
+
+/* Ocultar tarjeta en desktop/tablet, mostrar solo botón en header */
+@media (min-width: 768px) {
+    .mesa-card.mesa-nueva {
+        display: none !important;
+    }
+}
+
+/* En móvil: Ocultar botón del header, mostrar tarjeta */
+@media (max-width: 767px) {
+    .btn-nueva-mesa-header {
+        display: none !important;
+    }
+    
+    .mesa-card.mesa-nueva {
+        display: flex !important;
+    }
+}
+
+/* ==========================================
+   CONTROLES DEL HEADER - ESTILOS BASE
+   ========================================== */
+
+.mesas-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+    margin-right: 12px;
+}
+
+/* Botón Nueva Mesa */
+.btn-nueva-mesa-header {
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.25);
+    transition: all 0.2s;
+    white-space: nowrap;
+    min-width: auto;
+    width: auto;
+}
+
+.btn-nueva-mesa-header:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.35);
+}
+
+.btn-nueva-mesa-header:active {
+    transform: translateY(0);
+}
+
+/* Badge de estado */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.status-online {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+    color: #059669;
+}
+
+.status-polling {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: #f59e0b;
+    color: #b45309;
+}
+
+.status-offline {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: #ef4444;
+    color: #b91c1c;
+}
+
+/* Botón Historial */
+.btn-historial {
+    background: transparent;
+    color: #5B7FFF;
+    border: 2px solid #5B7FFF;
+    padding: 5px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    width: auto;
+    min-width: auto;
+    transition: all 0.2s ease;
+}
+
+.btn-historial:hover {
+    background: #EEF2FF;
+    transform: translateY(-1px);
+}
+
+.btn-historial:active {
+    transform: translateY(0);
+}
+
+/* ==========================================
    CONTENEDOR DE MESAS - Cool Breeze Theme
    ========================================== */
 
@@ -252,27 +369,30 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 18px 20px;
+    padding: 20px 24px;
     background: #fafafb;
+    border-bottom: 2px solid #e2e8f0;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .detalle-titulo {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 800;
     margin: 0;
     color: #0f172a;
 }
 
 .detalle-descripcion {
-    font-size: 12px;
+    font-size: 13px;
     color: #64748b;
-    margin: 2px 0 0;
+    margin: 4px 0 0;
 }
 
 .detalle-badge {
-    padding: 5px 12px;
+    padding: 6px 14px;
     border-radius: 20px;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -291,12 +411,12 @@
 .detalle-body {
     flex: 1;
     overflow-y: auto;
-    padding: 16px 20px;
+    padding: 12px 12px 20px 12px;
     background: #fafafb;
 }
 
 .detalle-footer {
-    padding: 16px 20px;
+    padding: 20px 24px;
     border-top: 1px solid #e2e8f0;
     display: flex;
     flex-direction: column;
@@ -325,6 +445,7 @@
     border: 1px solid #e2e8f0;
     border-radius: 12px;
     background: #ffffff;
+    padding: 4px;
 }
 
 .detalle-empty,
@@ -701,28 +822,30 @@
 .producto-mesa-item {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px;
-    background: #1f2230;
-    border-radius: 8px;
-    margin-bottom: 4px;
-    border: 1px solid #3a3f54;
+    gap: 10px;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border-radius: 10px;
+    margin-bottom: 6px;
+    border: 1px solid #e2e8f0;
     transition: all 0.2s;
 }
 
 .producto-mesa-item:hover {
-    border-color: #4a5568;
-    background: #262a3a;
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
 .producto-cantidad-controls {
     display: flex;
     gap: 0;
     align-items: center;
-    background: #2d3142;
-    border-radius: 6px;
-    border: 1px solid #3a3f54;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
     flex-shrink: 0;
+    height: 36px;
 }
 
 .productos-list::-webkit-scrollbar {
@@ -739,48 +862,47 @@
 }
 
 .btn-cantidad {
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 36px;
     border: none;
     background: transparent;
     cursor: pointer;
     font-size: 16px;
     font-weight: 700;
-    color: #1A1D2E;
+    color: #64748b;
     transition: all 0.2s;
     padding: 0;
-}
-
-.btn-cantidad:first-child {
-    border-radius: 6px 0 0 6px;
-}
-
-.btn-cantidad:last-child {
-    border-radius: 0 6px 6px 0;
-}
-
-.btn-cantidad {
-    color: #e8eaf0;
-}
-
-.btn-cantidad:hover {
-    background: #3a3f54;
-    color: #e8eaf0;
-}
-
-.cantidad-display {
-    width: 28px;
-    height: 24px;
-    text-align: center;
-    font-weight: 700;
-    font-size: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-left: 1px solid rgba(58, 63, 84, 0.5);
-    border-right: 1px solid rgba(58, 63, 84, 0.5);
-    background: rgba(16, 185, 129, 0.2);
-    color: #10b981;
+}
+
+.btn-cantidad:first-child {
+    border-radius: 8px 0 0 8px;
+}
+
+.btn-cantidad:last-child {
+    border-radius: 0 8px 8px 0;
+}
+
+.btn-cantidad:hover {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.cantidad-display {
+    width: 36px;
+    height: 36px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-left: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #0f172a;
 }
 
 .producto-info-mesa {
@@ -788,38 +910,41 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
     min-width: 0;
 }
 
 .producto-nombre-mesa {
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 14px;
+    font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    color: #e8eaf0;
+    color: #1e293b;
+    line-height: 1.4;
 }
 
 .producto-precio-mesa {
     font-weight: 700;
-    font-size: 12px;
+    font-size: 15px;
     color: #10b981;
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
+    min-width: 60px;
+    text-align: right;
 }
 
 .delete-btn-producto {
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 32px;
     flex-shrink: 0;
     background: transparent;
     border: none;
-    color: hsl(0 72% 51%);
+    color: #ef4444;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: 8px;
     transition: all 0.2s;
-    font-size: 14px;
+    font-size: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -827,6 +952,7 @@
 
 .delete-btn-producto:hover {
     background: rgba(239, 68, 68, 0.1);
+    transform: scale(1.05);
 }
 
 /* ==========================================
