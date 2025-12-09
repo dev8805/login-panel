@@ -1661,3 +1661,231 @@
 .resultado-producto-item {
     transition: background 0.1s ease, border-left 0.1s ease, padding-left 0.1s ease;
 }
+/* ==========================================
+   PANEL DE PAGO - NUEVO DISEÑO CORPORATE CLEAN
+   ========================================== */
+
+.panel-pago-wrapper {
+    background: #ffffff;
+    width: 100%;
+    max-width: 400px;
+    padding: 24px;
+    box-sizing: border-box;
+    margin: 0 auto;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Header del panel */
+.panel-pago-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.btn-back-pago {
+    background: transparent;
+    border: none;
+    color: #475569;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+}
+
+.btn-back-pago:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.panel-pago-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+}
+
+/* Grid de Métodos de Pago */
+.seccion-titulo {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #475569;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+}
+
+.grid-metodos-pago {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.btn-metodo-pago {
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.btn-metodo-pago:hover {
+    border-color: #94a3b8;
+    background: #f8fafc;
+}
+
+.btn-metodo-pago.activo {
+    background: #eff6ff;
+    border-color: #2563eb;
+    color: #2563eb;
+    font-weight: 700;
+    box-shadow: 0 0 0 1px #2563eb inset;
+}
+
+/* Formulario de Pago */
+.form-pago {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex: 1;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.input-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #475569;
+    letter-spacing: 0.5px;
+}
+
+.input-pago {
+    height: 44px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    padding: 0 16px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #0f172a;
+    width: 100%;
+    box-sizing: border-box;
+    transition: all 0.2s;
+    outline: none;
+}
+
+.input-pago:focus {
+    background: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.input-pago[readonly] {
+    background: #f1f5f9;
+    color: #64748b;
+    cursor: default;
+}
+
+.input-pago.highlight {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+/* Footer con Botón Confirmar */
+.panel-pago-footer {
+    margin-top: auto;
+    padding-top: 20px;
+}
+
+.btn-confirmar-venta {
+    width: 100%;
+    height: 50px;
+    background: #0f172a;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.1), 0 2px 4px -1px rgba(15, 23, 42, 0.06);
+}
+
+.btn-confirmar-venta:hover {
+    background: #1e293b;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.1), 0 4px 6px -2px rgba(15, 23, 42, 0.05);
+}
+
+.btn-confirmar-venta:active {
+    transform: translateY(0);
+}
+
+
+/* Updated Payment Panel styles for compactness */
+.btn-metodo-pago {
+    height: 36px !important;
+    font-size: 11px !important;
+}
+
+.input-pago {
+    height: 38px !important;
+}
+
+.grid-metodos-pago {
+    margin-bottom: 16px !important;
+}
+
+.form-pago {
+    gap: 12px !important;
+}
+
+.input-group {
+    gap: 4px !important;
+}
+
+.panel-pago-wrapper {
+    overflow-y: auto;
+}
+
+.panel-pago-footer {
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+}
+
