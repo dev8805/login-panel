@@ -1,0 +1,229 @@
+/* ==========================================
+   GOOGLE MATERIAL MINIMAL - OVERRIDE STYLES
+   Este archivo sobrescribe estilos de mesas.css
+   para aplicar el diseño Google Material
+   ========================================== */
+
+:root {
+    /* Google Material Colors */
+    --google-blue: #1a73e8;
+    --google-blue-light: #e8f0fe;
+    --google-green: #0F9D58;
+    --google-yellow: #F4B400;
+    --google-red: #d93025;
+
+    /* Backgrounds */
+    --google-grey-bg: #f1f3f4;
+    --google-surface: #ffffff;
+    --google-background: #eef2f6;
+
+    /* Text */
+    --text-primary: #202124;
+    --text-secondary: #5f6368;
+}
+
+/* ==========================================
+   LAYOUT PRINCIPAL
+   ========================================== */
+
+.modal-mesas-layout {
+    background: var(--google-background) !important;
+}
+
+.mesas-panel {
+    background: transparent !important;
+    border: none !important;
+}
+
+.mesas-panel-izquierdo {
+    background: var(--google-background) !important;
+}
+
+.mesas-panel-derecho {
+    background: var(--google-surface) !important;
+    border-left: 1px solid #dadce0 !important;
+}
+
+/* ==========================================
+   TARJETAS DE MESAS - GOOGLE MATERIAL
+   ========================================== */
+
+.modal-mesas-grid .mesa-card {
+    background: var(--google-surface) !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 16px !important;
+    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3) !important;
+    overflow: visible !important;
+    gap: 8px !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Borde superior de estado - SIEMPRE VISIBLE */
+.modal-mesas-grid .mesa-card::before {
+    content: "" !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 4px !important;
+    background: var(--google-green) !important;
+    border-radius: 8px 8px 0 0 !important;
+    transition: background 0.2s ease !important;
+    display: block !important;
+}
+
+/* Estado: Disponible (Verde) */
+.modal-mesas-grid .mesa-card:not(.ocupada)::before {
+    background: var(--google-green) !important;
+}
+
+/* Estado: Ocupada (Amarillo) - Borde SUPERIOR, no izquierdo */
+.modal-mesas-grid .mesa-card.ocupada {
+    border-left: none !important;
+    background: var(--google-surface) !important;
+}
+
+.modal-mesas-grid .mesa-card.ocupada::before {
+    background: var(--google-yellow) !important;
+    display: block !important;
+}
+
+/* Estado: Seleccionada - Solo sombra y elevación, sin cambio de color */
+.modal-mesas-grid .mesa-card.selected {
+    background: var(--google-surface) !important;
+    border: 1px solid #dadce0 !important;
+    box-shadow: 0 8px 16px rgba(60, 64, 67, 0.3) !important;
+    transform: translateY(-4px) !important;
+}
+
+/* Hover effect */
+.modal-mesas-grid .mesa-card:hover:not(.mesa-nueva) {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 1px 3px rgba(60, 64, 67, 0.3), 0 4px 8px rgba(60, 64, 67, 0.15) !important;
+    border-color: transparent !important;
+}
+
+/* Mesa Nueva */
+.modal-mesas-grid .mesa-card.mesa-nueva {
+    border: 2px dashed #dadce0 !important;
+    background: #fafafa !important;
+}
+
+.modal-mesas-grid .mesa-card.mesa-nueva::before {
+    display: none !important;
+}
+
+.modal-mesas-grid .mesa-card.mesa-nueva:hover {
+    border-color: var(--google-blue) !important;
+    background: var(--google-blue-light) !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.mesa-nueva-icono {
+    color: var(--google-blue) !important;
+}
+
+.mesa-nueva-texto {
+    color: var(--google-blue) !important;
+    font-weight: 500 !important;
+    font-size: 13px !important;
+}
+
+/* ==========================================
+   TIPOGRAFÍA
+   ========================================== */
+
+.mesa-nombre,
+.mesa-total,
+.detalle-titulo,
+.producto-nombre {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.mesa-nombre {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.mesa-total {
+    color: var(--text-secondary);
+}
+
+/* ==========================================
+   INPUTS - ESTILO GOOGLE SEARCH
+   ========================================== */
+
+.input-producto-buscar,
+.mesa-descripcion-input {
+    background: var(--google-grey-bg);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 14px;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+}
+
+.input-producto-buscar:focus,
+.mesa-descripcion-input:focus {
+    background: var(--google-surface);
+    box-shadow: 0 1px 3px rgba(60, 64, 67, 0.3), 0 4px 8px rgba(60, 64, 67, 0.15);
+    border: 1px solid var(--google-blue);
+    outline: none;
+}
+
+.input-producto-buscar::placeholder,
+.mesa-descripcion-input::placeholder {
+    color: var(--text-secondary);
+}
+
+/* ==========================================
+   BOTONES - GOOGLE MATERIAL STYLE
+   ========================================== */
+
+/* Botón Principal (Registrar Venta / Crear Venta) */
+.detalle-footer .btn-primary {
+    background: var(--google-blue) !important;
+    border: none !important;
+    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3);
+}
+
+.detalle-footer .btn-primary:hover {
+    background: #1765cc !important;
+    box-shadow: 0 2px 6px rgba(60, 64, 67, 0.15);
+}
+
+/* Controles de Cantidad (+/-) */
+.cantidad-btn {
+    background: transparent;
+    border: 1px solid #dadce0;
+    border-radius: 50%;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+}
+
+.cantidad-btn:hover {
+    background: var(--google-grey-bg);
+    border-color: var(--text-secondary);
+}
+
+/* ==========================================
+   SUGERENCIAS DE BÚSQUEDA
+   ========================================== */
+
+.sugerencias-container {
+    background: var(--google-surface);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(60, 64, 67, 0.3), 0 4px 8px rgba(60, 64, 67, 0.15);
+}
+
+.sugerencia-item:hover,
+.sugerencia-seleccionada {
+    background: var(--google-blue-light);
+}
+
+.sugerencia-precio {
+    color: var(--google-green);
+}

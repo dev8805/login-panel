@@ -1,0 +1,461 @@
+/* ==========================================
+   GOOGLE MATERIAL MINIMAL - VARIABLES
+   ========================================== */
+
+:root {
+    /* Google Material Colors */
+    --google-blue: #1a73e8;
+    --google-blue-light: #e8f0fe;
+    --google-green: #0F9D58;
+    --google-yellow: #F4B400;
+    --google-red: #d93025;
+
+    /* Backgrounds */
+    --google-grey-bg: #f1f3f4;
+    --google-surface: #ffffff;
+    --google-background: #eef2f6;
+
+    /* Text */
+    --text-primary: #202124;
+    --text-secondary: #5f6368;
+
+    /* Shadows */
+    --shadow-subtle: 0 1px 2px rgba(60, 64, 67, 0.3);
+    --shadow-medium: 0 2px 6px rgba(60, 64, 67, 0.15);
+    --shadow-focus: 0 1px 3px rgba(60, 64, 67, 0.3), 0 4px 8px rgba(60, 64, 67, 0.15);
+}
+
+/* ==========================================
+   LAYOUT PRINCIPAL
+   ========================================== */
+
+.modal-mesas-layout {
+    height: 100%;
+    padding: 16px;
+    box-sizing: border-box;
+    background: var(--google-background);
+}
+
+.mesas-panel {
+    background: var(--google-surface);
+    border-radius: 8px;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: var(--shadow-medium);
+}
+
+.mesas-panel-izquierdo {
+    flex: 7;
+    min-width: 0;
+    padding: 16px;
+    background: var(--google-background);
+}
+
+.mesas-panel-derecho {
+    flex: 3;
+    min-width: 260px;
+    padding: 0;
+    border-left: 1px solid #dadce0;
+    background: var(--google-surface);
+}
+
+/* ==========================================
+   TARJETAS DE MESAS - GOOGLE MATERIAL
+   ========================================== */
+
+.modal-mesas-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    overflow-y: auto;
+    padding-right: 8px;
+    align-content: start;
+}
+
+.modal-mesas-grid .mesa-card {
+    background: var(--google-surface);
+    border: none;
+    border-radius: 8px;
+    padding: 16px;
+    min-height: 95px;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: visible;
+    gap: 8px;
+    box-shadow: var(--shadow-subtle);
+}
+
+/* Borde superior de estado */
+.modal-mesas-grid .mesa-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--google-green);
+    border-radius: 8px 8px 0 0;
+    transition: background 0.2s ease;
+}
+
+/* Estado: Disponible (Verde) */
+.modal-mesas-grid .mesa-card:not(.ocupada)::before {
+    background: var(--google-green);
+}
+
+/* Estado: Ocupada (Amarillo) */
+.modal-mesas-grid .mesa-card.ocupada::before {
+    background: var(--google-yellow);
+}
+
+/* Estado: Seleccionada (Azul) */
+.modal-mesas-grid .mesa-card.selected {
+    background: var(--google-blue-light);
+    border: 1px solid var(--google-blue);
+    box-shadow: 0 1px 3px rgba(26, 115, 232, 0.3);
+}
+
+.modal-mesas-grid .mesa-card.selected::before {
+    background: var(--google-blue);
+}
+
+/* Hover effect */
+.modal-mesas-grid .mesa-card:hover:not(.mesa-nueva) {
+    box-shadow: var(--shadow-focus);
+    transform: translateY(-2px);
+}
+
+/* Mesa Nueva (Crear nueva mesa) */
+.modal-mesas-grid .mesa-card.mesa-nueva {
+    border: 2px dashed #dadce0;
+    background: #fafafa;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.modal-mesas-grid .mesa-card.mesa-nueva::before {
+    display: none;
+}
+
+.modal-mesas-grid .mesa-card.mesa-nueva:hover {
+    border-color: var(--google-blue);
+    background: var(--google-blue-light);
+    transform: none;
+    box-shadow: none;
+}
+
+.mesa-nueva-icono {
+    font-size: 28px;
+    color: var(--google-blue);
+    margin-bottom: 4px;
+}
+
+.mesa-nueva-texto {
+    font-weight: 500;
+    color: var(--google-blue);
+    font-size: 13px;
+}
+
+/* ==========================================
+   TIPOGRAFÍA Y TEXTOS
+   ========================================== */
+
+.mesa-nombre {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.mesa-total {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-secondary);
+}
+
+/* ==========================================
+   PANEL DE DETALLE (DERECHA)
+   ========================================== */
+
+.detalle-mesa-container {
+    padding: 20px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.detalle-mesa-header {
+    padding-bottom: 12px;
+    border-bottom: 1px solid #dadce0;
+}
+
+.detalle-mesa-header h3 {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* ==========================================
+   INPUTS - ESTILO GOOGLE SEARCH
+   ========================================== */
+
+.input-producto-buscar,
+.mesa-descripcion-input,
+.cantidad-input {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--google-grey-bg);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 14px;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.input-producto-buscar:focus,
+.mesa-descripcion-input:focus,
+.cantidad-input:focus {
+    background: var(--google-surface);
+    box-shadow: var(--shadow-focus);
+    border: 1px solid var(--google-blue);
+}
+
+.input-producto-buscar::placeholder,
+.mesa-descripcion-input::placeholder {
+    color: var(--text-secondary);
+}
+
+/* ==========================================
+   BOTONES - GOOGLE MATERIAL STYLE
+   ========================================== */
+
+/* Botón Principal (Registrar Venta) */
+.btn-registrar-venta,
+.btn-primary-action {
+    background: var(--google-blue);
+    color: var(--google-surface);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-subtle);
+}
+
+.btn-registrar-venta:hover,
+.btn-primary-action:hover {
+    background: #1765cc;
+    box-shadow: var(--shadow-medium);
+}
+
+.btn-registrar-venta:active,
+.btn-primary-action:active {
+    background: #1557b0;
+    box-shadow: var(--shadow-subtle);
+}
+
+/* Controles de Cantidad (+/-) */
+.btn-cantidad,
+.cantidad-btn {
+    background: transparent;
+    border: 1px solid #dadce0;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.btn-cantidad:hover,
+.cantidad-btn:hover {
+    background: var(--google-grey-bg);
+    border-color: var(--text-secondary);
+}
+
+.btn-cantidad:active,
+.cantidad-btn:active {
+    background: #e0e0e0;
+}
+
+/* Botón Eliminar */
+.btn-eliminar,
+.btn-delete {
+    background: transparent;
+    color: var(--google-red);
+    border: 1px solid var(--google-red);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-eliminar:hover,
+.btn-delete:hover {
+    background: #fce8e6;
+}
+
+/* ==========================================
+   LISTA DE PRODUCTOS
+   ========================================== */
+
+.productos-lista {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.producto-item {
+    background: var(--google-surface);
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+}
+
+.producto-item:hover {
+    box-shadow: var(--shadow-subtle);
+}
+
+.producto-nombre {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-primary);
+    flex: 1;
+}
+
+.producto-precio {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* ==========================================
+   SUGERENCIAS DE BÚSQUEDA
+   ========================================== */
+
+.sugerencias-container {
+    background: var(--google-surface);
+    border-radius: 8px;
+    box-shadow: var(--shadow-focus);
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 4px;
+}
+
+.sugerencia-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.sugerencia-item:last-child {
+    border-bottom: none;
+}
+
+.sugerencia-item:hover,
+.sugerencia-seleccionada {
+    background: var(--google-blue-light);
+}
+
+.sugerencia-codigo {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.sugerencia-nombre {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    color: var(--text-primary);
+    margin: 4px 0;
+}
+
+.sugerencia-precio {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--google-green);
+}
+
+/* ==========================================
+   RESPONSIVE - TABLET
+   ========================================== */
+
+@media (min-width: 768px) and (max-width: 1024px) {
+    .modal-mesas-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .mesas-panel-derecho {
+        flex: 4;
+        min-width: 300px;
+    }
+}
+
+/* ==========================================
+   RESPONSIVE - MOBILE
+   ========================================== */
+
+@media (max-width: 767px) {
+    .modal-mesas-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .modal-mesas-grid .mesa-card {
+        min-height: 80px;
+        padding: 12px;
+    }
+
+    .mesas-panel-derecho {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 98%;
+        max-height: 85vh;
+        border-radius: 16px 16px 0 0;
+        border-left: none;
+        box-shadow: 0 -4px 16px rgba(60, 64, 67, 0.3);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .mesas-panel-derecho.oculto {
+        transform: translateX(-50%) translateY(100%);
+    }
+
+    .mesas-panel-derecho.visible {
+        transform: translateX(-50%) translateY(0);
+    }
+}

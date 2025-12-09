@@ -1,0 +1,1891 @@
+/* ==========================================
+   BOTÓN NUEVA MESA - RESPONSIVE
+   ========================================== */
+
+/* Ocultar tarjeta en desktop/tablet, mostrar solo botón en header */
+@media (min-width: 768px) {
+    .mesa-card.mesa-nueva {
+        display: none !important;
+    }
+}
+
+/* En móvil: Ocultar botón del header, mostrar tarjeta */
+@media (max-width: 767px) {
+    .btn-nueva-mesa-header {
+        display: none !important;
+    }
+
+    .mesa-card.mesa-nueva {
+        display: flex !important;
+    }
+}
+
+/* ==========================================
+   CONTROLES DEL HEADER - ESTILOS BASE
+   ========================================== */
+
+.mesas-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+    margin-right: 12px;
+}
+
+/* Botón Nueva Mesa */
+.btn-nueva-mesa-header {
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.25);
+    transition: all 0.2s;
+    white-space: nowrap;
+    min-width: auto;
+    width: auto;
+}
+
+.btn-nueva-mesa-header:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.35);
+}
+
+.btn-nueva-mesa-header:active {
+    transform: translateY(0);
+}
+
+/* Badge de estado */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.status-online {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+    color: #059669;
+}
+
+.status-polling {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: #f59e0b;
+    color: #b45309;
+}
+
+.status-offline {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: #ef4444;
+    color: #b91c1c;
+}
+
+/* Botón Historial */
+.btn-historial {
+    background: transparent;
+    color: #5B7FFF;
+    border: 2px solid #5B7FFF;
+    padding: 5px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    width: auto;
+    min-width: auto;
+    transition: all 0.2s ease;
+}
+
+.btn-historial:hover {
+    background: #EEF2FF;
+    transform: translateY(-1px);
+}
+
+.btn-historial:active {
+    transform: translateY(0);
+}
+
+/* ==========================================
+   CONTENEDOR DE MESAS - Cool Breeze Theme
+   ========================================== */
+
+#modalMesas .modal-content {
+    background: #ffffff;
+    width: 98%;
+    max-width: none;
+    height: 98vh;
+    max-height: none;
+    margin: auto;
+    border-radius: 20px;
+}
+
+#modalMesas .modal-header {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-bottom: 1px solid #e2e8f0;
+    padding: 16px 24px;
+}
+
+#modalMesas .modal-header h3 {
+    color: #1e293b;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#modalMesas .modal-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    transition: all 0.2s;
+}
+
+#modalMesas .modal-close:hover {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #dc2626;
+}
+
+#modalBodyMesas {
+    background: #f8fafc;
+    padding: 0;
+    height: calc(100% - 60px);
+    overflow-y: auto;
+}
+
+.mesas-container {
+    padding: 8px;
+    max-width: 1600px;
+    margin: 0 auto;
+    background: #f8fafc;
+}
+
+@media (min-width: 640px) {
+    .mesas-container {
+        padding: 12px;
+    }
+}
+
+/* ==========================================
+   HEADER DE MESAS
+   ========================================== */
+
+.mesas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0 4px;
+}
+
+/* ==========================================
+   MODAL MESAS SPLIT LAYOUT
+   ========================================== */
+
+.modal-mesas-layout {
+    display: flex;
+    gap: 16px;
+    height: 100%;
+    padding: 16px;
+    box-sizing: border-box;
+    background: #f8fafc;
+}
+
+.mesas-panel {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.mesas-panel-izquierdo {
+    flex: 7;
+    min-width: 0;
+    padding: 8px;
+}
+
+.mesas-panel-derecho {
+    flex: 3;
+    min-width: 260px;
+    padding: 0;
+    border-top: none;
+}
+
+.modal-mesas-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    overflow-y: auto;
+    padding-right: 8px;
+    align-content: start;
+}
+
+.modal-mesas-layout .mesas-header {
+    justify-content: flex-end;
+    padding: 0;
+    margin-bottom: 16px;
+    gap: 12px;
+}
+
+.modal-mesas-grid .mesa-card {
+    border: 2px solid #e2e8f0;
+    padding: 12px;
+    min-height: 95px;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    gap: 6px;
+}
+
+/* Barra superior animada en hover */
+.modal-mesas-grid .mesa-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: transparent;
+    transition: background 0.3s ease;
+}
+
+/* Solo mostrar borde en hover para mesas LIBRES en el grid */
+.modal-mesas-grid .mesa-card:not(.ocupada):hover::before {
+    background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+}
+
+/* Estado ocupada - SOLO borde izquierdo verde, SIN barra superior */
+.modal-mesas-grid .mesa-card.ocupada {
+    border-left: 4px solid #10b981;
+    background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
+}
+
+/* Mesas ocupadas NO muestran la barra superior */
+.modal-mesas-grid .mesa-card.ocupada::before {
+    display: none !important;
+}
+
+.modal-mesas-grid .mesa-card.mesa-nueva {
+    border-style: dashed;
+    border-color: #c7d2fe;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: #fafafb;
+}
+
+.modal-mesas-grid .mesa-card.mesa-nueva::before {
+    display: none;
+}
+
+.modal-mesas-grid .mesa-card.mesa-nueva:hover {
+    border-color: #6366f1;
+    background: #eef2ff;
+    transform: none;
+    box-shadow: none;
+}
+
+.mesa-nueva-icono {
+    font-size: 28px;
+    color: #6366f1;
+    margin-bottom: 4px;
+}
+
+.mesa-nueva-texto {
+    font-weight: 600;
+    color: #6366f1;
+    font-size: 12px;
+}
+
+.modal-mesas-grid .mesa-card.selected {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.modal-mesas-grid .mesa-card.selected::before {
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+}
+
+.modal-mesas-grid .mesa-card:hover:not(.mesa-nueva) {
+    transform: translateY(-3px);
+    border-color: #c7d2fe;
+    box-shadow: 0 12px 24px rgba(99, 102, 241, 0.12);
+}
+
+.modal-mesas-grid .mesa-card .mesa-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+
+.status-online {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+    color: #059669;
+}
+
+.status-polling {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: #f59e0b;
+    color: #b45309;
+}
+
+.status-offline {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: #ef4444;
+    color: #b91c1c;
+}
+
+.detalle-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    background: #fafafb;
+    border-bottom: 2px solid #e2e8f0;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.detalle-titulo {
+    font-size: 20px;
+    font-weight: 800;
+    margin: 0;
+    color: #0f172a;
+}
+
+.detalle-descripcion {
+    font-size: 13px;
+    color: #64748b;
+    margin: 4px 0 0;
+}
+
+.detalle-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detalle-badge.ocupada {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.detalle-badge.libre {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.detalle-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 12px 20px 12px;
+    background: #fafafb;
+}
+
+.detalle-footer {
+    padding: 20px 24px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #ffffff;
+}
+
+.detalle-footer .btn {
+    width: 100%;
+}
+
+.detalle-footer .btn-primary {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.detalle-footer .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);
+}
+
+.productos-lista {
+    max-height: 60vh;
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    padding: 4px;
+}
+
+.detalle-empty,
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: #94a3b8;
+    text-align: center;
+    gap: 12px;
+}
+
+.empty-icon {
+    font-size: 32px;
+    color: #94a3b8;
+}
+
+/* ==========================================
+   RESPONSIVE - Tablet (768px-1024px)
+   ========================================== */
+
+/* Para tablets: Layout de 2 columnas lado a lado */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .modal-mesas-layout {
+        flex-direction: row;
+        padding: 16px;
+        gap: 16px;
+        height: 100%;
+    }
+
+    .mesas-panel {
+        width: auto;
+        height: 100%;
+    }
+
+    /* Panel izquierdo: Grid de mesas (60%) */
+    .mesas-panel-izquierdo {
+        flex: 6;
+        min-width: 0;
+        max-height: 100%;
+        overflow-y: auto;
+        padding: 16px;
+    }
+
+    /* Panel derecho: Detalle de mesa (40%) */
+    .mesas-panel-derecho {
+        flex: 4;
+        min-width: 300px;
+        max-width: 400px;
+        position: relative;
+        transform: none;
+        height: 100%;
+        border-radius: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: opacity 0.3s ease;
+    }
+
+    /* Mostrar el panel siempre en tablet */
+    .mesas-panel-derecho.oculto {
+        display: flex;
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    .mesas-panel-derecho.visible,
+    .mesas-panel-derecho:not(.oculto) {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* Grid de mesas en 2 columnas para tablet */
+    .modal-mesas-grid,
+    .mesa-grid.modal-mesas-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px;
+        align-content: start !important;
+    }
+
+    /* Ocultar el handle en tablet */
+    .bottom-sheet-handle {
+        display: none !important;
+    }
+
+    /* No necesitamos overlay en tablet */
+    .bottom-sheet-overlay {
+        display: none !important;
+    }
+}
+
+/* ==========================================
+   RESPONSIVE - Desktop (>1024px)
+   ========================================== */
+
+@media (min-width: 1025px) {
+
+    /* Grid de 4 columnas en desktop */
+    .modal-mesas-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 12px !important;
+    }
+}
+
+/* ==========================================
+   TARJETAS DE MESA - NUEVA ESTRUCTURA
+   ========================================== */
+
+.mesa-card {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-bottom: 8px;
+    position: relative;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Barra animada superior en hover */
+.mesa-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: transparent;
+    transition: background 0.3s ease;
+    z-index: 1;
+}
+
+/* Solo mostrar borde en hover para mesas LIBRES */
+.mesa-card:not(.ocupada):hover::before {
+    background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+}
+
+.mesa-card:hover {
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
+    border-color: #c7d2fe;
+    transform: translateY(-2px);
+}
+
+/* Estado ocupada - borde izquierdo verde */
+.mesa-card.ocupada {
+    border-left: 3px solid #10b981;
+    background: #ffffff;
+}
+
+/* ==========================================
+   NUEVA ESTRUCTURA SIMPLIFICADA
+   ========================================== */
+
+/* Header: Nombre + Total/Botón en misma fila - ALINEACIÓN CONSISTENTE */
+.mesa-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    flex-wrap: nowrap;
+    min-height: 24px;
+}
+
+/* Nombre de la mesa - ocupa espacio flexible */
+.mesa-nombre {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e293b;
+    flex: 0 1 auto;
+    line-height: 1.2;
+    min-width: 0;
+}
+
+/* Tamaño específico en el modal del grid */
+.modal-mesas-grid .mesa-nombre {
+    font-size: 13px;
+}
+
+/* Total de la mesa - alineado a la derecha con ancho fijo */
+.mesa-total {
+    color: #10b981;
+    font-weight: 700;
+    font-size: 14px;
+    margin-left: auto;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 50px;
+    text-align: right;
+}
+
+/* Total más compacto en el modal del grid */
+.modal-mesas-grid .mesa-total {
+    font-size: 13px;
+    min-width: 45px;
+}
+
+/* Chip de descripción - debajo del header */
+.mesa-descripcion-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    background: #EEF2FF;
+    color: #4F46E5;
+    border: 1px solid #C7D2FE;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.2;
+    width: fit-content;
+    max-width: 100%;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+/* Descripción más compacta en el modal del grid */
+.modal-mesas-grid .mesa-descripcion-chip {
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 8px;
+}
+
+/* Placeholder para mesas vacías */
+.mesa-descripcion-chip.placeholder {
+    background: #ffffff;
+    color: #94a3b8;
+    border: 1px solid #e2e8f0;
+    font-style: normal;
+}
+
+.mesa-descripcion-chip.placeholder:hover {
+    border-color: #5B7FFF;
+    background: #f8fafc;
+    color: #4F46E5;
+}
+
+.mesa-descripcion-chip.is-empty {
+    display: none;
+}
+
+/* Modo edición del chip */
+.mesa-descripcion-chip.editing {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    padding: 0;
+    width: 100%;
+    cursor: default;
+    max-width: 100%;
+}
+
+.mesa-descripcion-input {
+    width: 100%;
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid #E5E7EB;
+    border-radius: 6px;
+    font-size: 11px;
+    line-height: 1.4;
+    min-height: 28px;
+    box-sizing: border-box;
+}
+
+.mesa-descripcion-acciones {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.mesa-descripcion-btn {
+    border: none;
+    padding: 4px 6px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    line-height: 1;
+    height: 28px;
+    min-width: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mesa-descripcion-btn.cancelar {
+    background: #EF4444;
+}
+
+.mesa-descripcion-btn.guardar {
+    background: #10b981;
+}
+
+/* Botón de editar descripción (lápiz) */
+.mesa-edit-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    opacity: 0.5;
+    margin-left: 4px;
+}
+
+.mesa-edit-btn:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    opacity: 1;
+}
+
+/* Historial button */
+.btn-historial {
+    background: transparent;
+    color: #5B7FFF;
+    border: 2px solid #5B7FFF;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    width: auto;
+    transition: all 0.2s ease;
+}
+
+.btn-historial:hover {
+    background: #EEF2FF;
+}
+
+/* Ocultar elementos en modo edición */
+.mesa-card.editando-descripcion .mesa-total,
+.mesa-card.editando-descripcion .btn-delete-mesa {
+    display: none;
+}
+
+/* Estado ocupada/libre - OCULTO (se indica con borde) */
+.mesa-estado {
+    display: none !important;
+}
+
+/* DEPRECATED: Clases antiguas no utilizadas mantenidas por compatibilidad */
+
+/* Bot\u00f3n eliminar - esquina superior derecha (solo mesas vacías) */
+.btn-delete-mesa {
+    background: transparent;
+    color: #ef4444;
+    border: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    opacity: 0.8;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.btn-delete-mesa:hover {
+    background: rgba(239, 68, 68, 0.15);
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* ==========================================
+   DETALLE DE MESA
+   ========================================== */
+
+.mesa-detalle {
+    padding: 8px 0;
+    margin-top: 8px;
+    display: none !important;
+    overflow: visible;
+    transition: none;
+}
+
+.mesa-detalle.expanded {
+    display: block !important;
+}
+
+/* ==========================================
+   PRODUCTOS EN MESA
+   ========================================== */
+
+.producto-mesa-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border-radius: 10px;
+    margin-bottom: 6px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s;
+}
+
+.producto-mesa-item:hover {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.producto-cantidad-controls {
+    display: flex;
+    gap: 0;
+    align-items: center;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    flex-shrink: 0;
+    height: 36px;
+}
+
+.productos-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.productos-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.productos-list::-webkit-scrollbar-thumb {
+    background: #E5E7EB;
+    border-radius: 4px;
+}
+
+.btn-cantidad {
+    width: 32px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    color: #64748b;
+    transition: all 0.2s;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-cantidad:first-child {
+    border-radius: 8px 0 0 8px;
+}
+
+.btn-cantidad:last-child {
+    border-radius: 0 8px 8px 0;
+}
+
+.btn-cantidad:hover {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.cantidad-display {
+    width: 36px;
+    height: 36px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-left: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+.producto-info-mesa {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.producto-nombre-mesa {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #1e293b;
+    line-height: 1.4;
+}
+
+.producto-precio-mesa {
+    font-weight: 700;
+    font-size: 15px;
+    color: #10b981;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    min-width: 60px;
+    text-align: right;
+}
+
+.delete-btn-producto {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-btn-producto:hover {
+    background: rgba(239, 68, 68, 0.1);
+    transform: scale(1.05);
+}
+
+/* ==========================================
+   BÚSQUEDA Y AGREGAR PRODUCTOS
+   ========================================== */
+
+.buscador-mesa-wrapper {
+    position: relative;
+    margin-bottom: 8px;
+    overflow: visible;
+    z-index: 1;
+}
+
+.input-producto-buscar {
+    flex: 1;
+    padding: 6px 8px;
+    border: none;
+    background: #2d3142;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    outline: none;
+    transition: none;
+    color: #e8eaf0;
+}
+
+.input-producto-buscar::placeholder {
+    color: #6b7280;
+}
+
+.input-producto-buscar:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.cantidad-input::-webkit-outer-spin-button,
+.cantidad-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.cantidad-input {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+/* ==========================================
+   BOTONES
+   ========================================== */
+
+.btn-nueva-mesa {
+    background: linear-gradient(135deg, #5B7FFF 0%, #4A63CC 100%);
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 16px;
+}
+
+.btn-registrar-venta-mesa {
+    width: 100%;
+    padding: 10px;
+    background: #10b981;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    margin-top: 8px;
+}
+
+.btn-registrar-venta-mesa:hover {
+    background: #059669;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07);
+}
+
+.btn-registrar-venta-mesa:active {
+    transform: scale(0.98);
+}
+
+/* ==========================================
+   GRID DE MESAS
+   ========================================== */
+
+.mesa-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
+
+@media (min-width: 640px) {
+    .mesa-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+}
+
+@media (min-width: 768px) {
+    .mesas-container {
+        max-width: 900px;
+    }
+
+    .mesa-grid {
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 20px;
+        align-items: start;
+        align-content: start;
+    }
+}
+
+@media (min-width: 1024px) {
+    .mesa-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+    }
+}
+
+@media (min-width: 1280px) {
+    .mesa-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+    }
+}
+
+/* ==========================================
+   RESULTADOS DE BÚSQUEDA
+   ========================================== */
+
+.resultados-busqueda-flotante {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: #2d3142;
+    border: 2px solid #3a3f54;
+    border-radius: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    margin-bottom: 4px;
+}
+
+.resultados-busqueda-flotante>div {
+    padding: 12px;
+    border-bottom: 1px solid #3a3f54;
+    transition: background 0.15s ease;
+    cursor: pointer;
+    color: #e8eaf0;
+}
+
+.resultados-busqueda-flotante>div:hover {
+    background: #3a3f54;
+}
+
+.resultados-busqueda-flotante>div:first-child {
+    border-radius: 10px 10px 0 0;
+}
+
+.resultados-busqueda-flotante>div:last-child {
+    border-bottom: none;
+    border-radius: 0 0 10px 10px;
+}
+
+/* ==========================================
+   PANEL DESLIZABLE MÓVIL (Solo para < 768px)
+   ========================================== */
+
+.mesas-panel-derecho {
+    position: relative;
+}
+
+@media (max-width: 767px) {
+    .modal-mesas-layout.mesas-split-layout {
+        position: relative;
+    }
+
+    .mesas-panel-derecho {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        max-height: 80vh;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+        touch-action: none;
+    }
+
+    .mesas-panel-derecho.oculto {
+        transform: translateY(calc(100% - 60px));
+    }
+
+    .mesas-panel-derecho::before {
+        content: '';
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 4px;
+        background: #4a5568;
+        border-radius: 2px;
+        cursor: grab;
+    }
+
+    .mesas-panel-derecho.dragging::before {
+        cursor: grabbing;
+    }
+
+    .detalle-header {
+        padding-top: 28px;
+    }
+
+    .mesas-panel-izquierdo {
+        padding-bottom: 100px;
+    }
+}
+
+/* ==========================================
+   RESPONSIVIDAD MÓVIL
+   ========================================== */
+
+@media (max-width: 767px) {
+    .mesas-container {
+        padding: 12px !important;
+        background: #1a1d2e;
+    }
+
+    .modal-mesas-layout {
+        background: #1a1d2e;
+    }
+
+    /* Reducir padding vertical de productos en la lista */
+    .producto-item {
+        padding: 0 8px !important;
+        height: 26px !important;
+        min-height: 26px !important;
+    }
+
+    /* Agregar padding al contenedor de productos para separarlos del borde */
+    .productos-lista {
+        padding: 4px !important;
+    }
+
+    .mesa-descripcion-chip.editing {
+        align-items: center;
+        gap: 4px !important;
+        flex-wrap: nowrap;
+    }
+
+    .mesa-descripcion-input {
+        padding: 0 8px !important;
+        min-height: 27px !important;
+        height: 27px !important;
+        font-size: 13px !important;
+        border-radius: 6px !important;
+        line-height: 27px;
+        margin: 0;
+    }
+
+    .mesa-descripcion-acciones {
+        gap: 4px !important;
+        flex-shrink: 0 !important;
+        display: flex !important;
+        align-items: center;
+    }
+
+    .mesa-descripcion-btn {
+        min-height: 27px !important;
+        height: 27px !important;
+        width: 27px !important;
+        min-width: 27px !important;
+        padding: 0 !important;
+        border-radius: 6px !important;
+        flex-shrink: 0 !important;
+        font-size: 13px !important;
+        line-height: 1 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+    }
+
+    .btn-historial {
+        padding: 8px 14px !important;
+        border-width: 2px;
+        border-radius: 12px;
+        font-size: 13px;
+        line-height: 1.2;
+        min-height: 40px !important;
+        display: flex;
+        align-items: center;
+    }
+
+    .mesa-nombre {
+        font-size: 16px !important;
+    }
+
+    .mesa-productos-preview {
+        font-size: 12px !important;
+    }
+
+    .producto-mesa-item {
+        flex-wrap: nowrap !important;
+        font-size: 13px !important;
+    }
+
+    .btn-nueva-mesa {
+        padding: 14px !important;
+        font-size: 15px !important;
+    }
+
+    .modal-mesas-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+}
+
+/* ==========================================
+   RESPONSIVE - Móvil
+   ========================================== */
+
+@media (max-width: 600px) {
+    #modalMesas .modal-content {
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+    }
+
+    .modal-mesas-layout {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .mesas-panel-izquierdo {
+        padding: 12px;
+        flex: 1;
+        max-height: none;
+    }
+
+    .mesas-header {
+        margin-bottom: 12px;
+        gap: 8px;
+    }
+
+    .status-badge {
+        font-size: 10px;
+        padding: 4px 10px;
+    }
+
+    .btn-historial {
+        padding: 6px 10px !important;
+        font-size: 11px !important;
+        min-height: auto !important;
+    }
+
+    .modal-mesas-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    /* CRITICAL: Override gap for mobile */
+    .mesa-card,
+    .modal-mesas-grid .mesa-card,
+    .mesa-grid .mesa-card {
+        padding: 12px !important;
+        min-height: auto !important;
+        gap: 4px !important;
+    }
+
+    .mesa-card-header {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .mesa-info {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    /* Fila 1: Nombre + Total/X */
+    .mesa-nombre-row {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .mesa-nombre-row>div:first-child {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .mesa-nombre {
+        font-size: 13px !important;
+        font-weight: 700;
+        flex: 0 1 auto !important;
+        min-width: 0;
+        line-height: 1.3 !important;
+        padding: 2px 0 !important;
+    }
+
+    /* FIX: Ajustar mesa-header para botón de eliminar */
+    .mesa-card .mesa-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        position: relative;
+    }
+
+    /* Mover el resumen (total) a la fila 1 */
+    .mesa-resumen {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        margin: 0;
+    }
+
+    .mesa-total {
+        font-size: 13px;
+        font-weight: 700;
+        min-width: 50px !important;
+        text-align: right !important;
+        flex-shrink: 0 !important;
+        line-height: 1.3 !important;
+        padding: 2px 0 !important;
+    }
+
+    /* Fila 2: Descripción - FIX MÓVIL */
+    .mesa-descripcion-chip {
+        font-size: 9px;
+        padding: 4px 10px;
+        border-radius: 12px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        color: #475569;
+        max-width: 100%;
+        width: fit-content;
+        display: inline-flex !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .mesa-descripcion-chip.is-empty {
+        display: none !important;
+    }
+
+    /* Estado de edición en móvil */
+    .mesa-descripcion-chip.editing {
+        max-width: 100% !important;
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+    }
+
+    /* Ocultar acciones (ya movimos total arriba) */
+    .mesa-actions {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+
+    .mesa-actions .mesa-estado {
+        display: none;
+    }
+
+    .btn-delete-mesa {
+        background: transparent !important;
+        border: none !important;
+        color: #ef4444 !important;
+        font-size: 16px !important;
+        width: 24px !important;
+        height: 24px !important;
+        min-width: 50px !important;
+        min-height: 24px !important;
+        padding: 2px 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        cursor: pointer !important;
+        margin: 0 !important;
+        margin-left: auto !important;
+        line-height: 1 !important;
+        flex-shrink: 0 !important;
+    }
+
+    .mesa-edit-btn {
+        font-size: 9px !important;
+        opacity: 0.4 !important;
+    }
+
+    /* Bottom sheet móvil - 98% ancho y altura completa */
+    .mesas-panel-derecho {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%) translateY(100%);
+        width: 98%;
+        height: 98vh;
+        max-height: 98vh;
+        border-radius: 16px 16px 0 0;
+        z-index: 100;
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
+        transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+        will-change: transform;
+    }
+
+    .mesas-panel-derecho.visible,
+    .mesas-panel-derecho:not(.oculto) {
+        transform: translateX(-50%) translateY(0);
+    }
+
+    .mesas-panel-derecho.oculto {
+        transform: translateX(-50%) translateY(100%);
+    }
+
+    .mesas-panel-derecho.dragging {
+        transition: none;
+    }
+
+    .detalle-header {
+        padding: 14px 16px;
+    }
+
+    .detalle-titulo {
+        font-size: 16px;
+    }
+
+    .detalle-body {
+        padding: 12px 16px;
+    }
+
+    .producto-item {
+        padding: 10px 12px;
+    }
+
+    .producto-nombre {
+        font-size: 12px;
+    }
+
+    .producto-precio {
+        font-size: 12px;
+    }
+
+    .detalle-footer {
+        padding: 12px 16px;
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+        gap: 10px;
+    }
+}
+
+/* ==========================================
+   BOTTOM SHEET HANDLE INDICATOR - OCULTO
+   ========================================== */
+
+.bottom-sheet-handle {
+    display: none !important;
+}
+
+.bottom-sheet-handle::before {
+    display: none !important;
+}
+
+.bottom-sheet-handle:active::before {
+    display: none !important;
+}
+
+/* ==========================================
+   BOTTOM SHEET OVERLAY (Solo móvil) - DESHABILITADO
+   ========================================== */
+
+/* Overlay deshabilitado - no se usa */
+.bottom-sheet-overlay {
+    display: none !important;
+}
+
+/* ==========================================
+   SCROLLBAR STYLES
+   ========================================== */
+
+.modal-mesas-grid::-webkit-scrollbar,
+.detalle-body::-webkit-scrollbar,
+.productos-lista::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-mesas-grid::-webkit-scrollbar-track,
+.detalle-body::-webkit-scrollbar-track,
+.productos-lista::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-mesas-grid::-webkit-scrollbar-thumb,
+.detalle-body::-webkit-scrollbar-thumb,
+.productos-lista::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.modal-mesas-grid::-webkit-scrollbar-thumb:hover,
+.detalle-body::-webkit-scrollbar-thumb:hover,
+.productos-lista::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* ==========================================
+   ALINEACIÓN GLOBAL BOTÓN ELIMINAR
+   ========================================== */
+
+/* Asegurar que el botón de eliminar tenga el mismo espacio que el total */
+.btn-delete-mesa {
+    background: transparent;
+    color: #ef4444;
+    border: none;
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    opacity: 0.8;
+    margin-left: auto;
+    flex-shrink: 0;
+    padding: 0;
+}
+
+.btn-delete-mesa:hover {
+    background: rgba(239, 68, 68, 0.12);
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+/* ==========================================
+   NAVEGACIÓN POR TECLADO EN SUGERENCIAS (Desktop)
+   ========================================== */
+
+/* Estilo para sugerencia seleccionada por teclado */
+.resultado-producto-item.sugerencia-seleccionada {
+    background: #eef2ff !important;
+    border-left: 3px solid #6366f1;
+    padding-left: 11px !important;
+}
+
+.resultado-producto-item.sugerencia-seleccionada>div:first-child {
+    color: #4338ca !important;
+}
+
+/* Transición suave para feedback visual */
+.resultado-producto-item {
+    transition: background 0.1s ease, border-left 0.1s ease, padding-left 0.1s ease;
+}
+/* ==========================================
+   PANEL DE PAGO - NUEVO DISE�O CORPORATE CLEAN
+   ========================================== */
+
+.panel-pago-wrapper {
+    background: #ffffff;
+    width: 100%;
+    max-width: 400px;
+    padding: 24px;
+    box-sizing: border-box;
+    margin: 0 auto;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Header del panel */
+.panel-pago-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.btn-back-pago {
+    background: transparent;
+    border: none;
+    color: #475569;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+}
+
+.btn-back-pago:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.panel-pago-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+}
+
+/* Grid de M�todos de Pago */
+.seccion-titulo {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #475569;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+}
+
+.grid-metodos-pago {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.btn-metodo-pago {
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.btn-metodo-pago:hover {
+    border-color: #94a3b8;
+    background: #f8fafc;
+}
+
+.btn-metodo-pago.activo {
+    background: #eff6ff;
+    border-color: #2563eb;
+    color: #2563eb;
+    font-weight: 700;
+    box-shadow: 0 0 0 1px #2563eb inset;
+}
+
+/* Formulario de Pago */
+.form-pago {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex: 1;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.input-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #475569;
+    letter-spacing: 0.5px;
+}
+
+.input-pago {
+    height: 44px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    padding: 0 16px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #0f172a;
+    width: 100%;
+    box-sizing: border-box;
+    transition: all 0.2s;
+    outline: none;
+}
+
+.input-pago:focus {
+    background: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.input-pago[readonly] {
+    background: #f1f5f9;
+    color: #64748b;
+    cursor: default;
+}
+
+.input-pago.highlight {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+/* Footer con Bot�n Confirmar */
+.panel-pago-footer {
+    margin-top: auto;
+    padding-top: 20px;
+}
+
+.btn-confirmar-venta {
+    width: 100%;
+    height: 50px;
+    background: #0f172a;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.1), 0 2px 4px -1px rgba(15, 23, 42, 0.06);
+}
+
+.btn-confirmar-venta:hover {
+    background: #1e293b;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.1), 0 4px 6px -2px rgba(15, 23, 42, 0.05);
+}
+
+.btn-confirmar-venta:active {
+    transform: translateY(0);
+}
+
+
+/* Updated Payment Panel styles for compactness */
+.btn-metodo-pago {
+    height: 36px !important;
+    font-size: 11px !important;
+}
+
+.input-pago {
+    height: 38px !important;
+}
+
+.grid-metodos-pago {
+    margin-bottom: 16px !important;
+}
+
+.form-pago {
+    gap: 12px !important;
+}
+
+.input-group {
+    gap: 4px !important;
+}
+
+.panel-pago-wrapper {
+    overflow-y: auto;
+}
+
+.panel-pago-footer {
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+}
+
