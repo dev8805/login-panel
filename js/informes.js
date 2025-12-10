@@ -46,12 +46,19 @@ async function cargarInformes(modalBody) {
 
 // Función para cargar datos reales de Supabase
 async function cargarDatosRealesInforme(fechaInicio, fechaFin) {
-    console.log('📊 Cargando datos reales...', { fechaInicio, fechaFin, tenant_id: userData.tenant_id });
+    console.log('📊 Cargando datos reales...', { fechaInicio, fechaFin, tenant_id: userData?.tenant_id });
+
+    if (!userData || !userData.tenant_id) {
+        console.error('❌ userData no está disponible');
+        throw new Error('No se pudo obtener la información del usuario');
+    }
 
     // Usar la función getRangoUTC para convertir correctamente las fechas
     const rango = getRangoUTC(fechaInicio, fechaFin);
     const fechaInicioISO = rango.inicioISO;
     const fechaFinISO = rango.finISO;
+
+    console.log('📅 Rango UTC:', { fechaInicioISO, fechaFinISO });
 
     // 1. CARGAR VENTAS
     const { data: ventas, error: errorVentas } = await supabase
@@ -63,6 +70,7 @@ async function cargarDatosRealesInforme(fechaInicio, fechaFin) {
         .lte('created_at', fechaFinISO);
 
     if (errorVentas) throw new Error('Error cargando ventas: ' + errorVentas.message);
+    console.log('✅ Ventas cargadas:', ventas?.length || 0);
 
     // 2. CARGAR MOVIMIENTOS (Compras, Mermas, Consumos)
     const { data: movimientos, error: errorMovimientos } = await supabase
@@ -157,6 +165,11 @@ async function cargarDatosRealesInforme(fechaInicio, fechaFin) {
 
 // Función para renderizar el informe (CON DISEÑO GRID DARK TECH)
 function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
+    console.log('🎨 Renderizando informe...', {
+        modalBody: modalBody?.className || modalBody?.id || 'unknown',
+        totalVentas: datos.totalVentas,
+        cantidadVentas: datos.cantidadVentas
+    });
 
     const formatearMoneda = (valor) => {
         return new Intl.NumberFormat('es-CO', {
@@ -185,7 +198,8 @@ function renderizarInformeConDatos(modalBody, datos, fechaInicio, fechaFin) {
     window.recargarInformeInterno = async function () {
         const iVal = document.getElementById('fechaInicioInforme').value;
         const fVal = document.getElementById('fechaFinInforme').value;
-        const modalBodyRef = document.getElementById('modalBodyInformes');
+        // Buscar el contenedor correcto - PRIORIZAR content-area-body sobre modal
+        const modalBodyRef = document.querySelector('.content-area-body') || document.getElementById('modalBodyInformes');
 
         if (!iVal || !fVal) return;
 
