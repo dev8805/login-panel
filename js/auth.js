@@ -141,17 +141,13 @@ function showDashboard() {
     const nombreUsuario = userData.nombre || 'Usuario';
     const rolUsuario = userData.rol || 'usuario';
 
-    // Sidebar desktop - nombre del negocio
-    document.getElementById('sidebarBusinessName').textContent = nombreNegocio;
+    // Header desktop
+    document.getElementById('headerUserName').textContent = nombreUsuario;
+    document.getElementById('headerBusinessName').textContent = nombreNegocio;
 
     // Info usuario móvil
     document.getElementById('mobileUserName').textContent = nombreUsuario;
     document.getElementById('mobileUserMeta').textContent = `${nombreNegocio} · ${rolUsuario}`;
-
-    // Info usuario sidebar (desktop)
-    document.getElementById('userName').textContent = `👋 Hola, ${nombreUsuario}`;
-    document.getElementById('userRole').textContent = `Rol: ${rolUsuario}`;
-    document.getElementById('businessName').textContent = `🏪 ${nombreNegocio}`;
 
     renderMenu();
 }
