@@ -17,130 +17,171 @@ function cargarFormularioProducto() {
     const modal = document.getElementById('modalCrearProducto');
     const modalBody = document.getElementById('modalBody');
 
-    // 1. Inyectar el HTML original que tenías en panel.txt
+    // 1. Inyectar el nuevo HTML con diseño Layout A Premium
     modalBody.innerHTML = `
-    <div id="successMsg" class="success-message"></div>
-    <form id="formCrearProducto" onsubmit="submitProducto(event)">
-        <div id="errorMsgModal" class="error"></div>
-        
-        <div class="form-group">
-            <label class="required">Tipo de producto</label>
-            <div class="tipo-producto-group">
-                <div class="tipo-producto-option selected" onclick="seleccionarTipoProducto('simple', this)">
-                    <input type="radio" name="tipoProducto" id="tipoSimple" value="simple" checked>
-                    <label for="tipoSimple">📦 Producto Simple</label>
-                    <p style="font-size: 12px; color: #666; margin-top: 8px;">Se vende directamente</p>
+    <div class="form-crear-producto-container">
+        <div id="successMsg" class="form-message success"></div>
+        <form id="formCrearProducto" onsubmit="submitProducto(event)">
+            <div id="errorMsgModal" class="form-message error"></div>
+            
+            <div class="form-card">
+                <div class="form-card-body">
+                    <!-- Sección: Tipo de Producto -->
+                    <div class="form-section">
+                        <label class="form-section-label">Tipo de producto <span class="required-star">*</span></label>
+                        <div class="tipo-producto-cards">
+                            <label class="tipo-producto-card selected" onclick="seleccionarTipoProducto('simple', this)">
+                                <input type="radio" name="tipoProducto" id="tipoSimple" value="simple" checked>
+                                <div class="card-content">
+                                    <span class="card-icon">📦</span>
+                                    <span>Producto Simple</span>
+                                </div>
+                                <span class="card-description">Se vende directamente</span>
+                                <span class="check-icon">✓</span>
+                            </label>
+                            
+                            <label class="tipo-producto-card" onclick="seleccionarTipoProducto('procesado', this)">
+                                <input type="radio" name="tipoProducto" id="tipoProcesado" value="procesado">
+                                <div class="card-content">
+                                    <span class="card-icon">🍴</span>
+                                    <span>Producto Procesado</span>
+                                </div>
+                                <span class="card-description">Tiene receta con ingredientes</span>
+                                <span class="check-icon">✓</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Sección: Foto del Producto -->
+                    <div class="form-section">
+                        <label class="form-section-label">Foto del producto</label>
+                        <div class="foto-upload-area" onclick="document.getElementById('product_photo').click()">
+                            <div class="foto-upload-content">
+                                <div class="foto-upload-icon">☁️</div>
+                                <div class="foto-upload-text">
+                                    <span class="upload-link">Sube un archivo</span>
+                                    <span> o arrastra y suelta</span>
+                                </div>
+                                <p class="foto-upload-hint">PNG, JPG, GIF hasta 10MB</p>
+                            </div>
+                        </div>
+                        <input id="product_photo" name="product_photo" type="file" accept="image/*" style="display: none;">
+                    </div>
+                    
+                    <!-- Sección: Campos principales -->
+                    <div class="form-fields-grid">
+                        <div class="form-field col-span-2">
+                            <label for="productoNombre">Nombre del producto <span class="required-star">*</span></label>
+                            <input class="form-input" id="productoNombre" type="text" required placeholder="Ej. Coca Cola 600ml">
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="tipoVenta">Tipo de venta <span class="required-star">*</span></label>
+                            <select class="form-select" id="tipoVenta" required onchange="updateFormByType()">
+                                <option value="">Seleccionar...</option>
+                                <option value="unidad">Unidad</option>
+                                <option value="peso">Peso</option>
+                                <option value="medida">Medida</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Campos dinámicos según tipo de venta -->
+                    <div id="camposDinamicos"></div>
+                    
+                    <!-- Sección: Receta (solo para productos procesados) -->
+                    <div id="seccionReceta" class="receta-section-premium">
+                        <h3 class="section-title"><span class="icon">📝</span> Receta del Producto</h3>
+                        
+                        <div class="receta-info-alert">
+                            <span>ℹ️</span>
+                            <span><strong>Información:</strong> Define los ingredientes necesarios para producir 1 unidad de este producto.</span>
+                        </div>
+                        
+                        <div id="listaIngredientes" class="receta-lista-ingredientes">
+                            <div class="receta-empty">No hay ingredientes agregados aún</div>
+                        </div>
+                        
+                        <div class="ingrediente-form-premium">
+                            <h4 class="form-title">Agregar Ingrediente</h4>
+                            <div class="ingrediente-form-grid">
+                                <div class="form-field">
+                                    <label>📦 Ingrediente</label>
+                                    <select class="form-select" id="selectIngrediente">
+                                        <option value="">Cargando...</option>
+                                    </select>
+                                </div>
+                                <div class="form-field">
+                                    <label>🔢 Cantidad</label>
+                                    <input class="form-input" type="number" id="cantidadIngrediente" step="0.01" min="0.01" placeholder="50">
+                                </div>
+                                <div class="form-field">
+                                    <label>⚖️ Unidad</label>
+                                    <select class="form-select" id="unidadIngrediente">
+                                        <option value="">Selecciona ingrediente primero</option>
+                                    </select>
+                                </div>
+                                <div class="form-field">
+                                    <label>Acción</label>
+                                    <button type="button" class="btn-add-ingrediente" onclick="agregarIngredienteReceta()">➕</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sección: Apodos -->
+                    <div class="apodos-section">
+                        <h3 class="apodos-section-header">
+                            <span class="icon">🏷️</span>
+                            Apodos del producto
+                        </h3>
+                        
+                        <div class="apodos-container">
+                            <div class="apodos-grid">
+                                <div class="apodos-input-group">
+                                    <label>Agregar nuevo apodo</label>
+                                    <div class="apodos-input-row">
+                                        <input 
+                                            class="form-input" 
+                                            type="text" 
+                                            id="nuevoApodoCrear" 
+                                            placeholder="Escribe un apodo..."
+                                            onkeypress="if(event.key === 'Enter') { event.preventDefault(); agregarApodoCrear(); }"
+                                        >
+                                        <button type="button" class="btn-add-apodo" onclick="agregarApodoCrear()">➕</button>
+                                    </div>
+                                    <p class="apodos-hint">El nombre del producto se agregará automáticamente como apodo</p>
+                                </div>
+                                
+                                <div class="apodos-input-group">
+                                    <label>Apodos agregados</label>
+                                    <div id="listaApodosCrear" class="apodos-list-container empty">
+                                        <div id="apodosItemsCrear">No hay apodos agregados aún</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="tipo-producto-option" onclick="seleccionarTipoProducto('procesado', this)">
-                    <input type="radio" name="tipoProducto" id="tipoProcesado" value="procesado">
-                    <label for="tipoProcesado">🍴 Producto Procesado</label>
-                    <p style="font-size: 12px; color: #666; margin-top: 8px;">Tiene receta con ingredientes</p>
-                </div>
-            </div>
-        </div>
-                
-        <div class="form-group">
-            <label for="productoNombre">Nombre del producto *</label>
-            <input type="text" id="productoNombre" required>
-        </div>
-        
-        <div class="form-group">
-            <label for="tipoVenta">Tipo de venta *</label>
-            <select id="tipoVenta" required onchange="updateFormByType()">
-                <option value="">Seleccionar...</option>
-                <option value="unidad">Unidad</option>
-                <option value="peso">Peso</option>
-                <option value="medida">Medida</option>
-            </select>
-        </div>
-        
-        <div id="camposDinamicos"></div>
-        
-        <div id="seccionReceta" class="receta-section">
-            <h3 style="margin-bottom: 15px; color: #333;">📝 Receta del Producto</h3>
-            
-            <div class="alert alert-info" style="margin-bottom: 15px;">
-                <strong>ℹ️ Información:</strong> Define los ingredientes necesarios para producir 1 unidad de este producto.
-            </div>
-            
-            <div id="listaIngredientes">
-                <div class="empty-receta">
-                    No hay ingredientes agregados aún
+                <!-- Footer con botones -->
+                <div class="form-card-footer">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn-submit-premium" id="btnSubmit">Crear Producto</button>
                 </div>
             </div>
             
-            <div class="ingrediente-form">
-                <h4 style="margin-bottom: 10px; color: #667eea;">Agregar Ingrediente</h4>
-                <div class="form-row-ingrediente">
-                    <div>
-                        <label style="font-size: 13px; font-weight: 600; margin-bottom: 8px; display: block;">📦 Ingrediente</label>
-                        <select id="selectIngrediente">
-                            <option value="">Cargando...</option>
-                        </select>
-                    </div>
-            
-                    <div>
-                        <label style="font-size: 13px; font-weight: 600; margin-bottom: 8px; display: block;">🔢 Cantidad</label>
-                        <input type="number" id="cantidadIngrediente" step="0.01" min="0.01" placeholder="50">
-                    </div>
-                    <div>
-                        <label style="font-size: 13px; font-weight: 600; margin-bottom: 8px; display: block;">⚖️ Unidad</label>
-                        <select id="unidadIngrediente">
-                            <option value="">Selecciona ingrediente primero</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label style="font-size: 13px; font-weight: 600; margin-bottom: 8px; display: block;">Acción</label>
-                        <button type="button" onclick="agregarIngredienteReceta()" style="background: #10b981; width: 100%; height: 48px; font-size: 16px; font-weight: 600;">
-                            ➕
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="form-group">
-            <label style="font-weight: 600;">Apodos del producto</label>
-            
-            <div id="listaApodosCrear" style="background: #fff; border: 2px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 15px; min-height: 60px;">
-                <div id="apodosItemsCrear"></div>
-            </div>
-            
-            <div style="background: #f5f7ff; padding: 15px; border-radius: 8px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 13px;">Agregar apodo</label>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <input 
-                        type="text" 
-                        id="nuevoApodoCrear" 
-                        placeholder="Escribe un apodo..."
-                        style="flex: 1; padding: 10px 12px; max-width: 70%;"
-                        onkeypress="if(event.key === 'Enter') { event.preventDefault(); agregarApodoCrear(); }"
-                    >
-                    <button 
-                        type="button"
-                        onclick="agregarApodoCrear()"
-                        style="padding: 10px 12px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; min-width: auto; width: auto; flex-shrink: 0;"
-                    >
-                        ➕
-                    </button>
-                </div>
-                <small style="color: #666; font-size: 11px; display: block; margin-top: 8px;">El nombre del producto se agregará automáticamente como apodo</small>
-            </div>
-        </div>
-        
-        <input type="hidden" id="apodos" value="">
-        <input type="hidden" id="ingredientesReceta" value="">
-        
-        <button type="submit" id="btnSubmit">Crear Producto</button>
-    </form>
+            <input type="hidden" id="apodos" value="">
+            <input type="hidden" id="ingredientesReceta" value="">
+        </form>
+    </div>
     `;
 
-    // 2. Restaurar la lógica de inicialización que tenías inline [cite: 322]
+    // 2. Restaurar la lógica de inicialización
     window.apodosCrearProducto = [];
-    ingredientesReceta = []; // Resetear recetas también
+    ingredientesReceta = [];
 
-    // Listener para cuando cambia el nombre del producto (Auto-apodo) [cite: 323]
+    // Listener para cuando cambia el nombre del producto (Auto-apodo)
     document.getElementById('productoNombre').addEventListener('blur', function () {
         const nombreProducto = this.value.trim().toLowerCase();
         if (nombreProducto && !window.apodosCrearProducto.includes(nombreProducto)) {
@@ -155,123 +196,164 @@ function cargarFormularioProducto() {
 
 // Nueva función para cargar formulario en content-area (desktop)
 function cargarFormularioProductoEnArea(modalBody) {
-    // Usar el mismo HTML pero sin abrir modal
+    // Usar el mismo HTML premium pero sin abrir modal
     modalBody.innerHTML = `
-    <div id="successMsg" class="success-message"></div>
-    <form id="formCrearProducto" onsubmit="submitProducto(event)">
-        <div id="errorMsgModal" class="error"></div>
-        
-        <div class="form-group">
-            <label class="required">Tipo de producto</label>
-            <div class="tipo-producto-group">
-                <div class="tipo-producto-option selected" onclick="seleccionarTipoProducto('simple', this)">
-                    <input type="radio" name="tipoProducto" id="tipoSimple" value="simple" checked>
-                    <label for="tipoSimple">📦 Producto Simple</label>
-                    <p style="font-size: 12px; color: #666; margin-top: 8px;">Se vende directamente</p>
+    <div class="form-crear-producto-container">
+        <div id="successMsg" class="form-message success"></div>
+        <form id="formCrearProducto" onsubmit="submitProducto(event)">
+            <div id="errorMsgModal" class="form-message error"></div>
+            
+            <div class="form-card">
+                <div class="form-card-body">
+                    <!-- Sección: Tipo de Producto -->
+                    <div class="form-section">
+                        <label class="form-section-label">Tipo de producto <span class="required-star">*</span></label>
+                        <div class="tipo-producto-cards">
+                            <label class="tipo-producto-card selected" onclick="seleccionarTipoProducto('simple', this)">
+                                <input type="radio" name="tipoProducto" id="tipoSimple" value="simple" checked>
+                                <div class="card-content">
+                                    <span class="card-icon">📦</span>
+                                    <span>Producto Simple</span>
+                                </div>
+                                <span class="card-description">Se vende directamente</span>
+                                <span class="check-icon">✓</span>
+                            </label>
+                            
+                            <label class="tipo-producto-card" onclick="seleccionarTipoProducto('procesado', this)">
+                                <input type="radio" name="tipoProducto" id="tipoProcesado" value="procesado">
+                                <div class="card-content">
+                                    <span class="card-icon">🍴</span>
+                                    <span>Producto Procesado</span>
+                                </div>
+                                <span class="card-description">Tiene receta con ingredientes</span>
+                                <span class="check-icon">✓</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Sección: Foto del Producto -->
+                    <div class="form-section">
+                        <label class="form-section-label">Foto del producto</label>
+                        <div class="foto-upload-area" onclick="document.getElementById('product_photo').click()">
+                            <div class="foto-upload-content">
+                                <div class="foto-upload-icon">☁️</div>
+                                <div class="foto-upload-text">
+                                    <span class="upload-link">Sube un archivo</span>
+                                    <span> o arrastra y suelta</span>
+                                </div>
+                                <p class="foto-upload-hint">PNG, JPG, GIF hasta 10MB</p>
+                            </div>
+                        </div>
+                        <input id="product_photo" name="product_photo" type="file" accept="image/*" style="display: none;">
+                    </div>
+                    
+                    <!-- Sección: Campos principales -->
+                    <div class="form-fields-grid">
+                        <div class="form-field col-span-2">
+                            <label for="productoNombre">Nombre del producto <span class="required-star">*</span></label>
+                            <input class="form-input" id="productoNombre" type="text" required placeholder="Ej. Coca Cola 600ml">
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="tipoVenta">Tipo de venta <span class="required-star">*</span></label>
+                            <select class="form-select" id="tipoVenta" required onchange="updateFormByType()">
+                                <option value="">Seleccionar...</option>
+                                <option value="unidad">Unidad</option>
+                                <option value="peso">Peso</option>
+                                <option value="medida">Medida</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Campos dinámicos según tipo de venta -->
+                    <div id="camposDinamicos"></div>
+                    
+                    <!-- Sección: Receta (solo para productos procesados) -->
+                    <div id="seccionReceta" class="receta-section-premium">
+                        <h3 class="section-title"><span class="icon">📝</span> Receta del Producto</h3>
+                        
+                        <div class="receta-info-alert">
+                            <span>ℹ️</span>
+                            <span><strong>Información:</strong> Define los ingredientes necesarios para producir 1 unidad de este producto.</span>
+                        </div>
+                        
+                        <div id="listaIngredientes" class="receta-lista-ingredientes">
+                            <div class="receta-empty">No hay ingredientes agregados aún</div>
+                        </div>
+                        
+                        <div class="ingrediente-form-premium">
+                            <h4 class="form-title">Agregar Ingrediente</h4>
+                            <div class="ingrediente-form-grid">
+                                <div class="form-field">
+                                    <label>📦 Ingrediente</label>
+                                    <select class="form-select" id="selectIngrediente">
+                                        <option value="">Cargando...</option>
+                                    </select>
+                                </div>
+                                <div class="form-field">
+                                    <label>🔢 Cantidad</label>
+                                    <input class="form-input" type="number" id="cantidadIngrediente" step="0.01" min="0.01" placeholder="50">
+                                </div>
+                                <div class="form-field">
+                                    <label>⚖️ Unidad</label>
+                                    <select class="form-select" id="unidadIngrediente">
+                                        <option value="">Selecciona ingrediente primero</option>
+                                    </select>
+                                </div>
+                                <div class="form-field">
+                                    <label>Acción</label>
+                                    <button type="button" class="btn-add-ingrediente" onclick="agregarIngredienteReceta()">➕</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sección: Apodos -->
+                    <div class="apodos-section">
+                        <h3 class="apodos-section-header">
+                            <span class="icon">🏷️</span>
+                            Apodos del producto
+                        </h3>
+                        
+                        <div class="apodos-container">
+                            <div class="apodos-grid">
+                                <div class="apodos-input-group">
+                                    <label>Agregar nuevo apodo</label>
+                                    <div class="apodos-input-row">
+                                        <input 
+                                            class="form-input" 
+                                            type="text" 
+                                            id="nuevoApodoCrear" 
+                                            placeholder="Escribe un apodo..."
+                                            onkeypress="if(event.key === 'Enter') { event.preventDefault(); agregarApodoCrear(); }"
+                                        >
+                                        <button type="button" class="btn-add-apodo" onclick="agregarApodoCrear()">➕</button>
+                                    </div>
+                                    <p class="apodos-hint">El nombre del producto se agregará automáticamente como apodo</p>
+                                </div>
+                                
+                                <div class="apodos-input-group">
+                                    <label>Apodos agregados</label>
+                                    <div id="listaApodosCrear" class="apodos-list-container empty">
+                                        <div id="apodosItemsCrear">No hay apodos agregados aún</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="tipo-producto-option" onclick="seleccionarTipoProducto('procesado', this)">
-                    <input type="radio" name="tipoProducto" id="tipoProcesado" value="procesado">
-                    <label for="tipoProcesado">🍴 Producto Procesado</label>
-                    <p style="font-size: 12px; color: #666; margin-top: 8px;">Tiene receta con ingredientes</p>
-                </div>
-            </div>
-        </div>
-                
-        <div class="form-group">
-            <label for="productoNombre">Nombre del producto *</label>
-            <input type="text" id="productoNombre" required>
-        </div>
-        
-        <div class="form-group">
-            <label for="tipoVenta">Tipo de venta *</label>
-            <select id="tipoVenta" required onchange="updateFormByType()">
-                <option value="">Seleccionar...</option>
-                <option value="unidad">Unidad</option>
-                <option value="peso">Peso</option>
-                <option value="medida">Medida</option>
-            </select>
-        </div>
-        
-        <div id="camposDinamicos"></div>
-        
-        <div id="seccionReceta" class="receta-section">
-            <h3 style="margin-bottom: 15px; color: #333;">📝 Receta del Producto</h3>
-            
-            <div class="alert alert-info" style="margin-bottom: 15px;">
-                <strong>ℹ️ Información:</strong> Define los ingredientes necesarios para producir 1 unidad de este producto.
-            </div>
-            
-            <div id="listaIngredientes">
-                <div class="empty-receta">
-                    No hay ingredientes agregados aún
+                <!-- Footer con botones -->
+                <div class="form-card-footer">
+                    <button type="button" class="btn-cancel" onclick="cerrarContentArea()">Cancelar</button>
+                    <button type="submit" class="btn-submit-premium" id="btnSubmit">Crear Producto</button>
                 </div>
             </div>
             
-            <div class="ingrediente-form">
-                <h4 style="margin-bottom: 10px; color: #667eea;">Agregar Ingrediente</h4>
-                <div class="form-row-ingrediente">
-                    <div>
-                        <label style="font-size: 13px; font-weight: 600; margin-bottom: 8px; display: block;">📦 Ingrediente</label>
-                        <select id="selectIngrediente">
-                            <option value="">Cargando...</option>
-                        </select>
-                    </div>
-            
-                    <div>
-                        <label style="font-size: 13px; font-weight: 600; margin-bottom: 8px; display: block;">🔢 Cantidad</label>
-                        <input type="number" id="cantidadIngrediente" step="0.01" min="0.01" placeholder="50">
-                    </div>
-                    <div>
-                        <label style="font-size: 13px; font-weight: 600; margin-bottom: 8px; display: block;">⚖️ Unidad</label>
-                        <select id="unidadIngrediente">
-                            <option value="">Selecciona ingrediente primero</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label style="font-size: 13px; font-weight: 600; margin-bottom: 8px; display: block;">Acción</label>
-                        <button type="button" onclick="agregarIngredienteReceta()" style="background: #10b981; width: 100%; height: 48px; font-size: 16px; font-weight: 600;">
-                            ➕
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="form-group">
-            <label style="font-weight: 600;">Apodos del producto</label>
-            
-            <div id="listaApodosCrear" style="background: #fff; border: 2px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 15px; min-height: 60px;">
-                <div id="apodosItemsCrear"></div>
-            </div>
-            
-            <div style="background: #f5f7ff; padding: 15px; border-radius: 8px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 13px;">Agregar apodo</label>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <input 
-                        type="text" 
-                        id="nuevoApodoCrear" 
-                        placeholder="Escribe un apodo..."
-                        style="flex: 1; padding: 10px 12px; max-width: 70%;"
-                        onkeypress="if(event.key === 'Enter') { event.preventDefault(); agregarApodoCrear(); }"
-                    >
-                    <button 
-                        type="button"
-                        onclick="agregarApodoCrear()"
-                        style="padding: 10px 12px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; min-width: auto; width: auto; flex-shrink: 0;"
-                    >
-                        ➕
-                    </button>
-                </div>
-                <small style="color: #666; font-size: 11px; display: block; margin-top: 8px;">El nombre del producto se agregará automáticamente como apodo</small>
-            </div>
-        </div>
-        
-        <input type="hidden" id="apodos" value="">
-        <input type="hidden" id="ingredientesReceta" value="">
-        
-        <button type="submit" id="btnSubmit">Crear Producto</button>
-    </form>
+            <input type="hidden" id="apodos" value="">
+            <input type="hidden" id="ingredientesReceta" value="">
+        </form>
+    </div>
     `;
 
     // Inicializar
@@ -293,8 +375,8 @@ let ingredientesReceta = [];
 
 // Seleccionar tipo de producto
 function seleccionarTipoProducto(tipo, elemento) {
-    // Remover clase selected de todos
-    document.querySelectorAll('.tipo-producto-option').forEach(el => {
+    // Remover clase selected de todos (soporte para ambos formatos)
+    document.querySelectorAll('.tipo-producto-option, .tipo-producto-card').forEach(el => {
         el.classList.remove('selected');
     });
 
@@ -464,37 +546,45 @@ function updateFormByType() {
 
     if (tipo === 'unidad') {
         html = `
-            <div class="form-group">
-                <label>Unidad de compra *</label>
-                <select id="unidadCompra" required onchange="toggleUnidadCompraPersonalizada()">
-                    <option value="">Seleccionar...</option>
-                    <option value="CAJA">CAJA</option>
-                    <option value="PACA">PACA</option>
-                    <option value="UNIDAD">UNIDAD</option>
-                    <option value="PAQUETE">PAQUETE</option>
-                    <option value="BOLSA">BOLSA</option>
-                    <option value="OTRA">OTRA (Especificar)</option>
-                </select>
-            </div>
-            <div class="form-group" id="campoUnidadPersonalizada" style="display: none;">
-                <label>Especificar unidad de compra *</label>
-                <input type="text" id="unidadCompraPersonalizada" placeholder="Ej: BOTELLA, GARRAFA, etc.">
-            </div>
-            <div class="form-group">
-                <label id="labelFactorUnidad">Factor *</label>
-                <input type="number" id="factor" required min="1" step="1" value="1">
-            </div>
-            <div class="form-group">
-                <label>Stock inicial (unidades) *</label>
-                <input type="number" id="stock" required min="0" step="0.01">
-            </div>
-            <div class="form-group">
-                <label>Precio unitario *</label>
-                <input type="number" id="precio" required min="0" step="0.01">
-            </div>
-            <div class="form-group">
-                <label>Costo unitario *</label>
-                <input type="number" id="costo" required min="0" step="0.01">
+            <div class="campos-dinamicos-grid">
+                <div class="form-field">
+                    <label>Unidad de compra <span class="required-star">*</span></label>
+                    <select class="form-select" id="unidadCompra" required onchange="toggleUnidadCompraPersonalizada()">
+                        <option value="">Seleccionar...</option>
+                        <option value="CAJA">CAJA</option>
+                        <option value="PACA">PACA</option>
+                        <option value="UNIDAD">UNIDAD</option>
+                        <option value="PAQUETE">PAQUETE</option>
+                        <option value="BOLSA">BOLSA</option>
+                        <option value="OTRA">OTRA (Especificar)</option>
+                    </select>
+                </div>
+                <div class="form-field" id="campoUnidadPersonalizada" style="display: none;">
+                    <label>Especificar unidad de compra <span class="required-star">*</span></label>
+                    <input class="form-input" type="text" id="unidadCompraPersonalizada" placeholder="Ej: BOTELLA, GARRAFA, etc.">
+                </div>
+                <div class="form-field">
+                    <label id="labelFactorUnidad">Factor <span class="required-star">*</span></label>
+                    <input class="form-input" type="number" id="factor" required min="1" step="1" value="1">
+                </div>
+                <div class="form-field">
+                    <label>Stock inicial (unidades) <span class="required-star">*</span></label>
+                    <input class="form-input" type="number" id="stock" required min="0" step="0.01" placeholder="0">
+                </div>
+                <div class="form-field">
+                    <label>Precio unitario <span class="required-star">*</span></label>
+                    <div class="input-with-prefix">
+                        <span class="prefix">$</span>
+                        <input class="form-input" type="number" id="precio" required min="0" step="0.01" placeholder="0.00">
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label>Costo unitario <span class="required-star">*</span></label>
+                    <div class="input-with-prefix">
+                        <span class="prefix">$</span>
+                        <input class="form-input" type="number" id="costo" required min="0" step="0.01" placeholder="0.00">
+                    </div>
+                </div>
             </div>
         `;
 
@@ -513,7 +603,7 @@ function updateFormByType() {
                 } else {
                     unidadCompra = unidadCompraSelect.value || 'unidad de compra';
                 }
-                labelFactor.textContent = `¿Cuántas unidades tiene 1 ${unidadCompra}? *`;
+                labelFactor.innerHTML = `¿Cuántas unidades tiene 1 ${unidadCompra}? <span class="required-star">*</span>`;
             }
 
             unidadCompraSelect.addEventListener('change', actualizarLabelFactorUnidad);
@@ -523,45 +613,53 @@ function updateFormByType() {
 
     } else if (tipo === 'peso') {
         html = `
-            <div class="form-group">
-                <label>Unidad de venta *</label>
-                <select id="unidadVenta" required>
-                    <option value="">Seleccionar...</option>
-                    <option value="libras">Libras</option>
-                    <option value="kilogramos">Kilogramos</option>
-                    <option value="gramos">Gramos</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Unidad de compra *</label>
-                <select id="unidadCompra" required onchange="toggleUnidadCompraPersonalizada()">
-                    <option value="">Seleccionar...</option>
-                    <option value="BULTO">BULTO</option>
-                    <option value="LIBRA">LIBRA</option>
-                    <option value="KILO">KILO</option>
-                    <option value="ARROBA">ARROBA</option>
-                    <option value="OTRA">OTRA (Especificar)</option>
-                </select>
-            </div>
-            <div class="form-group" id="campoUnidadPersonalizada" style="display: none;">
-                <label>Especificar unidad de compra *</label>
-                <input type="text" id="unidadCompraPersonalizada" placeholder="Ej: BOTELLA, GARRAFA, etc." style="text-transform: uppercase;">
-            </div>
-            <div class="form-group">
-                <label id="labelFactorPeso">Factor *</label>
-                <input type="number" id="factor" required min="0.01" step="0.01">
-            </div>
-            <div class="form-group">
-                <label id="labelStockPeso">Stock inicial *</label>
-                <input type="number" id="stock" required min="0" step="0.01">
-            </div>
-            <div class="form-group">
-                <label id="labelPrecioPeso">Precio por unidad de venta *</label>
-                <input type="number" id="precio" required min="0" step="0.01">
-            </div>
-            <div class="form-group">
-                <label id="labelCostoPeso">Costo por unidad de venta *</label>
-                <input type="number" id="costo" required min="0" step="0.01">
+            <div class="campos-dinamicos-grid">
+                <div class="form-field">
+                    <label>Unidad de venta <span class="required-star">*</span></label>
+                    <select class="form-select" id="unidadVenta" required>
+                        <option value="">Seleccionar...</option>
+                        <option value="libras">Libras</option>
+                        <option value="kilogramos">Kilogramos</option>
+                        <option value="gramos">Gramos</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label>Unidad de compra <span class="required-star">*</span></label>
+                    <select class="form-select" id="unidadCompra" required onchange="toggleUnidadCompraPersonalizada()">
+                        <option value="">Seleccionar...</option>
+                        <option value="BULTO">BULTO</option>
+                        <option value="LIBRA">LIBRA</option>
+                        <option value="KILO">KILO</option>
+                        <option value="ARROBA">ARROBA</option>
+                        <option value="OTRA">OTRA (Especificar)</option>
+                    </select>
+                </div>
+                <div class="form-field" id="campoUnidadPersonalizada" style="display: none;">
+                    <label>Especificar unidad de compra <span class="required-star">*</span></label>
+                    <input class="form-input" type="text" id="unidadCompraPersonalizada" placeholder="Ej: BOTELLA, GARRAFA, etc." style="text-transform: uppercase;">
+                </div>
+                <div class="form-field">
+                    <label id="labelFactorPeso">Factor <span class="required-star">*</span></label>
+                    <input class="form-input" type="number" id="factor" required min="0.01" step="0.01">
+                </div>
+                <div class="form-field">
+                    <label id="labelStockPeso">Stock inicial <span class="required-star">*</span></label>
+                    <input class="form-input" type="number" id="stock" required min="0" step="0.01" placeholder="0">
+                </div>
+                <div class="form-field">
+                    <label id="labelPrecioPeso">Precio por unidad de venta <span class="required-star">*</span></label>
+                    <div class="input-with-prefix">
+                        <span class="prefix">$</span>
+                        <input class="form-input" type="number" id="precio" required min="0" step="0.01" placeholder="0.00">
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label id="labelCostoPeso">Costo por unidad de venta <span class="required-star">*</span></label>
+                    <div class="input-with-prefix">
+                        <span class="prefix">$</span>
+                        <input class="form-input" type="number" id="costo" required min="0" step="0.01" placeholder="0.00">
+                    </div>
+                </div>
             </div>
         `;
 
@@ -578,7 +676,7 @@ function updateFormByType() {
 
             function actualizarLabelStockPeso() {
                 const unidadVenta = unidadVentaSelect.value || 'unidad de venta';
-                labelStockPeso.textContent = `Stock inicial (en ${unidadVenta}) *`;
+                labelStockPeso.innerHTML = `Stock inicial (en ${unidadVenta}) <span class="required-star">*</span>`;
             }
 
             function actualizarLabelFactorPeso() {
@@ -590,13 +688,13 @@ function updateFormByType() {
                 } else {
                     unidadCompra = unidadCompraSelect.value || 'unidad de compra';
                 }
-                labelFactor.textContent = `¿Cuántas ${unidadVenta} tiene 1 ${unidadCompra}? *`;
+                labelFactor.innerHTML = `¿Cuántas ${unidadVenta} tiene 1 ${unidadCompra}? <span class="required-star">*</span>`;
             }
 
             function actualizarLabelsPrecioCostoPeso() {
                 const unidadVenta = unidadVentaSelect.value || 'unidad de venta';
-                labelPrecio.textContent = `Precio por ${unidadVenta} *`;
-                labelCosto.textContent = `Costo por ${unidadVenta} *`;
+                labelPrecio.innerHTML = `Precio por ${unidadVenta} <span class="required-star">*</span>`;
+                labelCosto.innerHTML = `Costo por ${unidadVenta} <span class="required-star">*</span>`;
             }
 
             unidadVentaSelect.addEventListener('change', () => {
@@ -611,45 +709,53 @@ function updateFormByType() {
 
     } else if (tipo === 'medida') {
         html = `
-            <div class="form-group">
-                <label>Unidad de venta *</label>
-                <select id="unidadVenta" required>
-                    <option value="">Seleccionar...</option>
-                    <option value="metros">Metros</option>
-                    <option value="centimetros">Centímetros</option>
-                    <option value="milimetros">Milímetros</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Unidad de compra *</label>
-                <select id="unidadCompra" required onchange="toggleUnidadCompraPersonalizada()">
-                    <option value="">Seleccionar...</option>
-                    <option value="ROLLO">ROLLO</option>
-                    <option value="LAMINA">LAMINA</option>
-                    <option value="BOBINA">BOBINA</option>
-                    <option value="METRO">METRO</option>
-                    <option value="OTRA">OTRA (Especificar)</option>
-                </select>
-            </div>
-            <div class="form-group" id="campoUnidadPersonalizada" style="display: none;">
-                <label>Especificar unidad de compra *</label>
-                <input type="text" id="unidadCompraPersonalizada" placeholder="Ej: PLIEGO, HOJA, etc." style="text-transform: uppercase;">
-            </div>
-            <div class="form-group">
-                <label id="labelFactorMedida">Factor *</label>
-                <input type="number" id="factor" required min="0.01" step="0.01">
-            </div>
-            <div class="form-group">
-                <label id="labelStockMedida">Stock inicial *</label>
-                <input type="number" id="stock" required min="0" step="0.01">
-            </div>
-            <div class="form-group">
-                <label id="labelPrecioMedida">Precio por unidad de venta *</label>
-                <input type="number" id="precio" required min="0" step="0.01">
-            </div>
-            <div class="form-group">
-                <label id="labelCostoMedida">Costo por unidad de venta *</label>
-                <input type="number" id="costo" required min="0" step="0.01">
+            <div class="campos-dinamicos-grid">
+                <div class="form-field">
+                    <label>Unidad de venta <span class="required-star">*</span></label>
+                    <select class="form-select" id="unidadVenta" required>
+                        <option value="">Seleccionar...</option>
+                        <option value="metros">Metros</option>
+                        <option value="centimetros">Centímetros</option>
+                        <option value="milimetros">Milímetros</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label>Unidad de compra <span class="required-star">*</span></label>
+                    <select class="form-select" id="unidadCompra" required onchange="toggleUnidadCompraPersonalizada()">
+                        <option value="">Seleccionar...</option>
+                        <option value="ROLLO">ROLLO</option>
+                        <option value="LAMINA">LAMINA</option>
+                        <option value="BOBINA">BOBINA</option>
+                        <option value="METRO">METRO</option>
+                        <option value="OTRA">OTRA (Especificar)</option>
+                    </select>
+                </div>
+                <div class="form-field" id="campoUnidadPersonalizada" style="display: none;">
+                    <label>Especificar unidad de compra <span class="required-star">*</span></label>
+                    <input class="form-input" type="text" id="unidadCompraPersonalizada" placeholder="Ej: PLIEGO, HOJA, etc." style="text-transform: uppercase;">
+                </div>
+                <div class="form-field">
+                    <label id="labelFactorMedida">Factor <span class="required-star">*</span></label>
+                    <input class="form-input" type="number" id="factor" required min="0.01" step="0.01">
+                </div>
+                <div class="form-field">
+                    <label id="labelStockMedida">Stock inicial <span class="required-star">*</span></label>
+                    <input class="form-input" type="number" id="stock" required min="0" step="0.01" placeholder="0">
+                </div>
+                <div class="form-field">
+                    <label id="labelPrecioMedida">Precio por unidad de venta <span class="required-star">*</span></label>
+                    <div class="input-with-prefix">
+                        <span class="prefix">$</span>
+                        <input class="form-input" type="number" id="precio" required min="0" step="0.01" placeholder="0.00">
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label id="labelCostoMedida">Costo por unidad de venta <span class="required-star">*</span></label>
+                    <div class="input-with-prefix">
+                        <span class="prefix">$</span>
+                        <input class="form-input" type="number" id="costo" required min="0" step="0.01" placeholder="0.00">
+                    </div>
+                </div>
             </div>
         `;
 
@@ -666,7 +772,7 @@ function updateFormByType() {
 
             function actualizarLabelStockMedida() {
                 const unidadVenta = unidadVentaSelect.value || 'unidad de venta';
-                labelStockMedida.textContent = `Stock inicial (en ${unidadVenta}) *`;
+                labelStockMedida.innerHTML = `Stock inicial (en ${unidadVenta}) <span class="required-star">*</span>`;
             }
 
             function actualizarLabelFactorMedida() {
@@ -678,13 +784,13 @@ function updateFormByType() {
                 } else {
                     unidadCompra = unidadCompraSelect.value || 'unidad de compra';
                 }
-                labelFactor.textContent = `¿Cuántos ${unidadVenta} tiene 1 ${unidadCompra}? *`;
+                labelFactor.innerHTML = `¿Cuántos ${unidadVenta} tiene 1 ${unidadCompra}? <span class="required-star">*</span>`;
             }
 
             function actualizarLabelsPrecioCostoMedida() {
                 const unidadVenta = unidadVentaSelect.value || 'unidad de venta';
-                labelPrecio.textContent = `Precio por ${unidadVenta} *`;
-                labelCosto.textContent = `Costo por ${unidadVenta} *`;
+                labelPrecio.innerHTML = `Precio por ${unidadVenta} <span class="required-star">*</span>`;
+                labelCosto.innerHTML = `Costo por ${unidadVenta} <span class="required-star">*</span>`;
             }
 
             unidadVentaSelect.addEventListener('change', () => {
@@ -747,22 +853,19 @@ function eliminarApodoCrear(apodo) {
 // Función para renderizar la lista de apodos
 function renderizarApodosCrear() {
     const container = document.getElementById('apodosItemsCrear');
+    const containerParent = document.getElementById('listaApodosCrear');
 
     if (window.apodosCrearProducto.length === 0) {
-        container.innerHTML = '<p style="color: #999; font-size: 13px; margin: 0;">No hay apodos agregados aún</p>';
+        container.innerHTML = 'No hay apodos agregados aún';
+        if (containerParent) containerParent.classList.add('empty');
     } else {
-        container.innerHTML = window.apodosCrearProducto.map(apodo => `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: #f5f7ff; border-radius: 6px; margin-bottom: 6px;">
-                <span style="font-weight: 500; color: #333; font-size: 13px;">🏷️ ${apodo}</span>
-                <button 
-                    type="button"
-                    onclick="eliminarApodoCrear('${apodo}')"
-                    style="padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 10px; min-width: auto; width: auto;"
-                >
-                    🗑️
-                </button>
-            </div>
-        `).join('');
+        if (containerParent) containerParent.classList.remove('empty');
+        container.innerHTML = `<div class="apodos-tags">${window.apodosCrearProducto.map(apodo => `
+            <span class="apodo-tag">
+                🏷️ ${apodo}
+                <button type="button" class="remove-apodo" onclick="eliminarApodoCrear('${apodo}')">×</button>
+            </span>
+        `).join('')}</div>`;
     }
 
     // Actualizar input oculto
